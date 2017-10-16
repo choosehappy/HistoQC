@@ -110,6 +110,7 @@ def getBasicStats(s,params):
     addToPrintList(s, "width", osh.properties["openslide.level[0].width"])
     addToPrintList(s, "mpp-x", osh.properties["openslide.mpp-x"])
     addToPrintList(s, "mpp-y", osh.properties["openslide.mpp-y"])
+    addToPrintList(s, "comment", osh.properties["openslide.comment"])
     return
 
 def getMag(s,params):
