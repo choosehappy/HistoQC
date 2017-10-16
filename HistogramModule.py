@@ -7,8 +7,6 @@ from distutils.util import strtobool
 global_holder = {}
 
 def getHistogram(s,params):
-    #TODO: compare against a base to provide a quantative metric
-    #TODO: can print out all the bins? how to add to result sheet? or just image graph?
     print "\tgetHistogram"
     limit_to_tissue = strtobool(params.get("limit_to_tissue", True))
     bins=int(params.get("bins", 20))
@@ -20,8 +18,7 @@ def getHistogram(s,params):
     if limit_to_tissue:
         img=img[s["img_mask_use"]]
     else:
-        #TODO Fix. img needs to be reshaped
-        print "NOT IMPLEMENTED"
+        img=img.reshape(-1,3)
 
     ax = plt.axes()
     ax.hist(img, bins=bins, normed=1, range=(0, 255), histtype='step', color=("r", "g","b"))

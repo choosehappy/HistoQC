@@ -6,8 +6,6 @@ import openslide
 
 
 class BaseImage():
-    global_holder = {}
-    s = {}
 
     def __init__(self, fname , fname_outdir):
         self.s = {}  # will hold everything for the image
