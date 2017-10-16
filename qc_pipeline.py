@@ -1,7 +1,9 @@
+import ConfigParser
 import errno
 import glob
 import os
 
+import argparse
 import matplotlib.pyplot as plt
 import numpy as np
 from skimage import color, io, morphology
@@ -10,8 +12,6 @@ os.environ['PATH'] = '.\\openslide\\bin' + ';' + os.environ['PATH']
 import openslide
 
 global_holder={}
-
-global global_holder
 
 def getImgThumb(s,dim):
     key="img_"+str(dim)
@@ -130,7 +130,7 @@ def getTissuePercent(s,params):
     img=getImgThumb(s,s["image_work_size"])
     img = color.rgb2gray(img)
     map=img<thresh
-    addToPrintList(s, "percent_tissue", str(np.mean(map)))
+    addToPrintList(s, "percent_tissue", str(map.mean()))
     io.imsave(s["outdir"] + os.sep + s["filename"] + "_white.png",map*255)
     s["img_mask_nonwhite"]=(map*255)>0
     s["img_mask_use"] = s["img_mask_use"] & s["img_mask_nonwhite"]
@@ -145,7 +145,7 @@ def getDarkTissuePercent(s,params):
     img=getImgThumb(s,s["image_work_size"])
     img = color.rgb2gray(img)
     map=img<thresh
-    addToPrintList(s, "percent_dark_tissue", str(np.mean(map)))
+    addToPrintList(s, "percent_dark_tissue", str(map.mean()))
     io.imsave(s["outdir"] + os.sep + s["filename"] + "_dark.png",map*255)
     s["img_mask_dark"]=(map*255)>0
     s["img_mask_use"] = s["img_mask_use"] & np.invert(s["img_mask_dark"])
@@ -212,14 +212,26 @@ def saveThumbnail(s,params):
     img.save(s["outdir"] + os.sep + s["filename"] + "_thumb.png")
     return
 
-outdir="out"
+
+parser = argparse.ArgumentParser(description='')
+parser.add_argument('input_pattern', help="input filename pattern (try: '*.svs')")
+parser.add_argument('-o', '--outdir', help="outputdir, default ./output/", default="output", type=str)
+parser.add_argument('-c', '--config', help="config file to use", default="./config.ini", type=str)
+args = parser.parse_args()
+
+config = ConfigParser.ConfigParser()
+config.read(args.config)
+
+config.sections()
+
+# make output directory and create report file
+makeDir(args.outdir)
+csv_report = open(args.outdir + os.sep + "results.tsv", "w")
 
 first=True
-csv_report=open(outdir+os.sep+"results.tsv","w")
-
-files=glob.glob("*.svs")
+files = glob.glob(args.input_pattern)
 for fname in files:
-    fname_outdir=outdir+os.sep+fname
+    fname_outdir = args.outdir + os.sep + fname
     makeDir(fname_outdir)
 
     s={}  #will hold everything for the image
@@ -261,10 +273,6 @@ for fname in files:
     for process,process_params in processQueue:
         process(s,process_params)
         s["completed"].append(process.__name__)
-
-    #print s
-
-    #TODO: save img_mask_use
 
     #--- done processing, now add to output report
     if(first):
