@@ -36,7 +36,7 @@ def addToPrintList(s,name,val):
 
 def getBrightness(s,params):
     print "\tgetContrast"
-    limit_to_tissue = params.get("limit_to_tissue", True)
+    limit_to_tissue = bool(params.get("limit_to_tissue", True))
     img = getImgThumb(s, s["image_work_size"])
 
     img_g=color.rgb2gray(img)
@@ -56,7 +56,7 @@ def getBrightness(s,params):
 
 def getContrast(s,params):
     print "\tgetContrast"
-    limit_to_tissue = params.get("limit_to_tissue", True)
+    limit_to_tissue = bool(params.get("limit_to_tissue", True))
     img = getImgThumb(s, s["image_work_size"])
     img = color.rgb2gray(img)
 
@@ -78,7 +78,7 @@ def getContrast(s,params):
 def removeSmallObjects(s,params):
     #TODO: should take into account markings on slide
     print "\tremoveSmallObjects"
-    min_size=params.get("min_size",64)
+    min_size=int(params.get("min_size",64))
     img_reduced=morphology.remove_small_objects(s["img_mask_use"], min_size=min_size)
     img_small= np.invert(img_reduced) &  s["img_mask_use"]
     addToPrintList(s, "percent_small_tissue_removed", str(np.mean(img_small)))
@@ -91,7 +91,7 @@ def removeSmallObjects(s,params):
 def fillSmallHoles(s,params):
     #TODO: should take into account markings on slide
     print "\tfillSmallHoles"
-    min_size=params.get("min_size",64)
+    min_size=int(params.get("min_size",64))
     img_reduced=morphology.remove_small_holes(s["img_mask_use"], min_size=min_size)
     img_small= img_reduced &  np.invert(s["img_mask_use"])
     addToPrintList(s, "percent_small_tissue_filled", str(np.mean(img_small)))
@@ -116,7 +116,7 @@ def getMag(s,params):
     print "\tgetMag"
     osh = s["os_handle"]
     mag = osh.properties["openslide.objective-power"]
-    if(mag is None or params["confirm"]): #TODO: Don't know what previous call returns when not available....
+    if(mag is None or bool(params.get("confirm",True))): #TODO: Don't know what previous call returns when not available....
         #do DL work here
         print "Unknown magnification for file, need to implement: " + s["filename"]
     addToPrintList(s, "Magnification", mag)
@@ -125,7 +125,7 @@ def getMag(s,params):
 def getTissuePercent(s,params):
     #TODO: should take into account markings on slide
     print "\tgetTissuePercent"
-    thresh=params.get("thresh",.9)
+    thresh=float(params.get("thresh",.9))
 
     img=getImgThumb(s,s["image_work_size"])
     img = color.rgb2gray(img)
@@ -140,7 +140,7 @@ def getTissuePercent(s,params):
 def getDarkTissuePercent(s,params):
     #TODO: should take into account markings on slide
     print "\tgetTissueFoldPercent"
-    thresh=params.get("thresh",.15)
+    thresh=float(params.get("thresh",.15))
 
     img=getImgThumb(s,s["image_work_size"])
     img = color.rgb2gray(img)
@@ -155,8 +155,8 @@ def getHistogram(s,params):
     #TODO: compare against a base to provide a quantative metric
     #TODO: can print out all the bins? how to add to result sheet? or just image graph?
     print "\tgetHistogram"
-    bins=params.get("bins", 20)
-    if(params["nonwhite"] and "getTissuePercent" not in s["completed"]):
+    bins=int(params.get("bins", 20))
+    if(bool(params.get("limit_to_tissue",True)) and "getTissuePercent" not in s["completed"]):
         s["warnings"].append("getHistogram: Depends on getTissuePercent. NOT limited to non-white space")
     img=getImgThumb(s,s["image_work_size"])
     nonwhite=img[s["img_mask_use"]]
@@ -183,10 +183,10 @@ def computeHistogram(img,bins,mask=-1):
 
 
 def compareToTemplates(s,params):
-    bins = params.get("bins", 20)
+    bins = int(params.get("bins", 20))
     if(not global_holder.get("templates",False)):
         templates={}
-        for template in params["templates"]:
+        for template in params["templates"].splitlines():
             templates[os.path.splitext(os.path.basename(template))[0]]=computeHistogram(io.imread(template),bins)
             #compute each of their histograms
         global_holder["templates"]=templates
@@ -208,7 +208,8 @@ def saveImages(s,params):
 def saveThumbnail(s,params):
     print "\tsaveThumbnail"
     osh = s["os_handle"]
-    img=osh.get_thumbnail((params["size"], params["size"]))
+    size=int(params.get("size",500))
+    img=osh.get_thumbnail((size, size))
     img.save(s["outdir"] + os.sep + s["filename"] + "_thumb.png")
     return
 
@@ -222,7 +223,20 @@ args = parser.parse_args()
 config = ConfigParser.ConfigParser()
 config.read(args.config)
 
-config.sections()
+processQueue = []
+for process in config.get('pipeline','steps').splitlines():
+    if globals().has_key(process):
+        func=globals().get(process)
+    else:
+        raise NameError("Unknown step in pipeline from config file: %s", process)
+
+    if config.has_section(process):
+        params=dict(config.items(process))
+    else:
+        params={}
+
+    processQueue.append((func,params))
+
 
 # make output directory and create report file
 makeDir(args.outdir)
@@ -245,30 +259,10 @@ for fname in files:
     s["output"].append("filename")
     s["output"].append("outdir")
 
-
-
-    processQueue=[]
-
-    processQueue.append((getBasicStats,{}))
-    processQueue.append((getMag,{"confirm":False}))
-
-
-    processQueue.append((getTissuePercent,{"thresh":.8}))
-    processQueue.append((getDarkTissuePercent, {}))
-    processQueue.append((removeSmallObjects, {}))
-    processQueue.append((fillSmallHoles, {}))
-    processQueue.append((compareToTemplates, {"templates": ["./templates/template1.png",
-                                                            "./templates/template2.png",
-                                                            "./templates/template3.png"]}))
-    processQueue.append((getHistogram,{"nonwhite":True}))
-    processQueue.append((getContrast, {}))
-    processQueue.append((getBrightness, {}))
-    processQueue.append((saveImages, {}))
-    processQueue.append((saveThumbnail,{"size":500}))
-
-
     s["completed"]=[]
     s["warnings"]=[]
+
+
     print "Working on:\t"+fname
     for process,process_params in processQueue:
         process(s,process_params)
@@ -304,9 +298,7 @@ csv_report.close()
 #fresh vs ffpe
 #compression quality
 
-#load config file
 #refactor
-#homogenise "nonwhite" parameter
 
 # " Haematoxylin and Eosin determined by G.Landini ('H&E')\n"
 # 		" Haematoxylin and Eosin determined by A.C.Ruifrok ('H&E 2')\n"
