@@ -1,7 +1,12 @@
 <html>
 <head>
+<link rel="stylesheet" type="text/css" href="scripts/c3.css" >
 <link rel="stylesheet" type="text/css" href="scripts/datatables.css"/>
+
+<script type="text/javascript" src="scripts/c3.js"></script>
+<script type="text/javascript" src="scripts/d3.min.js" charset="utf-8"></script>
 <script type="text/javascript" src="scripts/datatables.min.js"></script>
+
 <style>
 #overlay {
     position: absolute;
@@ -38,36 +43,45 @@ var openFile = function(event) {
             row.split("\t").forEach(function(col,colIndex){
                 $line.append($("<td></td>").html(col))
             });
-            /*if(rowIndex==0){
-                var $linenew= $("<thead></thead>");
-
-            }*/
-            /*else{
-                var $linenew= $("<tbody></tbody>");
-            }*/
-          //      $linenew.append($line);
-           //     $line=$linenew;*/
-
-
-            $table.append($line)
+            
+        $table.append($line)
         });
-        //$table.appendTo($("#results"));
+        
         
         $table.prepend('<thead></thead>')
-        $table.find('thead').append($table.find("tr:eq(0)"));
+        $table.find('thead').append($table.find("tr:eq(0)"))
+
+        $table.find('thead').find("td").each(function(x,y){ 
+            val=y.innerText;
+            $('#dim1').append($('<option>', {value:x, text:val}));
+            $('#dim2').append($('<option>', {value:x, text:val}));
+        });
+        
+
+
+
         $table.appendTo(document.body);
         $table.DataTable({
             colReorder: true,
-            dom: 'Bfrtip',
-            buttons: [ 'copy'],
             paging:         false,
             scrollY:        300,
             scrollX:        true,
             scrollCollapse: true,
             fixedColumns:   true,
-            keys:           true
-
-        });
+            keys:           true,
+            dom: 'Bfrtip',
+            buttons: [
+            {
+                extend: 'copy',
+                exportOptions: {
+                    columns: ':visible'
+                }
+            }, 'colvis'],
+                columnDefs: [ {
+            visible: false
+                } ]
+            
+            });
 
 
          
@@ -93,6 +107,22 @@ function overlay_off() {
     document.getElementById("overlay").style.display = "none";
 }
 
+function drawGraph(){
+    var table = $('#results').DataTable();
+    dim1=$('#dim1').val();
+    dim2=$('#dim2').val();
+    data=table.columns([0,dim1]).data().toArray()
+    //json_data=JSON.stringify(data)
+    var chart = c3.generate({
+    bindto: '#chart',
+    data:{
+        rows: data,
+        type: 'bar'
+    }
+
+});
+}
+
 
 </script>
 
@@ -106,5 +136,13 @@ function overlay_off() {
 
 <table id='results' class='display' width='10000px'><tbody></tbody></table>
 
+
+
+Dimension 1: <select id="dim1" onchange="drawGraph()">  </select> <br>
+Dimension 2: <select id="dim2">  </select>
+
+<input type=button value="Draw" onclick='drawGraph()'>
+
 </body>
+<div id="chart"></div>
 </html>
