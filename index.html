@@ -1,0 +1,91 @@
+<html>
+<head>
+<link rel="stylesheet" type="text/css" href="scripts/datatables.css"/>
+<script type="text/javascript" src="scripts/datatables.min.js"></script>
+
+</head>
+<body>
+<script>
+
+var openFile = function(event) {
+    var input = event.target;
+
+    var reader = new FileReader();
+    reader.onload = function(){
+      var $table = $( "<table id='results' class='display' width='10000px'><tbody></tbody></table>" );
+      var text = reader.result;
+      
+        text.split("\n").forEach(function(row,rowIndex){
+           if(row.length<5){
+               return;
+           }
+          
+           var $line = $("<tr></tr>")     
+            row.split("\t").forEach(function(col,colIndex){
+                $line.append($("<td></td>").html(col))
+            });
+            /*if(rowIndex==0){
+                var $linenew= $("<thead></thead>");
+
+            }*/
+            /*else{
+                var $linenew= $("<tbody></tbody>");
+            }*/
+          //      $linenew.append($line);
+           //     $line=$linenew;*/
+
+
+            $table.append($line)
+        });
+        //$table.appendTo($("#results"));
+        
+        $table.prepend('<thead></thead>')
+        $table.find('thead').append($table.find("tr:eq(0)"));
+        $table.appendTo(document.body);
+        $table.DataTable({
+            colReorder: true,
+            dom: 'Bfrtip',
+            buttons: [ 'copy'],
+            paging:         false,
+            scrollY:        300,
+            scrollX:        true,
+            scrollCollapse: true,
+            fixedColumns:   true,
+            keys:           true
+
+        });
+
+
+         
+      $('#results tbody').on('click', 'tr', function () {
+        var  table =  $('#results').DataTable();
+        fname=table.row(this).data()[1] + "_thumb.png";
+        alert( 'You clicked on '+fname+'\'s row' );
+        
+    } );
+
+
+
+
+
+
+
+    };
+        reader.readAsText(input.files[0]);
+ };
+
+
+
+
+
+
+</script>
+
+
+<input type='file' accept=".tsv" onchange='openFile(event)'><br>
+
+
+
+
+</body>
+</html>
