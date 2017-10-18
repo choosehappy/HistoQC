@@ -2,7 +2,21 @@
 <head>
 <link rel="stylesheet" type="text/css" href="scripts/datatables.css"/>
 <script type="text/javascript" src="scripts/datatables.min.js"></script>
-
+<style>
+#overlay {
+    position: absolute;
+    display: none;
+    width: 100%;
+    height: 100%;
+    top: 50%;
+    left: 50%;
+    right: 0;
+    bottom: 0;
+    background-color: white; 
+    z-index: 2;
+    cursor: pointer;
+}
+</style>
 </head>
 <body>
 <script>
@@ -12,7 +26,7 @@ var openFile = function(event) {
 
     var reader = new FileReader();
     reader.onload = function(){
-      var $table = $( "<table id='results' class='display' width='10000px'><tbody></tbody></table>" );
+      var $table = $("#results");
       var text = reader.result;
       
         text.split("\n").forEach(function(row,rowIndex){
@@ -59,15 +73,10 @@ var openFile = function(event) {
          
       $('#results tbody').on('click', 'tr', function () {
         var  table =  $('#results').DataTable();
-        fname=table.row(this).data()[1] + "_thumb.png";
-        alert( 'You clicked on '+fname+'\'s row' );
-        
+        fname=table.row(this).data()[1] + "\\" + table.row(this).data()[0] + "_thumb.png";
+        $("#overlay_image")[0].src=fname;
+        overlay_on();
     } );
-
-
-
-
-
 
 
     };
@@ -76,7 +85,13 @@ var openFile = function(event) {
 
 
 
+function overlay_on() {
+    document.getElementById("overlay").style.display = "block";
+}
 
+function overlay_off() {
+    document.getElementById("overlay").style.display = "none";
+}
 
 
 </script>
@@ -85,7 +100,11 @@ var openFile = function(event) {
 <input type='file' accept=".tsv" onchange='openFile(event)'><br>
 
 
+<div id="overlay" onclick="overlay_off()">
+  <div id="img"><img id="overlay_image" src=""></div>
+</div>
 
+<table id='results' class='display' width='10000px'><tbody></tbody></table>
 
 </body>
 </html>
