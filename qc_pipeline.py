@@ -52,7 +52,7 @@ csv_report = open(args.outdir + os.sep + "results.tsv", "w")
 first=True
 files = glob.glob(args.input_pattern)
 for fname in files:
-    fname_outdir = args.outdir + os.sep + fname
+    fname_outdir = args.outdir + os.sep + os.path.basename(fname)
     makeDir(fname_outdir)
 
     s = BaseImage.BaseImage( fname , fname_outdir)

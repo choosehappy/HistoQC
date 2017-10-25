@@ -10,16 +10,9 @@
 <style>
 #overlay {
     position: absolute;
-    display: none;
-    width: 100%;
-    height: 100%;
-    top: 50%;
-    left: 50%;
-    right: 0;
-    bottom: 0;
     background-color: white; 
     z-index: 2;
-    cursor: pointer;
+    display: '';
 }
 </style>
 </head>
@@ -83,13 +76,10 @@ var openFile = function(event) {
             
             });
 
-
-         
-      $('#results tbody').on('click', 'tr', function () {
+    $('#results tbody').on('click', 'tr', function () {
         var  table =  $('#results').DataTable();
         fname=table.row(this).data()[1] + "\\" + table.row(this).data()[0] + "_thumb.png";
-        $("#overlay_image")[0].src=fname;
-        overlay_on();
+        setup_overlay(fname);
     } );
 
 
@@ -97,7 +87,13 @@ var openFile = function(event) {
         reader.readAsText(input.files[0]);
  };
 
-
+function setup_overlay(fname){
+    $("#overlay_image")[0].src=fname;
+    $("#overlay")[0].style.left=event.clientX + "px";
+    $("#overlay")[0].style.top=event.clientY + "px";
+    $("#overlay")[0].style.position="absolute";
+    overlay_on();
+}
 
 function overlay_on() {
     document.getElementById("overlay").style.display = "block";
@@ -107,20 +103,71 @@ function overlay_off() {
     document.getElementById("overlay").style.display = "none";
 }
 
+
 function drawGraph(){
+    $('#chart').remove()
+    $('#charts').append("<div id='chart'/>")
     var table = $('#results').DataTable();
     dim1=$('#dim1').val();
-    dim2=$('#dim2').val();
     data=table.columns([0,dim1]).data().toArray()
     //json_data=JSON.stringify(data)
     var chart = c3.generate({
     bindto: '#chart',
+    tooltip:{
+                grouped: false
+        },
     data:{
         rows: data,
-        type: 'bar'
-    }
+        type: 'bar',
+        onclick: function(e){
+            var  table =  $('#results').DataTable();
+            fname=table.cells(":contains("+e.id+")",":contains(outdir)").data()[0] + "\\" + e.id + "_thumb.png";
+            setup_overlay(fname);
+            console.log(e);
+            }
+        },
+    });
+}
 
-});
+function clearAllGraphs(){
+    $('.c3').remove()
+}
+
+function drawAllGraphs(){
+    var table = $('#results').DataTable();
+
+    table.columns().every( function () {
+        index=this.index()
+        data=table.columns([0,index]).data().toArray()
+
+        if(data.length==1 || isNaN(parseFloat(data[1][0]))) {
+            return;
+        }
+         
+        header=this.header().innerText
+        newdiv="chart_"+index
+        $('#charts').append("<div id='"+newdiv+"'/>")
+        
+        var chart = c3.generate({
+            title: {
+                text: header
+            },
+            tooltip:{
+                grouped: false
+            },
+            bindto: "#"+newdiv,
+            data:{
+                rows: data,
+                type: 'bar',
+                        onclick: function(e){
+            var  table =  $('#results').DataTable();
+            fname=table.cells(":contains("+e.id+")",":contains(outdir)").data()[0] + "\\" + e.id + "_thumb.png";
+            setup_overlay(fname);
+            console.log(e);
+            }
+
+           }});       
+    } );
 }
 
 
@@ -138,11 +185,11 @@ function drawGraph(){
 
 
 
-Dimension 1: <select id="dim1" onchange="drawGraph()">  </select> <br>
-Dimension 2: <select id="dim2">  </select>
+Y-Axis 1: <select id="dim1" onchange="drawGraph()">  </select> <br>
 
-<input type=button value="Draw" onclick='drawGraph()'>
+<input type=button value="Draw All" onclick='drawAllGraphs()'>
+<input type=button value="Clear All" onclick='clearAllGraphs()'>
 
 </body>
-<div id="chart"></div>
+<div id="charts"/>
 </html>

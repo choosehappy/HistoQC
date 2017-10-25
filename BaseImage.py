@@ -9,7 +9,7 @@ class BaseImage():
 
     def __init__(self, fname , fname_outdir):
         self.s = {}  # will hold everything for the image
-        self.s["filename"] = fname
+        self.s["filename"] = os.path.basename(fname)
         self.s["outdir"] = fname_outdir
         self.s["os_handle"] = openslide.OpenSlide(fname)
         self.s["image_work_size"] = 1000
