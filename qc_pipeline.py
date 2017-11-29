@@ -77,8 +77,6 @@ csv_report.close()
 
 
 
-#from skimage.color import rgb2hed
-#http://scikit-image.org/docs/0.13.x/auto_examples/color_exposure/plot_ihc_color_separation.html#sphx-glr-auto-examples-color-exposure-plot-ihc-color-separation-py
 
 #skimage.color.combine_stains(stains, conv_matrix)
 #QC metrics
@@ -91,6 +89,11 @@ csv_report.close()
 #blurryiness
 #fresh vs ffpe
 #compression quality
+#slide thickness
+
+
+#from skimage.color import rgb2hed
+#http://scikit-image.org/docs/0.13.x/auto_examples/color_exposure/plot_ihc_color_separation.html#sphx-glr-auto-examples-color-exposure-plot-ihc-color-separation-py
 
 # " Haematoxylin and Eosin determined by G.Landini ('H&E')\n"
 # 		" Haematoxylin and Eosin determined by A.C.Ruifrok ('H&E 2')\n"

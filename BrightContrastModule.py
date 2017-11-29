@@ -18,7 +18,7 @@ def getBrightness(s,params):
         vals=img[:, :, chan]
         if (limit_to_tissue):
             vals= vals[s["img_mask_use"]]
-        s.addToPrintList(("chan%d_contrast") % (chan+1), str(vals.mean()))
+        s.addToPrintList(("chan%d_brightness") % (chan+1), str(vals.mean()))
 
     return
 

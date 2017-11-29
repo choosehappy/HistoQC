@@ -50,10 +50,6 @@ var openFile = function(event) {
             $('#dim2').append($('<option>', {value:x, text:val}));
         });
         
-
-
-
-        $table.appendTo(document.body);
         $table.DataTable({
             colReorder: true,
             paging:         false,
@@ -159,15 +155,26 @@ function drawAllGraphs(){
             data:{
                 rows: data,
                 type: 'bar',
-                        onclick: function(e){
-            var  table =  $('#results').DataTable();
-            fname=table.cells(":contains("+e.id+")",":contains(outdir)").data()[0] + "\\" + e.id + "_thumb.png";
-            setup_overlay(fname);
-            console.log(e);
-            }
+                onclick: function(e){
+                        var  table =  $('#results').DataTable();
+                        fname=table.cells(":contains("+e.id+")",":contains(outdir)").data()[0] + "\\" + e.id + "_thumb.png";
+                        setup_overlay(fname);
+                        console.log(e);
+                        }
+               }});       
+        } );
+}
 
-           }});       
-    } );
+
+
+function fillGalary(){
+       var table = $('#results').DataTable();
+        table.column(":contains(filename)").data().each(function(val,index){
+            var  table =  $('#results').DataTable();
+            fname=table.cells(":contains("+val+")",":contains(outdir)").data()[0] + "\\" + val + "_thumb.png";
+            console.log(fname);           
+            $('#galary').prepend('<img height=400px id="'+index+'" src="'+fname+'" />')
+        })
 }
 
 
@@ -181,15 +188,24 @@ function drawAllGraphs(){
   <div id="img"><img id="overlay_image" src=""></div>
 </div>
 
-<table id='results' class='display' width='10000px'><tbody></tbody></table>
-
-
-
+<div id="chart_body">
 Y-Axis 1: <select id="dim1" onchange="drawGraph()">  </select> <br>
 
 <input type=button value="Draw All" onclick='drawAllGraphs()'>
 <input type=button value="Clear All" onclick='clearAllGraphs()'>
 
+<div id="charts"></div>
+
+</div>
+
+<div id="results_body">
+<table id='results' class='display' width='10000px'><tbody></tbody></table>
+</div>
+
+<input type=button value="Images" onclick='fillGalary()'>
+
+<div id="galary" style="overflow:scroll; height:400px;"></div>
+
+
 </body>
-<div id="charts"/>
 </html>
