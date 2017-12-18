@@ -14,10 +14,60 @@
     z-index: 2;
     display: '';
 }
+
+
 </style>
 </head>
 <body>
 <script>
+
+
+
+image_extentions=["_thumb.png",
+                  "_mask_use.png",
+                  "_nonwhite.png",
+                  "_small_fill.png",
+                  "_small_remove.png",
+                  "_blurry.png",
+                  "_dark.png",
+                  "_hist.png"];
+
+
+
+$('document').ready(function(){
+
+    image_extentions.forEach(function(e){ $('#cmbimg').append(new Option(e,e)); })
+    overlay_off();
+
+});
+
+$(document).keydown(function(e){
+    console.log(e.keyCode)
+    if (document.getElementById("overlay").style.display!="block" ) return true;
+
+
+    if (e.keyCode == 27) { overlay_off(); return true; } //escape removes overlay
+
+    fname=$("#overlay_image")[0].src //get current fname
+    dotidx=fname.lastIndexOf(".",fname.length-5) //find dot like filename.svs_____/
+    oldext=fname.substring(dotidx+4) // get everything after dot, skipping original filename extention
+    idx=image_extentions.indexOf(oldext)
+    if (e.keyCode == 37) {
+      idx--;
+      if(idx < 0 ) idx=0;
+    }
+
+    if (e.keyCode == 39) {
+      idx++;
+      if(idx>=image_extentions.length) idx=image_extentions.length-1;
+    }
+
+    setup_overlay(fname.substring(0,dotidx+4)+image_extentions[idx]);
+    return false;
+
+})
+
+
 
 var openFile = function(event) {
     var input = event.target;
@@ -73,8 +123,9 @@ var openFile = function(event) {
             });
 
     $('#results tbody').on('click', 'tr', function () {
+        ext = $("#cmbimg").val()
         var  table =  $('#results').DataTable();
-        fname=table.row(this).data()[1] + "\\" + table.row(this).data()[0] + "_thumb.png";
+        fname=table.row(this).data()[1] + "\\" + table.row(this).data()[0] + ext;
         setup_overlay(fname);
     } );
 
@@ -84,10 +135,12 @@ var openFile = function(event) {
  };
 
 function setup_overlay(fname){
+    fname=decodeURI(fname);
     $("#overlay_image")[0].src=fname;
-    $("#overlay")[0].style.left=event.clientX + "px";
-    $("#overlay")[0].style.top=event.clientY + "px";
+    $("#overlay")[0].style.left=window.innerWidth/2 - 500 + "px";
+    $("#overlay")[0].style.top=window.innerHeight/2 - 500+ "px";
     $("#overlay")[0].style.position="absolute";
+    $("#imgname")[0].innerHTML=fname;
     overlay_on();
 }
 
@@ -116,8 +169,9 @@ function drawGraph(){
         rows: data,
         type: 'bar',
         onclick: function(e){
+            ext = $("#cmbimg").val()
             var  table =  $('#results').DataTable();
-            fname=table.cells(":contains("+e.id+")",":contains(outdir)").data()[0] + "\\" + e.id + "_thumb.png";
+            fname=table.cells(":contains("+e.id+")",":contains(outdir)").data()[0] + "\\" + e.id + ext;
             setup_overlay(fname);
             console.log(e);
             }
@@ -156,8 +210,9 @@ function drawAllGraphs(){
                 rows: data,
                 type: 'bar',
                 onclick: function(e){
+                        ext = $("#cmbimg").val()
                         var  table =  $('#results').DataTable();
-                        fname=table.cells(":contains("+e.id+")",":contains(outdir)").data()[0] + "\\" + e.id + "_thumb.png";
+                        fname=table.cells(":contains("+e.id+")",":contains(outdir)").data()[0] + "\\" + e.id + ext;
                         setup_overlay(fname);
                         console.log(e);
                         }
@@ -168,14 +223,22 @@ function drawAllGraphs(){
 
 
 function fillGalary(){
-       var table = $('#results').DataTable();
-        table.column(":contains(filename)").data().each(function(val,index){
+    ext = $("#cmbimg").val()
+    new_table='<table id="imgtable" border=1 cellspacing="10"><tr>'
+    var table = $('#results').DataTable();
+    table.column(":contains(filename)").data().each(function(val,index){
             var  table =  $('#results').DataTable();
-            fname=table.cells(":contains("+val+")",":contains(outdir)").data()[0] + "\\" + val + "_thumb.png";
-            console.log(fname);           
-            $('#galary').prepend('<img height=400px id="'+index+'" src="'+fname+'" />')
+            fname=table.cells(":contains("+val+")",":contains(outdir)").data()[0] + "\\" + val + ext;
+            
+            new_table+='<td><img height=400px id="'+index+'" onclick=setup_overlay(\''+encodeURI(fname)+'\') src="'+fname+'" /><br><center>'+fname+'</center></td>';
         })
+    new_table+='</tr></table>'
+    $( "#imgtable" ).remove(); //remove old table
+    $('#galary').prepend(new_table) //put in new table
 }
+
+
+
 
 
 </script>
@@ -185,7 +248,10 @@ function fillGalary(){
 
 
 <div id="overlay" onclick="overlay_off()">
-  <div id="img"><img id="overlay_image" src=""></div>
+  <div id="img">
+  <font color="red"><h2><div id="imgname"> This is some text!</div></h2></font><br>
+  <img id="overlay_image" src="" width=1000>
+  </div>
 </div>
 
 <div id="chart_body">
@@ -203,8 +269,10 @@ Y-Axis 1: <select id="dim1" onchange="drawGraph()">  </select> <br>
 </div>
 
 <input type=button value="Images" onclick='fillGalary()'>
+<select id="cmbimg" onchange="fillGalary()">
+</select>
 
-<div id="galary" style="overflow:scroll; height:400px;"></div>
+<div id="galary" style="overflow:scroll; height:800px;"></div>
 
 
 </body>

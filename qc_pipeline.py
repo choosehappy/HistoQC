@@ -55,24 +55,31 @@ for fname in files:
     fname_outdir = args.outdir + os.sep + os.path.basename(fname)
     makeDir(fname_outdir)
 
-    s = BaseImage.BaseImage( fname , fname_outdir)
+    print "Working on:\t" + fname
+    try:
+        s = BaseImage.BaseImage( fname , fname_outdir)
 
-    print "Working on:\t"+fname
-    for process,process_params in processQueue:
-        process(s,process_params)
-        s["completed"].append(process.__name__)
 
-    #--- done processing, now add to output report
-    if(first):
-        first = False
+        for process,process_params in processQueue:
+            process(s,process_params)
+            s["completed"].append(process.__name__)
+
+        #--- done processing, now add to output report
+        if(first):
+            first = False
+            for field in s["output"]:
+                csv_report.write(field + "\t")
+            csv_report.write("\n")
+
         for field in s["output"]:
-            csv_report.write(field + "\t")
-        csv_report.write("\n")
+            csv_report.write(s[field]+"\t")
 
-    for field in s["output"]:
-        csv_report.write(s[field]+"\t")
+        csv_report.write("|".join(s["warnings"])+"\n")
+    except Exception as e:
+        print e.__doc__
+        print e.message
+        continue
 
-    csv_report.write("|".join(s["warnings"])+"\n")
 csv_report.close()
 
 
