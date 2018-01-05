@@ -14,10 +14,12 @@ class BaseImage():
         self.s["os_handle"] = openslide.OpenSlide(fname)
         self.s["image_work_size"] = 1000
         self.s["img_mask_use"] = np.ones(self.getImgThumb(self.s["image_work_size"]).shape[0:2], dtype=bool)
+        self.s["comments"] = " "
 
         self.s["output"] = []
         self.s["output"].append("filename")
         self.s["output"].append("outdir")
+        self.s["output"].append("comments")
 
         self.s["completed"] = []
         self.s["warnings"] = []

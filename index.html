@@ -1,279 +1,385 @@
 <html>
+
 <head>
-<link rel="stylesheet" type="text/css" href="scripts/c3.css" >
-<link rel="stylesheet" type="text/css" href="scripts/datatables.css"/>
+    <link rel="stylesheet" type="text/css" href="scripts/c3.css">
+    <link rel="stylesheet" type="text/css" href="scripts/datatables.css" />
 
-<script type="text/javascript" src="scripts/c3.js"></script>
-<script type="text/javascript" src="scripts/d3.min.js" charset="utf-8"></script>
-<script type="text/javascript" src="scripts/datatables.min.js"></script>
-
-<style>
-#overlay {
-    position: absolute;
-    background-color: white; 
-    z-index: 2;
-    display: '';
-}
-
-
-</style>
-</head>
-<body>
-<script>
-
-
-
-image_extentions=["_thumb.png",
-                  "_mask_use.png",
-                  "_nonwhite.png",
-                  "_small_fill.png",
-                  "_small_remove.png",
-                  "_blurry.png",
-                  "_dark.png",
-                  "_hist.png"];
-
-
-
-$('document').ready(function(){
-
-    image_extentions.forEach(function(e){ $('#cmbimg').append(new Option(e,e)); })
-    overlay_off();
-
-});
-
-$(document).keydown(function(e){
-    console.log(e.keyCode)
-    if (document.getElementById("overlay").style.display!="block" ) return true;
-
-
-    if (e.keyCode == 27) { overlay_off(); return true; } //escape removes overlay
-
-    fname=$("#overlay_image")[0].src //get current fname
-    dotidx=fname.lastIndexOf(".",fname.length-5) //find dot like filename.svs_____/
-    oldext=fname.substring(dotidx+4) // get everything after dot, skipping original filename extention
-    idx=image_extentions.indexOf(oldext)
-    if (e.keyCode == 37) {
-      idx--;
-      if(idx < 0 ) idx=0;
-    }
-
-    if (e.keyCode == 39) {
-      idx++;
-      if(idx>=image_extentions.length) idx=image_extentions.length-1;
-    }
-
-    setup_overlay(fname.substring(0,dotidx+4)+image_extentions[idx]);
-    return false;
-
-})
-
-
-
-var openFile = function(event) {
-    var input = event.target;
-
-    var reader = new FileReader();
-    reader.onload = function(){
-      var $table = $("#results");
-      var text = reader.result;
-      
-        text.split("\n").forEach(function(row,rowIndex){
-           if(row.length<5){
-               return;
-           }
-          
-           var $line = $("<tr></tr>")     
-            row.split("\t").forEach(function(col,colIndex){
-                $line.append($("<td></td>").html(col))
-            });
-            
-        $table.append($line)
-        });
-        
-        
-        $table.prepend('<thead></thead>')
-        $table.find('thead').append($table.find("tr:eq(0)"))
-
-        $table.find('thead').find("td").each(function(x,y){ 
-            val=y.innerText;
-            $('#dim1').append($('<option>', {value:x, text:val}));
-            $('#dim2').append($('<option>', {value:x, text:val}));
-        });
-        
-        $table.DataTable({
-            colReorder: true,
-            paging:         false,
-            scrollY:        300,
-            scrollX:        true,
-            scrollCollapse: true,
-            fixedColumns:   true,
-            keys:           true,
-            dom: 'Bfrtip',
-            buttons: [
-            {
-                extend: 'copy',
-                exportOptions: {
-                    columns: ':visible'
-                }
-            }, 'colvis'],
-                columnDefs: [ {
-            visible: false
-                } ]
-            
-            });
-
-    $('#results tbody').on('click', 'tr', function () {
-        ext = $("#cmbimg").val()
-        var  table =  $('#results').DataTable();
-        fname=table.row(this).data()[1] + "\\" + table.row(this).data()[0] + ext;
-        setup_overlay(fname);
-    } );
-
-
-    };
-        reader.readAsText(input.files[0]);
- };
-
-function setup_overlay(fname){
-    fname=decodeURI(fname);
-    $("#overlay_image")[0].src=fname;
-    $("#overlay")[0].style.left=window.innerWidth/2 - 500 + "px";
-    $("#overlay")[0].style.top=window.innerHeight/2 - 500+ "px";
-    $("#overlay")[0].style.position="absolute";
-    $("#imgname")[0].innerHTML=fname;
-    overlay_on();
-}
-
-function overlay_on() {
-    document.getElementById("overlay").style.display = "block";
-}
-
-function overlay_off() {
-    document.getElementById("overlay").style.display = "none";
-}
-
-
-function drawGraph(){
-    $('#chart').remove()
-    $('#charts').append("<div id='chart'/>")
-    var table = $('#results').DataTable();
-    dim1=$('#dim1').val();
-    data=table.columns([0,dim1]).data().toArray()
-    //json_data=JSON.stringify(data)
-    var chart = c3.generate({
-    bindto: '#chart',
-    tooltip:{
-                grouped: false
-        },
-    data:{
-        rows: data,
-        type: 'bar',
-        onclick: function(e){
-            ext = $("#cmbimg").val()
-            var  table =  $('#results').DataTable();
-            fname=table.cells(":contains("+e.id+")",":contains(outdir)").data()[0] + "\\" + e.id + ext;
-            setup_overlay(fname);
-            console.log(e);
-            }
-        },
-    });
-}
-
-function clearAllGraphs(){
-    $('.c3').remove()
-}
-
-function drawAllGraphs(){
-    var table = $('#results').DataTable();
-
-    table.columns().every( function () {
-        index=this.index()
-        data=table.columns([0,index]).data().toArray()
-
-        if(data.length==1 || isNaN(parseFloat(data[1][0]))) {
-            return;
+    <script type="text/javascript" src="scripts/c3.js"></script>
+    <script type="text/javascript" src="scripts/d3.min.js" charset="utf-8"></script>
+    <script type="text/javascript" src="scripts/datatables.min.js"></script>
+    <script type="text/javascript" src="scripts/dataTables.cellEdit.js"></script>
+    <style>
+        #overlay {
+            position: absolute;
+            background-color: white;
+            z-index: 2;
+            display: '';
         }
-         
-        header=this.header().innerText
-        newdiv="chart_"+index
-        $('#charts').append("<div id='"+newdiv+"'/>")
-        
-        var chart = c3.generate({
-            title: {
-                text: header
-            },
-            tooltip:{
-                grouped: false
-            },
-            bindto: "#"+newdiv,
-            data:{
-                rows: data,
-                type: 'bar',
-                onclick: function(e){
+        .my-input-class {
+            padding: 3px 6px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .my-confirm-class {
+            padding: 3px 6px;
+            font-size: 12px;
+            color: white;
+            text-align: center;
+            vertical-align: middle;
+            border-radius: 4px;
+            background-color: #337ab7;
+            text-decoration: none;
+        }
+        .my-cancel-class {
+            padding: 3px 6px;
+            font-size: 12px;
+            color: white;
+            text-align: center;
+            vertical-align: middle;
+            border-radius: 4px;
+            background-color: #a94442;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+        window.onbeforeunload = function() {
+            return "This will not save your stuff"
+        }
+
+        image_extentions = ["_thumb.png",
+            "_mask_use.png",
+            "_nonwhite.png",
+            "_small_fill.png",
+            "_small_remove.png",
+            "_blurry.png",
+            "_dark.png",
+            "_hist.png"
+        ];
+
+
+
+        $('document').ready(function() {
+
+            image_extentions.forEach(function(e) {
+                $('#cmbimg').append(new Option(e, e));
+            })
+            overlay_off();
+
+        });
+
+        $(document).keydown(function(e) {
+            console.log(e.keyCode)
+            if (document.getElementById("overlay").style.display != "block") return true;
+
+
+            if (e.keyCode == 27) {
+                overlay_off();
+                return true;
+            } //escape removes overlay
+
+            fname = $("#overlay_image")[0].src //get current fname
+            dotidx = fname.lastIndexOf(".", fname.length - 5) //find dot like filename.svs_____/
+            oldext = fname.substring(dotidx + 4) // get everything after dot, skipping original filename extention
+            idx = image_extentions.indexOf(oldext)
+            if (e.keyCode == 37) {
+                idx--;
+                if (idx < 0) idx = 0;
+            }
+
+            if (e.keyCode == 39) {
+                idx++;
+                if (idx >= image_extentions.length) idx = image_extentions.length - 1;
+            }
+
+            setup_overlay(fname.substring(0, dotidx + 4) + image_extentions[idx]);
+            return false;
+
+        })
+
+
+
+
+        var openFile = function(event) {
+            var input = event.target;
+
+            var reader = new FileReader();
+            reader.onload = function() {
+                var $table = $("#results");
+                var text = reader.result;
+
+                text.split("\n").forEach(function(row, rowIndex) {
+                    if (row.length < 5) {
+                        return;
+                    }
+
+                    var $line = $("<tr></tr>")
+                    row.split("\t").forEach(function(col, colIndex) {
+                        $line.append($("<td></td>").html(col))
+                    });
+
+                    $table.append($line)
+                });
+
+
+                $table.prepend('<thead></thead>')
+                $table.find('thead').append($table.find("tr:eq(0)"))
+
+                $table.find('thead').find("td").each(function(x, y) {
+                    val = y.innerText;
+                    $('#dim1').append($('<option>', {
+                        value: x,
+                        text: val
+                    }));
+                    $('#dim2').append($('<option>', {
+                        value: x,
+                        text: val
+                    }));
+                });
+
+                $table.DataTable({
+                    colReorder: true,
+                    paging: false,
+                    scrollY: 300,
+                    scrollX: true,
+                    scrollCollapse: true,
+                    fixedColumns: {
+                        leftColumns: 2
+                    },
+                    keys: false,
+                    dom: 'Bfrtip',
+                    buttons: [{
+                            extend: 'copy',
+                            exportOptions: {
+                                columns: ':visible'
+                            }
+                        }, 'colvis', {
+                            text: 'Delete Rows',
+                            action: function(e, dt, node, config) {
+                                $('#results').DataTable().rows('.selected').remove().draw(false);
+                            }
+                        }
+
+                    ],
+                    columnDefs: [{
+                        visible: false
+                    }]
+
+                });
+
+
+
+
+                $('#results').DataTable().MakeCellsEditable({
+                    "confirmationButton": { //https://github.com/ejbeaty/CellEdit
+                        "confirmCss": 'my-confirm-class', //can use columns to limit to particular columns
+                        "cancelCss": 'my-cancel-class'
+                    },
+                    "inputCss": 'my-input-class'
+                });
+
+
+                $('#results tbody').on('click', 'tr', function() {
+                    $(this).toggleClass('selected');
+                });
+
+
+                $('#results tbody').on('click', 'tr', function() {
+                    ext = $("#cmbimg").val()
+                    var table = $('#results').DataTable();
+                    fname = table.row(this).data()[1] + "\\" + table.row(this).data()[0] + ext;
+                    setup_overlay(fname);
+                });
+
+
+
+                $('#results').on('order.dt', function() {
+                    fillGalary();
+                    ncharts_present = $("#charts")[0].childNodes.length;
+                    switch (ncharts_present) {
+                        case 0:
+                            break;
+                        case 1:
+                            drawGraph();
+                            break;
+                        default:
+                            drawAllGraphs();
+
+
+                    }
+
+                });
+
+
+            };
+            reader.readAsText(input.files[0]);
+        };
+
+        function setup_overlay(fname) {
+            if (!$('#doOverlay').prop("checked")) {
+                return;
+            }
+            fname = decodeURI(fname);
+            $("#overlay_image")[0].src = fname;
+            $("#overlay")[0].style.left = window.innerWidth / 2 - 500 + "px";
+            $("#overlay")[0].style.top = window.innerHeight / 2 - 500 + "px";
+            $("#overlay")[0].style.position = "absolute";
+            $("#imgname")[0].innerHTML = fname;
+            overlay_on();
+        }
+
+        function overlay_on() {
+            document.getElementById("overlay").style.display = "block";
+        }
+
+        function overlay_off() {
+            document.getElementById("overlay").style.display = "none";
+        }
+
+
+        function drawGraph() {
+            $('#chart').remove()
+            $('#charts').append("<div id='chart'/>")
+            var table = $('#results').DataTable();
+            dim1 = $('#dim1').val();
+            data = table.columns([0, dim1]).data().toArray()
+                //json_data=JSON.stringify(data)
+            var chart = c3.generate({
+                bindto: '#chart',
+                size: {
+                    height: 1000
+                },
+                tooltip: {
+                    grouped: false
+                },
+                data: {
+                    rows: data,
+                    type: 'bar',
+                    onclick: function(e) {
                         ext = $("#cmbimg").val()
-                        var  table =  $('#results').DataTable();
-                        fname=table.cells(":contains("+e.id+")",":contains(outdir)").data()[0] + "\\" + e.id + ext;
+                        var table = $('#results').DataTable();
+                        fname = table.cells(":contains(" + e.id + ")", ":contains(outdir)").data()[0] + "\\" + e.id + ext;
                         setup_overlay(fname);
                         console.log(e);
+                    }
+                },
+            });
+        }
+
+        function clearAllGraphs() {
+            $('.c3').remove()
+        }
+
+        function drawAllGraphs() {
+            var table = $('#results').DataTable();
+
+            table.columns().every(function() {
+                index = this.index()
+                data = table.columns([0, index]).data().toArray()
+
+                if (data.length == 1 || isNaN(parseFloat(data[1][0]))) {
+                    return;
+                }
+
+                header = this.header().innerText
+                newdiv = "chart_" + index
+                $('#charts').append("<div id='" + newdiv + "'/>")
+
+                var chart = c3.generate({
+                    title: {
+                        text: header
+                    },
+                    tooltip: {
+                        grouped: false
+                    },
+                    bindto: "#" + newdiv,
+                    data: {
+                        rows: data,
+                        type: 'bar',
+                        onclick: function(e) {
+                            ext = $("#cmbimg").val()
+                            var table = $('#results').DataTable();
+                            fname = table.cells(":contains(" + e.id + ")", ":contains(outdir)").data()[0] + "\\" + e.id + ext;
+                            setup_overlay(fname);
+                            console.log(e);
                         }
-               }});       
-        } );
-}
+                    }
+                });
+            });
+        }
 
 
 
-function fillGalary(){
-    ext = $("#cmbimg").val()
-    new_table='<table id="imgtable" border=1 cellspacing="10"><tr>'
-    var table = $('#results').DataTable();
-    table.column(":contains(filename)").data().each(function(val,index){
-            var  table =  $('#results').DataTable();
-            fname=table.cells(":contains("+val+")",":contains(outdir)").data()[0] + "\\" + val + ext;
-            
-            new_table+='<td><img height=400px id="'+index+'" onclick=setup_overlay(\''+encodeURI(fname)+'\') src="'+fname+'" /><br><center>'+fname+'</center></td>';
-        })
-    new_table+='</tr></table>'
-    $( "#imgtable" ).remove(); //remove old table
-    $('#galary').prepend(new_table) //put in new table
-}
+        function fillGalary() {
+            ext = $("#cmbimg").val()
+            new_table = '<table id="imgtable" border=1 cellspacing="10"><tr>'
+            var table = $('#results').DataTable();
+            table.column(":contains(filename)").data().each(function(val, index) {
+                var table = $('#results').DataTable();
+                fname = table.cells(":contains(" + val + ")", ":contains(outdir)").data()[0] + "\\" + val + ext;
+
+                new_table += '<td><img height=400px id="' + index + '" onclick=setup_overlay(\'' + encodeURI(fname) + '\') src="' + fname + '" /><br><center>' + fname + '</center></td>';
+            })
+            new_table += '</tr></table>'
+            $("#imgtable").remove(); //remove old table
+            $('#galary').prepend(new_table) //put in new table
+        }
 
 
+        function deselectAll() {
+            var table = $('#results').DataTable();
+            table.rows('.selected').deselect();
+        }
+    </script>
 
 
-
-</script>
-
-
-<input type='file' accept=".tsv" onchange='openFile(event)'><br>
+    <input type='file' accept=".tsv" onchange='openFile(event)'>
+    <br>
 
 
-<div id="overlay" onclick="overlay_off()">
-  <div id="img">
-  <font color="red"><h2><div id="imgname"> This is some text!</div></h2></font><br>
-  <img id="overlay_image" src="" width=1000>
-  </div>
-</div>
+    <div id="overlay" onclick="overlay_off()">
+        <div id="img">
+            <font color="red"><h2><div id="imgname"> This is some text!</div></h2></font>
+            <br>
+            <img id="overlay_image" src="" width=1000>
+        </div>
+    </div>
 
-<div id="chart_body">
-Y-Axis 1: <select id="dim1" onchange="drawGraph()">  </select> <br>
+    <div id="chart_body">
+        Y-Axis 1:
+        <select id="dim1" onchange="drawGraph()"> </select>
+        <br>
 
-<input type=button value="Draw All" onclick='drawAllGraphs()'>
-<input type=button value="Clear All" onclick='clearAllGraphs()'>
+        <input type=button value="Draw All" onclick='drawAllGraphs()'>
+        <input type=button value="Clear All" onclick='clearAllGraphs()'>
 
-<div id="charts"></div>
+        <div id="charts"></div>
 
-</div>
+    </div>
 
-<div id="results_body">
-<table id='results' class='display' width='10000px'><tbody></tbody></table>
-</div>
+    <div id="table_buttons">
+        Show Overlay
+        <input type="checkbox" id="doOverlay" checked>
+        <br>
+        <input type="button" Value="Deselect All" onclick='deselectAll()'>
+        <br>
+    </div>
 
-<input type=button value="Images" onclick='fillGalary()'>
-<select id="cmbimg" onchange="fillGalary()">
-</select>
+    <div id="results_body">
+        <table id='results' class='display' width='10000px'>
+            <tbody></tbody>
+        </table>
+    </div>
 
-<div id="galary" style="overflow:scroll; height:800px;"></div>
+    <input type=button value="Images" onclick='fillGalary()'>
+    <select id="cmbimg" onchange="fillGalary()">
+    </select>
+
+    <div id="galary" style="overflow:scroll; height:800px;"></div>
 
 
 </body>
+
 </html>
