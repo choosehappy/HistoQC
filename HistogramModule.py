@@ -7,11 +7,11 @@ from distutils.util import strtobool
 global_holder = {}
 
 def getHistogram(s,params):
-    print "\tgetHistogram"
+    print("\tgetHistogram")
     limit_to_tissue = strtobool(params.get("limit_to_tissue", True))
     bins=int(params.get("bins", 20))
     if(limit_to_tissue and "getTissuePercent" not in s["completed"]):
-        print "getHistogram: Depends on getTissuePercent. NOT limited to non-white space"
+        print("getHistogram: Depends on getTissuePercent. NOT limited to non-white space")
         s["warnings"].append("getHistogram: Depends on getTissuePercent. NOT limited to non-white space")
 
     img=s.getImgThumb(s["image_work_size"])
@@ -33,7 +33,7 @@ def getHistogram(s,params):
 
 def computeHistogram(img,bins,mask=-1):
     result = np.zeros(shape=(bins, 3))
-    for chan in xrange(0,3):
+    for chan in range(0,3):
         vals=img[:, :, chan].flatten()
         if(isinstance(mask,np.ndarray)):
             vals=vals[mask.flatten()]

@@ -4,7 +4,7 @@ from skimage import io, color
 
 def getTissuePercent(s,params):
     #TODO: should take into account markings on slide
-    print "\tgetTissuePercent"
+    print("\tgetTissuePercent")
     thresh=float(params.get("thresh",.9))
 
     img=s.getImgThumb(s["image_work_size"])
@@ -19,7 +19,7 @@ def getTissuePercent(s,params):
 
 def getDarkTissuePercent(s,params):
     #TODO: should take into account markings on slide
-    print "\tgetTissueFoldPercent"
+    print("\tgetTissueFoldPercent")
     thresh=float(params.get("thresh",.15))
 
     img=s.getImgThumb(s["image_work_size"])

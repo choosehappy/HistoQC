@@ -2,11 +2,12 @@ import os
 import errno
 import glob
 import argparse
-import ConfigParser
+import configparser
 
 from importlib import import_module
 
 import BaseImage
+
 
 def makeDir(path):
     try:
@@ -21,7 +22,7 @@ parser.add_argument('-o', '--outdir', help="outputdir, default ./output/", defau
 parser.add_argument('-c', '--config', help="config file to use", default="./config.ini", type=str)
 args = parser.parse_args()
 
-config = ConfigParser.ConfigParser()
+config = configparser.ConfigParser()
 config.read(args.config)
 
 processQueue = []
@@ -55,7 +56,7 @@ for fname in files:
     fname_outdir = args.outdir + os.sep + os.path.basename(fname)
     makeDir(fname_outdir)
 
-    print "Working on:\t" + fname
+    print("Working on:",fname)
     try:
         s = BaseImage.BaseImage( fname , fname_outdir)
 
@@ -76,8 +77,8 @@ for fname in files:
 
         csv_report.write("|".join(s["warnings"])+"\n")
     except Exception as e:
-        print e.__doc__
-        print e.message
+        print(e.__doc__)
+        print(e.message)
         continue
 
 csv_report.close()

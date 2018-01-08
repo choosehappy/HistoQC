@@ -38,7 +38,7 @@ class BaseImage():
     def getImgThumb(self,dim):
         key="img_"+str(dim)
         if self.s.get(key) is None:
-            print "creating image thumb of size " + str(dim)
+            print("creating image thumb of size ",str(dim))
             osh = self.s["os_handle"]
             self.s[key] = np.array(osh.get_thumbnail((dim, dim)))
         return self.s[key]

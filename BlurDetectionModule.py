@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 
 
 def identifyBlurryRegions(s,params):
-    print "\tidentifyBlurryRegions"
+    print("\tidentifyBlurryRegions")
     blur_radius=int(params.get("blur_radius",7))
     blur_threshold= float(params.get("blur_threshold", .02))
 

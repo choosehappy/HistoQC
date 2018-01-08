@@ -4,7 +4,7 @@ from distutils.util import strtobool
 
 
 def getBrightness(s,params):
-    print "\tgetContrast"
+    print("\tgetContrast")
     limit_to_tissue = strtobool(params.get("limit_to_tissue", True))
     img = s.getImgThumb(s["image_work_size"])
 
@@ -14,7 +14,7 @@ def getBrightness(s,params):
 
     s.addToPrintList("grayscale_brightness", str(img_g.mean()))
 
-    for chan in xrange(0,3):
+    for chan in range(0,3):
         vals=img[:, :, chan]
         if (limit_to_tissue):
             vals= vals[s["img_mask_use"]]
@@ -24,7 +24,7 @@ def getBrightness(s,params):
 
 
 def getContrast(s,params):
-    print "\tgetContrast"
+    print("\tgetContrast")
     limit_to_tissue = strtobool(params.get("limit_to_tissue", True))
     img = s.getImgThumb(s["image_work_size"])
     img = color.rgb2gray(img)
