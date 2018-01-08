@@ -12,7 +12,7 @@
         #overlay {
             position: absolute;
             background-color: white;
-            z-index: 2;
+            z-index: 5;
             display: '';
         }
         .my-input-class {
@@ -141,15 +141,17 @@
 
                 $table.DataTable({
                     colReorder: true,
-                    paging: false,
+                    paging: true,
                     scrollY: 300,
                     scrollX: true,
+                    scroller: true,
                     scrollCollapse: true,
                     fixedColumns: {
                         leftColumns: 1
                     },
-                    keys: false,
+                    keys: true,
                     dom: 'Bfrtip',
+                    select: true,
                     buttons: [{
                             extend: 'copy',
                             exportOptions: {
@@ -159,7 +161,11 @@
                             text: 'Delete Rows',
                             action: function(e, dt, node, config) {
                                 $('#results').DataTable().rows('.selected').remove().draw(false);
+                            }}, { text: 'Deselect All',
+                                action: function(e, dt, node, config) {
+                                $('#results').DataTable().rows('.selected').deselect();
                             }
+
                         }
 
                     ],
@@ -170,19 +176,13 @@
                 });
 
 
-
-
                 $('#results').DataTable().MakeCellsEditable({
                     "confirmationButton": { //https://github.com/ejbeaty/CellEdit
                         "confirmCss": 'my-confirm-class', //can use columns to limit to particular columns
                         "cancelCss": 'my-cancel-class'
                     },
-                    "inputCss": 'my-input-class'
-                });
-
-
-                $('#results tbody').on('click', 'tr', function() {
-                    $(this).toggleClass('selected');
+                    "inputCss": 'my-input-class',
+                    "columns": [2]
                 });
 
 
@@ -227,7 +227,12 @@
             $("#overlay")[0].style.top = window.innerHeight / 2 - 500 + "px";
             $("#overlay")[0].style.position = "absolute";
             $("#imgname")[0].innerHTML = fname;
+
+            slashidx = fname.lastIndexOf("\\", fname.length ); 
+            fname_base=fname.substring(0, slashidx); 
+            $("#imgrowurl")[0].innerHTML = '<a href=# onclick=gotoRow(\'' + encodeURI(fname_base) + '\')>See Row</a></center>';
             overlay_on();
+
         }
 
         function overlay_on() {
@@ -311,6 +316,17 @@
         }
 
 
+        function gotoRow(fname){
+            fname = decodeURI(fname);
+            var table = $('#results').DataTable();
+            var indexes = table.rows().eq( 0 ).filter( function (rowIdx) {
+                    return table.cell( rowIdx, 1 ).data() === fname ? true : false;
+                    } );
+    
+            table.rows().deselect();
+            table.row(indexes[0]).scrollTo();
+            table.row(indexes[0]).select()
+        }
 
         function fillGalary() {
             ext = $("#cmbimg").val()
@@ -318,9 +334,12 @@
             var table = $('#results').DataTable();
             table.column(":contains(filename)").data().each(function(val, index) {
                 var table = $('#results').DataTable();
-                fname = table.cells(":contains(" + val + ")", ":contains(outdir)").data()[0] + "\\" + val + ext;
+                fname_base = table.cells(":contains(" + val + ")", ":contains(outdir)").data()[0];
+                fname = fname_base + "\\" + val + ext;
 
-                new_table += '<td><img height=400px id="' + index + '" onclick=setup_overlay(\'' + encodeURI(fname) + '\') src="' + fname + '" /><br><center>' + fname + '</center></td>';
+
+                new_table += '<td><img height=400px id="' + index + '" onclick=setup_overlay(\'' + encodeURI(fname) + '\') src="' + fname + '" /><br><center>' + fname + '</center>' +
+                                '<br><center><a href=# onclick=gotoRow(\'' + encodeURI(fname_base) + '\')>See Row</a></center></td>';
             })
             new_table += '</tr></table>'
             $("#imgtable").remove(); //remove old table
@@ -328,10 +347,6 @@
         }
 
 
-        function deselectAll() {
-            var table = $('#results').DataTable();
-            table.rows('.selected').deselect();
-        }
     </script>
 
 
@@ -341,9 +356,10 @@
 
     <div id="overlay" onclick="overlay_off()">
         <div id="img">
-            <font color="red"><h2><div id="imgname"> This is some text!</div></h2></font>
+            <center><font color="red"><h2><div id="imgname"> This is some text!</div></h2></font></center>
+            <center><div id="imgrowurl"></div></center>
             <br>
-            <img id="overlay_image" src="" width=1000>
+            <img id="overlay_image" src="" width=1000><br>
         </div>
     </div>
 
@@ -362,9 +378,6 @@
     <div id="table_buttons">
         Show Overlay
         <input type="checkbox" id="doOverlay" checked>
-        <br>
-        <input type="button" Value="Deselect All" onclick='deselectAll()'>
-        <br>
     </div>
 
     <div id="results_body">
