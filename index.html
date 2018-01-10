@@ -104,7 +104,8 @@
 
         var openFile = function(event) {
             var input = event.target;
-
+            document.title= input.files[0].name;
+            
             var reader = new FileReader();
             reader.onload = function() {
                 var $table = $("#results");
