@@ -49,7 +49,7 @@
             return "This will not save your stuff"
         }
 
-        image_extentions = ["_thumb.png",
+        image_extensions = ["_thumb.png",
             "_mask_use.png",
             "_nonwhite.png",
             "_small_fill.png",
@@ -63,7 +63,7 @@
 
         $('document').ready(function() {
 
-            image_extentions.forEach(function(e) {
+            image_extensions.forEach(function(e) {
                 $('#cmbimg').append(new Option(e, e));
             })
             overlay_off();
@@ -82,8 +82,8 @@
 
             fname = $("#overlay_image")[0].src //get current fname
             dotidx = fname.lastIndexOf(".", fname.length - 5) //find dot like filename.svs_____/
-            oldext = fname.substring(dotidx + 4) // get everything after dot, skipping original filename extention
-            idx = image_extentions.indexOf(oldext)
+            oldext = fname.substring(dotidx + 4) // get everything after dot, skipping original filename extension
+            idx = image_extensions.indexOf(oldext)
             if (e.keyCode == 37) {
                 idx--;
                 if (idx < 0) idx = 0;
@@ -91,10 +91,10 @@
 
             if (e.keyCode == 39) {
                 idx++;
-                if (idx >= image_extentions.length) idx = image_extentions.length - 1;
+                if (idx >= image_extensions.length) idx = image_extensions.length - 1;
             }
 
-            setup_overlay(fname.substring(0, dotidx + 4) + image_extentions[idx]);
+            setup_overlay(fname.substring(0, dotidx + 4) + image_extensions[idx]);
             return false;
 
         })
@@ -140,6 +140,7 @@
                 });
 
                 $table.DataTable({
+                    //stateSave: true,
                     colReorder: true,
                     paging: true,
                     scrollY: 300,
@@ -154,10 +155,18 @@
                     select: true,
                     buttons: [{
                             extend: 'copy',
+                            text: 'Copy to Clipboard',
                             exportOptions: {
                                 columns: ':visible'
                             }
-                        }, 'colvis', {
+                        }, {
+                            extend: 'csv',
+                            text: 'Save',
+                            fieldSeparator: "\t",
+                            fieldBoundary: "",
+                            filename: "results_revised",
+                            extension: ".tsv"
+                        },'colvis', {
                             text: 'Delete Rows',
                             action: function(e, dt, node, config) {
                                 $('#results').DataTable().rows('.selected').remove().draw(false);
