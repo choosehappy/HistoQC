@@ -74,7 +74,6 @@
             console.log(e.keyCode)
             if (document.getElementById("overlay").style.display != "block") return true;
 
-
             if (e.keyCode == 27) {
                 overlay_off();
                 return true;
@@ -105,7 +104,7 @@
         var openFile = function(event) {
             var input = event.target;
             document.title= input.files[0].name;
-            
+
             var reader = new FileReader();
             reader.onload = function() {
                 var $table = $("#results");
@@ -275,7 +274,9 @@
                     onclick: function(e) {
                         ext = $("#cmbimg").val()
                         var table = $('#results').DataTable();
-                        fname = table.cells(":contains(" + e.id + ")", ":contains(outdir)").data()[0] + "\\" + e.id + ext;
+                        fname_base= table.cells(":contains(" + e.id + ")", ":contains(outdir)").data()[0];
+                        fname =  fname_base + "\\" + e.id + ext;
+                        gotoRow(fname_base);
                         setup_overlay(fname);
                         console.log(e);
                     }
