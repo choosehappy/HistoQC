@@ -61,6 +61,7 @@ for process in config.get('pipeline', 'steps').splitlines():
 # make output directory and create report file
 makeDir(args.outdir)
 csv_report = open(args.outdir + os.sep + "results.tsv", "w")
+error_report = open(args.outdir + os.sep + "error.log", "w")
 
 first = True
 files = glob.glob(args.input_pattern)
@@ -71,7 +72,7 @@ for fname in files:
         if(args.force): #remove entirey directory to ensure no old files are present
             shutil.rmtree(fname_outdir)
         else: #otherwise skip it
-            print(fname," already seems to be processing (output directory exists), skipping. To avoid this behavior use "
+            print(fname," already seems to be processed (output directory exists), skipping. To avoid this behavior use "
                     "--force")
         continue
     makeDir(fname_outdir)
@@ -79,16 +80,14 @@ for fname in files:
     print("Working on:", fname)
     try:
         s = BaseImage.BaseImage(fname, fname_outdir)
-        if "FAILED" in s:
-            failed.append((s["filename"], s["FAILED"]))
-            continue  # module should have printed error to screen
+        s["error_report"]=error_report #so that other plugins can write to it if desired
 
         for process, process_params in processQueue:
             process(s, process_params)
             s["completed"].append(process.__name__)
 
         # --- done processing, now add to output report
-        if (first):
+        if first:
             first = False
             for field in s["output"]:
                 csv_report.write(field + "\t")
@@ -99,15 +98,20 @@ for fname in files:
 
         csv_report.write("|".join(s["warnings"]) + "\n")
     except Exception as e:
-        print(e.__doc__)
-        print(e.message)
+        print("--->Error reading file (skipping):\t",fname)
+        print("--->Error was ", str(e))
+        failed.append((fname, str(e)))
+        error_report.write("Error working on file:",fname, str(e), sep="\t")
         continue
 
 csv_report.close()
+error_report.close()
 
-print("These images failed, review above log:")
+print("These images failed (available also in error.log):")
 for fname, error in failed:
     print(fname, error, sep="\t")
+
+
 
 # skimage.color.combine_stains(stains, conv_matrix)
 # QC metrics
