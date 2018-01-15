@@ -3,7 +3,7 @@ import errno
 import glob
 import argparse
 import configparser
-
+import shutil
 import matplotlib as mpl  # need to do this before anything else tries to access
 
 if os.environ.get('DISPLAY', '') == '':
@@ -31,6 +31,7 @@ parser = argparse.ArgumentParser(description='')
 parser.add_argument('input_pattern', help="input filename pattern (try: '*.svs')")
 parser.add_argument('-o', '--outdir', help="outputdir, default ./output/", default="output", type=str)
 parser.add_argument('-c', '--config', help="config file to use", default="./config.ini", type=str)
+parser.add_argument('-f', '--force', help="force overwriting of existing files", action="store_true")
 args = parser.parse_args()
 
 config = configparser.ConfigParser()
@@ -66,6 +67,13 @@ files = glob.glob(args.input_pattern)
 failed = []
 for fname in files:
     fname_outdir = args.outdir + os.sep + os.path.basename(fname)
+    if os.path.isdir(fname_outdir): #directory exists
+        if(args.force): #remove entirey directory to ensure no old files are present
+            shutil.rmtree(fname_outdir)
+        else: #otherwise skip it
+            print(fname," already seems to be processing (output directory exists), skipping. To avoid this behavior use "
+                    "--force")
+        continue
     makeDir(fname_outdir)
 
     print("Working on:", fname)

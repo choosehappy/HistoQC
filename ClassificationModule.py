@@ -78,7 +78,7 @@ def byExample(s, params):
             model_labels = np.vstack((model_labels, mask))
 
         clf = RandomForestClassifier()
-        clf.fit(model_vals, model_labels)
+        clf.fit(model_vals, model_labels.ravel())
         global_holder["model_"+name] = clf
 
     clf = global_holder["model_"+name]
