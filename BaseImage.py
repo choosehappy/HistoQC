@@ -19,8 +19,8 @@ class BaseImage():
 
         except Exception as e:
             print("--->Error reading file (skipping):\t",fname)
-            print("--->Error was ", e.message)
-            self.s["FAILED"] = e.message
+            print("--->Error was ", str(e))
+            self.s["FAILED"] = str(e)
             return
 
 
