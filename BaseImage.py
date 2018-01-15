@@ -12,15 +12,18 @@ class BaseImage():
         self.s["filename"] = os.path.basename(fname)
         self.s["outdir"] = fname_outdir
 
-        try:
+        try: #if openslide is going to fail, its going to be in these 3 statements
             self.s["os_handle"] = openslide.OpenSlide(fname)
-        except openslide.OpenSlideUnsupportedFormatError:
-            print("--->OpenSlideUnsupportedFormatError (skipping):\t",fname)
-            self.s["FAILED"] = 'OpenSlideUnsupportedFormatError '
+            self.s["image_work_size"] = 1000
+            self.s["img_mask_use"] = np.ones(self.getImgThumb(self.s["image_work_size"]).shape[0:2], dtype=bool)
+
+        except Exception as e:
+            print("--->Error reading file (skipping):\t",fname)
+            print("--->Error was ", e.message)
+            self.s["FAILED"] = e.message
             return
 
-        self.s["image_work_size"] = 1000
-        self.s["img_mask_use"] = np.ones(self.getImgThumb(self.s["image_work_size"]).shape[0:2], dtype=bool)
+
         self.s["comments"] = " "
 
         self.s["output"] = []

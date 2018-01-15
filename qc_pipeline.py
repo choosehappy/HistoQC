@@ -4,17 +4,17 @@ import glob
 import argparse
 import configparser
 
-import matplotlib as mpl #need to do this before anything else tries to access
-if os.environ.get('DISPLAY','') == '':
+import matplotlib as mpl  # need to do this before anything else tries to access
+
+if os.environ.get('DISPLAY', '') == '':
     print('no display found. Using non-interactive Agg backend')
     mpl.use('Agg')
 import matplotlib.pyplot as plt
 
-
 from importlib import import_module
 import warnings
-warnings.filterwarnings("ignore")
 
+warnings.filterwarnings("ignore")
 
 import BaseImage
 
@@ -71,8 +71,8 @@ for fname in files:
     print("Working on:", fname)
     try:
         s = BaseImage.BaseImage(fname, fname_outdir)
-        if ("FAILED" in s):
-            failed.append(s["filename"])
+        if "FAILED" in s:
+            failed.append((s["filename"], s["FAILED"]))
             continue  # module should have printed error to screen
 
         for process, process_params in processQueue:
@@ -98,8 +98,8 @@ for fname in files:
 csv_report.close()
 
 print("These images failed, review above log:")
-for fail in failed:
-    print(fail)
+for fname, error in failed:
+    print(fname, error, sep="\t")
 
 # skimage.color.combine_stains(stains, conv_matrix)
 # QC metrics
