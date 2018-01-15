@@ -4,7 +4,17 @@ import glob
 import argparse
 import configparser
 
+import matplotlib as mpl #need to do this before anything else tries to access
+if os.environ.get('DISPLAY','') == '':
+    print('no display found. Using non-interactive Agg backend')
+    mpl.use('Agg')
+import matplotlib.pyplot as plt
+
+
 from importlib import import_module
+import warnings
+warnings.filterwarnings("ignore")
+
 
 import BaseImage
 
@@ -16,6 +26,7 @@ def makeDir(path):
         if exception.errno != errno.EEXIST:
             raise
 
+
 parser = argparse.ArgumentParser(description='')
 parser.add_argument('input_pattern', help="input filename pattern (try: '*.svs')")
 parser.add_argument('-o', '--outdir', help="outputdir, default ./output/", default="output", type=str)
@@ -26,7 +37,7 @@ config = configparser.ConfigParser()
 config.read(args.config)
 
 processQueue = []
-for process in config.get('pipeline','steps').splitlines():
+for process in config.get('pipeline', 'steps').splitlines():
     mod_name, func_name = process.split('.')
     try:
         mod = import_module(mod_name)
@@ -36,46 +47,49 @@ for process in config.get('pipeline','steps').splitlines():
     try:
         func = getattr(mod, func_name)
     except:
-        raise NameError("Unknown function from module in pipeline from config file: \t%s \t in \t %s" % (mod_name, func_name))
+        raise NameError(
+            "Unknown function from module in pipeline from config file: \t%s \t in \t %s" % (mod_name, func_name))
 
     if config.has_section(process):
-        params=dict(config.items(process))
+        params = dict(config.items(process))
     else:
-        params={}
+        params = {}
 
-    processQueue.append((func,params))
-
+    processQueue.append((func, params))
 
 # make output directory and create report file
 makeDir(args.outdir)
 csv_report = open(args.outdir + os.sep + "results.tsv", "w")
 
-first=True
+first = True
 files = glob.glob(args.input_pattern)
+failed = []
 for fname in files:
     fname_outdir = args.outdir + os.sep + os.path.basename(fname)
     makeDir(fname_outdir)
 
-    print("Working on:",fname)
+    print("Working on:", fname)
     try:
-        s = BaseImage.BaseImage( fname , fname_outdir)
+        s = BaseImage.BaseImage(fname, fname_outdir)
+        if ("FAILED" in s):
+            failed.append(s["filename"])
+            continue  # module should have printed error to screen
 
-
-        for process,process_params in processQueue:
-            process(s,process_params)
+        for process, process_params in processQueue:
+            process(s, process_params)
             s["completed"].append(process.__name__)
 
-        #--- done processing, now add to output report
-        if(first):
+        # --- done processing, now add to output report
+        if (first):
             first = False
             for field in s["output"]:
                 csv_report.write(field + "\t")
             csv_report.write("\n")
 
         for field in s["output"]:
-            csv_report.write(s[field]+"\t")
+            csv_report.write(s[field] + "\t")
 
-        csv_report.write("|".join(s["warnings"])+"\n")
+        csv_report.write("|".join(s["warnings"]) + "\n")
     except Exception as e:
         print(e.__doc__)
         print(e.message)
@@ -83,25 +97,26 @@ for fname in files:
 
 csv_report.close()
 
+print("These images failed, review above log:")
+for fail in failed:
+    print(fail)
+
+# skimage.color.combine_stains(stains, conv_matrix)
+# QC metrics
+# https://www.mathworks.com/help/images/ref/niqe.html
+# https://www.mathworks.com/help/images/ref/brisque.html
+# https://github.com/aizvorski/video-quality/blob/master/niqe.py
+
+# Pen detection
+# stain detection
+# blurryiness
+# fresh vs ffpe
+# compression quality
+# slide thickness
 
 
-
-#skimage.color.combine_stains(stains, conv_matrix)
-#QC metrics
-#https://www.mathworks.com/help/images/ref/niqe.html
-#https://www.mathworks.com/help/images/ref/brisque.html
-#https://github.com/aizvorski/video-quality/blob/master/niqe.py
-
-#Pen detection
-#stain detection
-#blurryiness
-#fresh vs ffpe
-#compression quality
-#slide thickness
-
-
-#from skimage.color import rgb2hed
-#http://scikit-image.org/docs/0.13.x/auto_examples/color_exposure/plot_ihc_color_separation.html#sphx-glr-auto-examples-color-exposure-plot-ihc-color-separation-py
+# from skimage.color import rgb2hed
+# http://scikit-image.org/docs/0.13.x/auto_examples/color_exposure/plot_ihc_color_separation.html#sphx-glr-auto-examples-color-exposure-plot-ihc-color-separation-py
 
 # " Haematoxylin and Eosin determined by G.Landini ('H&E')\n"
 # 		" Haematoxylin and Eosin determined by A.C.Ruifrok ('H&E 2')\n"

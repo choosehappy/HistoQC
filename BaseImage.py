@@ -11,7 +11,14 @@ class BaseImage():
         self.s = {}  # will hold everything for the image
         self.s["filename"] = os.path.basename(fname)
         self.s["outdir"] = fname_outdir
-        self.s["os_handle"] = openslide.OpenSlide(fname)
+
+        try:
+            self.s["os_handle"] = openslide.OpenSlide(fname)
+        except openslide.OpenSlideUnsupportedFormatError:
+            print("--->OpenSlideUnsupportedFormatError (skipping):\t",fname)
+            self.s["FAILED"] = 'OpenSlideUnsupportedFormatError '
+            return
+
         self.s["image_work_size"] = 1000
         self.s["img_mask_use"] = np.ones(self.getImgThumb(self.s["image_work_size"]).shape[0:2], dtype=bool)
         self.s["comments"] = " "
@@ -24,8 +31,13 @@ class BaseImage():
         self.s["completed"] = []
         self.s["warnings"] = []
 
-    def __getitem__(self, item):
-        return self.s[item]
+
+    def __contains__(self,key):
+        return key in self.s.keys()
+
+    def __getitem__(self, key):
+            return self.s[key]
+
     def __setitem__(self, key, value):
         self.s[key]= value
     def __delitem__(self, key):
