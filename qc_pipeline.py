@@ -110,9 +110,10 @@ for fname in files:
 
         csv_report.write("|".join(s["warnings"]) + "\n")
     except Exception as e:
-        print("--->Error reading file (skipping):\t",fname)
-        print("--->Error was ", str(e))
-        failed.append((fname, str(e)))
+        err_string=" ".join((str(e.__class__ ),e.__doc__))
+        print("--->Error analyzing file (skipping):\t",fname)
+        print("--->Error was ", err_string)
+        failed.append((fname, err_string))
         error_report.write(f"Error working on file: {fname}\t{str(e)}")
         continue
 
