@@ -60,8 +60,20 @@ for process in config.get('pipeline', 'steps').splitlines():
 
 # make output directory and create report file
 makeDir(args.outdir)
-csv_report = open(args.outdir + os.sep + "results.tsv", "w")
-error_report = open(args.outdir + os.sep + "error.log", "w")
+
+
+if(os.path.isfile(args.outdir + os.sep + "results.tsv")):
+    if(args.force):
+        print("Previous run detected....overwriting (--force set)")
+        overwrite_flag = "w"
+    else:
+        print("Previous run detected....skipping completed (--force not set)")
+        overwrite_flag = "a"
+else:
+    overwrite_flag = "w"
+
+csv_report = open(args.outdir + os.sep + "results.tsv", overwrite_flag)
+error_report = open(args.outdir + os.sep + "error.log", overwrite_flag)
 
 first = True
 files = glob.glob(args.input_pattern)
@@ -87,7 +99,7 @@ for fname in files:
             s["completed"].append(process.__name__)
 
         # --- done processing, now add to output report
-        if first:
+        if first and overwrite_flag == "w": #add headers to output file, don't do this if we're in append mode
             first = False
             for field in s["output"]:
                 csv_report.write(field + "\t")
@@ -101,7 +113,7 @@ for fname in files:
         print("--->Error reading file (skipping):\t",fname)
         print("--->Error was ", str(e))
         failed.append((fname, str(e)))
-        error_report.write("Error working on file:",fname, str(e), sep="\t")
+        error_report.write(f"Error working on file: {fname}\t{str(e)}")
         continue
 
 csv_report.close()
