@@ -7,22 +7,14 @@ import openslide
 
 class BaseImage():
 
-    def __init__(self, fname , fname_outdir):
+    def __init__(self, fname, fname_outdir):
         self.s = {}  # will hold everything for the image
         self.s["filename"] = os.path.basename(fname)
         self.s["outdir"] = fname_outdir
 
-        try: #if openslide is going to fail, its going to be in these 3 statements
-            self.s["os_handle"] = openslide.OpenSlide(fname)
-            self.s["image_work_size"] = 1000
-            self.s["img_mask_use"] = np.ones(self.getImgThumb(self.s["image_work_size"]).shape[0:2], dtype=bool)
-
-        except Exception as e:
-            print("--->Error reading file (skipping):\t",fname)
-            print("--->Error was ", str(e))
-            self.s["FAILED"] = str(e)
-            return
-
+        self.s["os_handle"] = openslide.OpenSlide(fname)
+        self.s["image_work_size"] = 1000
+        self.s["img_mask_use"] = np.ones(self.getImgThumb(self.s["image_work_size"]).shape[0:2], dtype=bool)
 
         self.s["comments"] = " "
 
@@ -34,26 +26,26 @@ class BaseImage():
         self.s["completed"] = []
         self.s["warnings"] = []
 
-
-    def __contains__(self,key):
+    def __contains__(self, key):
         return key in self.s.keys()
 
     def __getitem__(self, key):
-            return self.s[key]
+        return self.s[key]
 
     def __setitem__(self, key, value):
-        self.s[key]= value
+        self.s[key] = value
+
     def __delitem__(self, key):
-        self.s.pop(key,None)
+        self.s.pop(key, None)
 
     def addToPrintList(self, name, val):
         self.s[name] = val
         self.s["output"].append(name)
 
-    def getImgThumb(self,dim):
-        key="img_"+str(dim)
+    def getImgThumb(self, dim):
+        key = "img_" + str(dim)
         if self.s.get(key) is None:
-            print("creating image thumb of size ",str(dim))
+            print("\t\tcreating image thumb of size ", str(dim))
             osh = self.s["os_handle"]
             self.s[key] = np.array(osh.get_thumbnail((dim, dim)))
         return self.s[key]
