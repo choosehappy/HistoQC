@@ -129,7 +129,7 @@ for filei, fname in enumerate(files):
 
         csv_report.write("|".join(s["warnings"]) + "\n")
     except Exception as e:
-        err_string = " ".join((str(e.__class__), e.__doc__))
+        err_string = " ".join((str(e.__class__), e.__doc__, str(e)))
         print("--->Error analyzing file (skipping):\t", fname)
         print("--->Error was ", err_string)
         failed.append((fname, err_string))
