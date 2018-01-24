@@ -6,7 +6,7 @@ from ast import literal_eval as make_tuple
 from distutils.util import strtobool
 
 from skimage import io
-from skimage.filters import gabor_kernel, frangi, gaussian, median
+from skimage.filters import gabor_kernel, frangi, gaussian, median, laplace
 from skimage.color import rgb2gray
 from skimage.morphology import remove_small_objects, disk
 from skimage.feature import local_binary_pattern
@@ -61,6 +61,11 @@ def compute_rgb(img, params):
     return img
 
 
+
+def compute_laplace(img,params):
+    laplace_ksize= int(params.get("laplace_ksize", 3))
+    return laplace(rgb2gray(img), ksize=laplace_ksize)[:, :, None]
+
 def compute_lbp(img, params):
     lbp_radius = float(params.get("lbp_radius", 3))
     lbp_points = int(params.get("lbp_points", 24)) #example sets radius * 8
@@ -113,7 +118,7 @@ def compute_frangi(img, params):
     frangi_scale_step = float(params.get("frangi_scale_step", 2))
     frangi_beta1 = float(params.get("frangi_beta1", .5))
     frangi_beta2 = float(params.get("frangi_beta2", 15))
-    frangi_black_ridges = strtobool(params.get("frangi_black_ridges", True))
+    frangi_black_ridges = strtobool(params.get("frangi_black_ridges", "True"))
     feat = frangi(rgb2gray(img), frangi_scale_range, frangi_scale_step, frangi_beta1, frangi_beta2, frangi_black_ridges)
     return feat[:, :, None]  # add singleton dimension
 

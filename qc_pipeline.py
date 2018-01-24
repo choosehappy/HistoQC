@@ -53,6 +53,7 @@ for process in config.get('pipeline', 'steps').splitlines():
         raise NameError("Unknown module in pipeline from config file:\t %s" % mod_name)
 
     try:
+        func_name=func_name.split(":")[0] #take base of function name
         func = getattr(mod, func_name)
     except:
         raise NameError(
