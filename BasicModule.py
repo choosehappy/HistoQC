@@ -1,4 +1,5 @@
 from distutils.util import strtobool
+from skimage.morphology import remove_small_objects
 
 
 def getBasicStats(s, params):
@@ -29,3 +30,8 @@ def getMag(s, params):
 def finalComputations(s, params):
     mask = s["img_mask_use"]
     s.addToPrintList("pixels_to_use", str(len(mask.nonzero()[0])))
+
+
+def finalProcessing(s, params):
+    mask = remove_small_objects(s["img_mask_use"], min_size=int(params.get("area_thresh", "")), in_place=True)
+    s["img_mask_use"] = mask > 0

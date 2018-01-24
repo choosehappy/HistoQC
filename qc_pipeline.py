@@ -81,11 +81,11 @@ else:
 
 if (args.batch != float("inf")):
     batch = 1
-    csv_report = open(args.outdir + os.sep + "results_" + str(batch) + ".tsv", overwrite_flag)
+    csv_report = open(args.outdir + os.sep + "results_" + str(batch) + ".tsv", overwrite_flag, buffering=1)
 else:
-    csv_report = open(args.outdir + os.sep + "results.tsv", overwrite_flag)
+    csv_report = open(args.outdir + os.sep + "results.tsv", overwrite_flag, buffering=1)
 
-error_report = open(args.outdir + os.sep + "error.log", overwrite_flag)
+error_report = open(args.outdir + os.sep + "error.log", overwrite_flag, buffering=1)
 
 first = True
 files = glob.glob(args.input_pattern)
@@ -115,7 +115,7 @@ for filei, fname in enumerate(files):
         if (filei and filei % args.batch == 0):
             csv_report.close()
             batch += 1
-            csv_report = open(args.outdir + os.sep + "results_" + str(batch) + ".tsv", overwrite_flag)
+            csv_report = open(args.outdir + os.sep + "results_" + str(batch) + ".tsv", overwrite_flag, buffering=1)
             first = True
 
         if first and overwrite_flag == "w":  # add headers to output file, don't do this if we're in append mode
