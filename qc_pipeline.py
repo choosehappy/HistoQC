@@ -103,7 +103,7 @@ for filei, fname in enumerate(files):
         continue
     makeDir(fname_outdir)
 
-    print(f"-----Working on:\t{fname}")
+    print(f"-----Working on:\t{fname}\t\t{filei} of {len(files)}")
     try:
         s = BaseImage.BaseImage(fname, fname_outdir)
         s["error_report"] = error_report  # so that other plugins can write to it if desired

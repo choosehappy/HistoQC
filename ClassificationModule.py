@@ -189,5 +189,5 @@ def byExampleWithFeatures(s, params):
     io.imsave(s["outdir"] + os.sep + s["filename"] + "_" + name + ".png", mask * 255)
     s["img_mask_" + name] = (mask * 255) > 0
     s["img_mask_use"] = s["img_mask_use"] & ~s["img_mask_" + name]
-
+    s["completed"].append(f"byExampleWithFeatures:{name}")
     return

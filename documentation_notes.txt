@@ -1,0 +1,7 @@
+Documentation notes:
+
+
+concept of "img_mask_use" going through iterative refinements
+
+discuss ordering of things in pipeline
+discuss idea of requiring certain things to be completed (e.g., histogram)
