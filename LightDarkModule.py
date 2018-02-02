@@ -43,9 +43,7 @@ def getIntensityThresholdPercent(s, params):
 
     img = s.getImgThumb(s["image_work_size"])
     img = color.rgb2gray(img)
-    map = np.bitwise_and(img>lower_thresh,img<upper_thresh)
-
-
+    map = np.bitwise_and(img > lower_thresh, img < upper_thresh)
 
     s.addToPrintList(name, str(map.mean()))
     io.imsave(s["outdir"] + os.sep + s["filename"] + "_" + name + ".png", map * 255)
