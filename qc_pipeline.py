@@ -134,7 +134,7 @@ for filei, fname in enumerate(files):
         print("--->Error analyzing file (skipping):\t", fname)
         print("--->Error was ", err_string)
         failed.append((fname, err_string))
-        error_report.write(f"Error working on file: {fname}\t{str(e)}")
+        error_report.write(f"Error working on file: {fname}\t{err_string)}\n")
         continue
 
 csv_report.close()
