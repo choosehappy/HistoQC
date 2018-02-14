@@ -9,6 +9,8 @@ class BaseImage():
 
     def __init__(self, fname, fname_outdir, params):
         self.s = {}  # will hold everything for the image
+
+        self.s["warnings"] = [] #this needs to be first key in case anything else wants to add to it
         self.s["filename"] = os.path.basename(fname)
         self.s["outdir"] = fname_outdir
 
@@ -24,7 +26,7 @@ class BaseImage():
         self.s["output"].append("comments")
 
         self.s["completed"] = []
-        self.s["warnings"] = []
+
 
     def __contains__(self, key):
         return key in self.s.keys()
