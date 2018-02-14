@@ -53,7 +53,7 @@ for process in config.get('pipeline', 'steps').splitlines():
         raise NameError("Unknown module in pipeline from config file:\t %s" % mod_name)
 
     try:
-        func_name=func_name.split(":")[0] #take base of function name
+        func_name = func_name.split(":")[0]  # take base of function name
         func = getattr(mod, func_name)
     except:
         raise NameError(
@@ -105,7 +105,7 @@ for filei, fname in enumerate(files):
 
     print(f"-----Working on:\t{fname}\t\t{filei} of {len(files)}")
     try:
-        s = BaseImage.BaseImage(fname, fname_outdir)
+        s = BaseImage.BaseImage(fname, fname_outdir , dict(config.items("BaseImage.BaseImage")))
         s["error_report"] = error_report  # so that other plugins can write to it if desired
 
         for process, process_params in processQueue:
@@ -137,7 +137,6 @@ for filei, fname in enumerate(files):
         error_report.write(f"Error working on file: {fname}\t{str(e)}")
         continue
 
-
 csv_report.close()
 error_report.close()
 
@@ -145,33 +144,3 @@ print("------------Done---------\n")
 print("These images failed (available also in error.log):")
 for fname, error in failed:
     print(fname, error, sep="\t")
-
-# skimage.color.combine_stains(stains, conv_matrix)
-# QC metrics
-# https://www.mathworks.com/help/images/ref/niqe.html
-# https://www.mathworks.com/help/images/ref/brisque.html
-# https://github.com/aizvorski/video-quality/blob/master/niqe.py
-
-# Pen detection
-# stain detection
-# blurryiness
-# fresh vs ffpe
-# compression quality
-# slide thickness
-
-
-# from skimage.color import rgb2hed
-# http://scikit-image.org/docs/0.13.x/auto_examples/color_exposure/plot_ihc_color_separation.html#sphx-glr-auto-examples-color-exposure-plot-ihc-color-separation-py
-
-# " Haematoxylin and Eosin determined by G.Landini ('H&E')\n"
-# 		" Haematoxylin and Eosin determined by A.C.Ruifrok ('H&E 2')\n"
-# 		" Haematoxylin and DAB ('H DAB')\n"
-# 		" Haematoxylin, Eosin and DAB ('H&E DAB')\n"
-# 		" Haematoxylin and AEC ('H AEC')\n"
-# 		" Fast Red, Fast Blue and DAB ('FastRed FastBlue DAB')\n"
-# 		" Methyl green and DAB ('Methyl Green DAB')\n"
-# 		" Azan-Mallory ('Azan-Mallory')\n"
-# 		" Alcian blue & Haematoxylin ('Alcian blue & H')\n"
-# 		" Haematoxylin and Periodic Acid of Schiff ('H PAS')\n"
-# 		" RGB subtractive ('RGB')\n"
-# 		" CMY subtractive ('CMY')\n");
