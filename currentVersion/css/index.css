@@ -1,0 +1,181 @@
+html {
+  line-height: 1.15; /* same as bootstrap.css */
+}
+
+.btn-outline-secondary {
+	border-width: 1.5px;
+}
+
+.m-container {
+	border-width: 1px;
+	border-radius: 5px;
+	border-color: #eee;
+}
+
+#dataset-tag {
+	display: none;
+	color: #aaa;
+}
+
+#file-input {
+	display: none;
+}
+
+#table-view {
+	display: none;
+}
+
+#chart-view {
+	display: none;
+	height: 300px;
+}
+
+#image-view {
+	display: none;
+	overflow-y: scroll;
+}
+
+#result-table_wrapper {
+	display: flex !important;
+	padding: 0px;
+}
+
+.table-control {
+	/*padding-right: 0px;*/
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+}
+
+.table-control > div.dt-buttons {
+	width: 100%;
+	height: 100%;
+}
+
+/* img view */
+
+#img-select-button {
+	position: fixed;
+	padding-left: 15px;
+	padding-top: 15px;
+}
+
+#img-select-button > select {
+	border-width: 1.5px;
+	height: 40px;
+}
+
+#gallery {
+	padding-left: 15px;
+	padding-top: 15px;
+	padding-bottom: 15px;
+	padding-right: 15px;
+}
+
+#gallery > img {
+	margin-right: 5px;
+	margin-bottom: 5px;
+}
+
+#detail-gallery {
+	display: none;
+	padding-left: 15px;
+	padding-top: 15px;
+	padding-right: 15px;
+}
+
+#exibit-img {
+	margin-right: 5px;
+	margin-bottom: 5px;
+}
+
+#detail-list {
+	display: flex;
+	flex-wrap: wrap;
+  position: relative;
+  float: right;
+}
+
+#detail-list > img {
+	padding-right: 5px;
+	padding-bottom: 5px;
+}
+
+/* bar chart */
+
+.axis path,
+.axis line {
+	fill: none;
+	stroke: #000;
+	shape-rendering: crispEdges;
+}
+
+.selected-bar {
+	fill: orangered;
+}
+
+.bar {
+	fill: #007bff;
+}
+
+.bar:hover {
+	fill: orangered;
+}
+
+.x.axis path {
+	display: none;
+}
+
+.d3-tip {
+	line-height: 1;
+	font-weight: bold;
+	padding: 5px;
+	background: rgba(0, 0, 0, 0.8);
+	color: #fff;
+	border-radius: 3px;
+}
+
+/* Creates a small triangle extender for the tooltip */
+.d3-tip:after {
+	box-sizing: border-box;
+	display: inline;
+	font-size: 10px;
+	width: 100%;
+	line-height: 1;
+	color: rgba(0, 0, 0, 0.8);
+	content: "\25BC";
+	position: absolute;
+	text-align: center;
+}
+
+/* Style northward tooltips differently */
+.d3-tip.n:after {
+	margin: -1px 0 0 0;
+	top: 100%;
+	left: 0;
+}
+
+/* chart selector */
+
+#chart-select-button {
+	position: fixed;
+	padding-left: 15px;
+	padding-top: 15px;
+}
+
+#chart-select-button > select {
+	border-width: 1.5px;
+	height: 40px;
+}
+
+#svg-container {
+	width: 100%;
+	height: 100%;
+	display: block;
+}
+
+.dt-button-collection {
+	height: 300px;
+	overflow-y: scroll;
+}
+
