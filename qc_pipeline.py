@@ -12,14 +12,6 @@ import warnings
 import BaseImage
 
 # --- setup logging
-# logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-#                     filename="error.log", filemode='w')
-#
-# console = logging.StreamHandler()
-# console.setLevel(logging.DEBUG)
-# console.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
-# logging.getLogger('').addHandler(console)
-
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 file = logging.FileHandler(filename="error.log")
@@ -110,10 +102,13 @@ def worker_error(e):
 
 def load_pipeline(lconfig):
     lprocessQueue = []
-    logging.info("Pipeline will use these steps:")
+    in_main=multiprocessing.current_process()._identity==()
+    if(in_main):
+        logging.info("Pipeline will use these steps:")
     for process in lconfig.get('pipeline', 'steps').splitlines():
         mod_name, func_name = process.split('.')
-        logging.info(f"\t\t{mod_name}\t{func_name}")
+        if(in_main):
+            logging.info(f"\t\t{mod_name}\t{func_name}")
         try:
             mod = import_module(mod_name)
         except:
