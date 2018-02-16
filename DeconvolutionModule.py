@@ -1,3 +1,4 @@
+import logging
 import os
 import sys
 import numpy as np
@@ -12,19 +13,19 @@ import matplotlib.pyplot as plt
 
 
 def seperateStains(s, params):
-    print("\tseperateStains")
+    logging.info(f"{s['filename']} - \tseperateStains")
     stain = params.get("stain", "")
     use_mask = strtobool(params.get("use_mask", "True"))
 
     if stain == "":
-        print("stain not set in DeconolutionModule.seperateStains")
+        logging.error(f"{s['filename']} - stain not set in DeconolutionModule.seperateStains")
         sys.exit(1)
         return
 
     stain_matrix = getattr(sys.modules[__name__], stain, "")
 
     if stain_matrix == "":
-        print("Unknown stain matrix specified in DeconolutionModule.seperateStains")
+        logging.error(f"{s['filename']} - Unknown stain matrix specified in DeconolutionModule.seperateStains")
         sys.exit(1)
         return
     img = s.getImgThumb(s["image_work_size"])

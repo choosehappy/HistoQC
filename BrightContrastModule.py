@@ -1,10 +1,11 @@
+import logging
 import numpy as np
 from skimage import color
 from distutils.util import strtobool
 
 
 def getBrightness(s,params):
-    print("\tgetContrast")
+    logging.info(f"{s['filename']} - \tgetContrast")
     limit_to_mask = strtobool(params.get("limit_to_mask", True))
     img = s.getImgThumb(s["image_work_size"])
 
@@ -24,7 +25,7 @@ def getBrightness(s,params):
 
 
 def getContrast(s,params):
-    print("\tgetContrast")
+    logging.info(f"{s['filename']} - \tgetContrast")
     limit_to_mask = strtobool(params.get("limit_to_mask", True))
     img = s.getImgThumb(s["image_work_size"])
     img = color.rgb2gray(img)

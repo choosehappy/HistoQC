@@ -1,3 +1,4 @@
+import logging
 import os
 import errno
 import glob
@@ -11,13 +12,20 @@ import warnings
 import BaseImage
 
 # --- setup logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    filename="error.log", filemode='w')
+# logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+#                     filename="error.log", filemode='w')
+#
+# console = logging.StreamHandler()
+# console.setLevel(logging.DEBUG)
+# console.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+# logging.getLogger('').addHandler(console)
 
-console = logging.StreamHandler()
-console.setLevel(logging.INFO)
-console.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
-logging.getLogger('').addHandler(console)
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+file = logging.FileHandler(filename="error.log")
+file.setLevel(logging.WARNING)
+file.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+logging.getLogger('').addHandler(file)
 
 # --- setup plotting backend
 if os.name != "nt" and os.environ.get('DISPLAY', '') == '':
@@ -92,7 +100,7 @@ def worker_error(e):
     #     fname = e.args
     print("ERROR!")
     print(e)
-
+    #add to failed here!
 
 #     err_string = " ".join((str(e.__class__), e.__doc__, str(e)))
 #     logging.error("--->Error analyzing file (skipping):\t", fname)

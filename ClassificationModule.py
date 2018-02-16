@@ -1,3 +1,4 @@
+import logging
 import os
 import sys
 
@@ -25,13 +26,13 @@ global_holder = {}
 
 def pixelWise(s, params):
     name = params.get("name", "classTask")
-    print("\tpixelWise:\t", name)
+    logging.info(f"{s['filename']} - \tpixelWise:\t", name)
 
     thresh = float(params.get("threshold", .5))
 
     fname = params.get("tsv_file", "")
     if fname == "":
-        print("tsv_file not set in ClassificationModule.pixelWise for ", name)
+        logging.error(f"{s['filename']} - tsv_file not set in ClassificationModule.pixelWise for ", name)
         sys.exit(1)
         return
     model_vals = np.loadtxt(fname, delimiter="\t", skiprows=1)
@@ -136,18 +137,18 @@ def compute_features(img, params):
 
 def byExampleWithFeatures(s, params):
     name = params.get("name", "classTask")
-    print("\tClassificationModule.byExample:\t", name)
+    logging.info(f"{s['filename']} - \tClassificationModule.byExample:\t", name)
 
     thresh = float(params.get("threshold", .5))
 
     examples = params.get("examples", "")
     if examples == "":
-        print("No examples provided in ClassificationModule.byExample for ", name, "!!")
+        logging.error(f"{s['filename']} - No examples provided in ClassificationModule.byExample for ", name, "!!")
         sys.exit(1)
         return
 
     if params.get("features", "") == "":
-        print("No features provided in ClassificationModule.byExample for ", name, "!!")
+        logging.error(f"{s['filename']} - No features provided in ClassificationModule.byExample for ", name, "!!")
         sys.exit(1)
         return
 

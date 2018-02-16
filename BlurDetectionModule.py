@@ -1,3 +1,4 @@
+import logging
 import os
 
 import skimage
@@ -13,7 +14,7 @@ import numpy as np
 
 
 def identifyBlurryRegions(s, params):
-    print("\tidentifyBlurryRegions")
+    logging.info(f"{s['filename']} - \tidentifyBlurryRegions")
 
     blur_radius = int(params.get("blur_radius", 7))
     blur_threshold = float(params.get("blur_threshold", .02))

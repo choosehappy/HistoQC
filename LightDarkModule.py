@@ -1,3 +1,4 @@
+import logging
 import os
 import numpy as np
 from skimage import io, color
@@ -7,7 +8,7 @@ import matplotlib.pyplot as plt
 
 
 # def getTissuePercent(s, params):
-#     print("\tgetTissuePercent")
+#     logging.info(f"{s['filename']} - \tgetTissuePercent")
 #     thresh = float(params.get("thresh", .9))
 #
 #     img = s.getImgThumb(s["image_work_size"])
@@ -21,7 +22,7 @@ import matplotlib.pyplot as plt
 #
 #
 # def getDarkTissuePercent(s, params):
-#     print("\tgetTissueFoldPercent")
+#     logging.info(f"{s['filename']} - \tgetTissueFoldPercent")
 #     thresh = float(params.get("thresh", .15))
 #
 #     img = s.getImgThumb(s["image_work_size"])
@@ -36,7 +37,7 @@ import matplotlib.pyplot as plt
 
 def getIntensityThresholdPercent(s, params):
     name = params.get("name", "classTask")
-    print("\tLightDarkModule.getIntensityThresholdPercent:\t", name)
+    logging.info(f"{self.s['filename']} - \tLightDarkModule.getIntensityThresholdPercent:\t", name)
 
     lower_thresh = float(params.get("lower_threshold", -float("inf")))
     upper_thresh = float(params.get("upper_threshold", float("inf")))

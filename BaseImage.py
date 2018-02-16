@@ -1,3 +1,4 @@
+import logging
 import os
 import numpy as np
 import inspect
@@ -56,14 +57,14 @@ class BaseImage():
                 if dim >= osh.level_count:
                     dim = osh.level_count - 1
                     calling_class=inspect.stack()[1][3]
-                    print(f"Desired Image Level {dim} does not exist! Instead using level {osh.level_count-1}! Downstream output may not be correct")
+                    logging.error(f"{self.s['filename']}: Desired Image Level {dim} does not exist! Instead using level {osh.level_count-1}! Downstream output may not be correct")
                     self.s["warnings"].append(
                         f"Desired Image Level {dim} does not exist! Instead using level {osh.level_count-1}! Downstream output may not be correct")
-                print(f"\t\tloading image from level {dim} of size {osh.level_dimensions[dim]}")
+                logging.info(f"{self.s['filename']} - \t\tloading image from level {dim} of size {osh.level_dimensions[dim]}")
                 img = osh.read_region((0, 0), dim, osh.level_dimensions[dim])
                 self.s[key] = np.asarray(img)[:, :, 0:3]
             else:  # assume its an explicit size, *WARNING* this will likely cause different images to have different
                 # perceived magnifications!
-                print("\t\tcreating image thumb of size ", str(dim))
+                logging.info(f"{self.s['filename']} - \t\tcreating image thumb of size ", str(dim))
                 self.s[key] = np.array(osh.get_thumbnail((dim, dim)))
         return self.s[key]
