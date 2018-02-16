@@ -39,7 +39,7 @@ failed = []
 
 
 # --- setup worker functions
-def worker(filei, nfiles, fname, args, lconfig, processQueue):
+def worker(filei, nfiles, fname, args, lconfig, processQueue, lock, shared_dict):
     fname_outdir = args.outdir + os.sep + os.path.basename(fname)
     if os.path.isdir(fname_outdir):  # directory exists
         if (args.force):  # remove entirey directory to ensure no old files are present
@@ -56,6 +56,8 @@ def worker(filei, nfiles, fname, args, lconfig, processQueue):
         s = BaseImage.BaseImage(fname, fname_outdir, dict(lconfig.items("BaseImage.BaseImage")))
 
         for process, process_params in processQueue:
+            process_params["lock"] = lock
+            process_params["shared_dict"] = shared_dict
             process(s, process_params)
             s["completed"].append(process.__name__)
     except Exception as e:
@@ -93,9 +95,11 @@ def worker_callback(s):
 
 
 def worker_error(e):
+    err_string = " ".join((str(e.__class__), e.__doc__, str(e)))
+    logging.error(e)
+    logging.error(err_string)
     func = e.args[1]
     fname = e.args[2]
-    err_string = " ".join((str(e.__class__), e.__doc__, str(e)))
     logging.error(f"{fname} - \t{func} - Error analyzing file (skipping): \t {err_string}")
     failed.append((fname, err_string))
 
@@ -141,6 +145,7 @@ if __name__ == '__main__':
 
     manager = multiprocessing.Manager()
     lock = manager.Lock()
+    shared_dict = manager.dict()
 
     parser = argparse.ArgumentParser(description='')
     parser.add_argument('input_pattern', help="input filename pattern (try: '*.svs')")
@@ -181,11 +186,11 @@ if __name__ == '__main__':
     files = glob.glob(args.input_pattern)
     for filei, fname in enumerate(files):
         if args.nthreads > 1:
-            res = pool.apply_async(worker, args=(filei, len(files), fname, args, config, processQueue),
+            res = pool.apply_async(worker, args=(filei, len(files), fname, args, config, processQueue, lock, shared_dict),
                                    callback=worker_callback, error_callback=worker_error)
         else:
             try:
-                s = worker(filei, len(files), fname, args, config, processQueue)
+                s = worker(filei, len(files), fname, args, config, processQueue, lock, shared_dict)
                 worker_callback(s)
             except Exception as e:
                 worker_error(e)

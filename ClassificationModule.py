@@ -21,9 +21,6 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 
-global_holder = {}
-
-
 def pixelWise(s, params):
     name = params.get("name", "classTask")
     logging.info(f"{s['filename']} - \tpixelWise:\t", name)
@@ -91,7 +88,9 @@ def compute_median(img, params):
 
 
 def compute_gabor(img, params):
-    if not global_holder.get("gabor_kernels", False):
+
+
+    if not params["shared_dict"].get("gabor_kernels", False):
         gabor_theta = int(params.get("gabor_theta", 4))
         gabor_sigma = make_tuple(params.get("gabor_sigma", "(1,3)"))
         gabor_frequency = make_tuple(params.get("gabor_frequency", "(0.05, 0.25)"))
@@ -104,8 +103,9 @@ def compute_gabor(img, params):
                     kernel = np.real(gabor_kernel(frequency, theta=theta,
                                                   sigma_x=sigma, sigma_y=sigma))
                     kernels.append(kernel)
-        global_holder["gabor_kernels"] = kernels
+        params["shared_dict"]["gabor_kernels"] = kernels
 
+    kernels = params["shared_dict"]["gabor_kernels"]
     imgg = rgb2gray(img)
     feats = np.zeros((imgg.shape[0], imgg.shape[1], len(kernels)), dtype=np.double)
     for k, kernel in enumerate(kernels):
@@ -137,7 +137,7 @@ def compute_features(img, params):
 
 def byExampleWithFeatures(s, params):
     name = params.get("name", "classTask")
-    logging.info(f"{s['filename']} - \tClassificationModule.byExample:\t", name)
+    logging.info(f"{s['filename']} - \tClassificationModule.byExample:\t{name}")
 
     thresh = float(params.get("threshold", .5))
 
@@ -152,28 +152,28 @@ def byExampleWithFeatures(s, params):
         sys.exit(1)
         return
 
-    if not global_holder.get("model_" + name, False):
+    with params["lock"]:
+        if not params["shared_dict"].get("model_" + name, False):
+            model_vals = []
+            model_labels = np.empty([0, 1])
 
-        model_vals = []
-        model_labels = np.empty([0, 1])
+            for ex in params["examples"].splitlines():
+                ex = ex.split(":")
+                img = io.imread(ex[0])
+                eximg = compute_features(img, params)
+                eximg = eximg.reshape(-1, eximg.shape[2])
+                model_vals.append(eximg)
 
-        for ex in params["examples"].splitlines():
-            ex = ex.split(":")
-            img = io.imread(ex[0])
-            eximg = compute_features(img, params)
-            eximg = eximg.reshape(-1, eximg.shape[2])
-            model_vals.append(eximg)
+                mask = io.imread(ex[1]).reshape(-1, 1)
+                model_labels = np.vstack((model_labels, mask))
 
-            mask = io.imread(ex[1]).reshape(-1, 1)
-            model_labels = np.vstack((model_labels, mask))
+            # do stuff here with model_vals
+            model_vals = np.vstack(model_vals)
+            clf = RandomForestClassifier(n_jobs=-1)
+            clf.fit(model_vals, model_labels.ravel())
+            params["shared_dict"]["model_" + name] = clf
 
-        # do stuff here with model_vals
-        model_vals = np.vstack(model_vals)
-        clf = RandomForestClassifier(n_jobs=-1)
-        clf.fit(model_vals, model_labels.ravel())
-        global_holder["model_" + name] = clf
-
-    clf = global_holder["model_" + name]
+    clf = params["shared_dict"]["model_" + name]
     img = s.getImgThumb(s["image_work_size"])
     feats = compute_features(img, params)
     cal = clf.predict_proba(feats.reshape(-1, feats.shape[2]))
