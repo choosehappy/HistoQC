@@ -18,7 +18,7 @@ def seperateStains(s, params):
     use_mask = strtobool(params.get("use_mask", "True"))
 
     if stain == "":
-        logging.error(f"{s['filename']} - stain not set in DeconolutionModule.seperateStains")
+        logging.error(f"{s['filename']} - stain not set in DeconvolutionModule.seperateStains")
         sys.exit(1)
         return
 

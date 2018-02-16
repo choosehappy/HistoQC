@@ -24,6 +24,7 @@ def getMag(s, params):
             params.get("confirm", False))):  # TODO: Don't know what previous call returns when not available....
         # do analysis work here
         logging.warning(f"{s['filename']} - Unknown magnification for file")
+        s["warnings"].append(f"{s['filename']} - Unknown magnification for file")
     s.addToPrintList("Magnification", mag)
     return
 

@@ -37,7 +37,7 @@ import matplotlib.pyplot as plt
 
 def getIntensityThresholdPercent(s, params):
     name = params.get("name", "classTask")
-    logging.info(f"{self.s['filename']} - \tLightDarkModule.getIntensityThresholdPercent:\t", name)
+    logging.info(f"{s['filename']} - \tLightDarkModule.getIntensityThresholdPercent:\t {name}" )
 
     lower_thresh = float(params.get("lower_threshold", -float("inf")))
     upper_thresh = float(params.get("upper_threshold", float("inf")))

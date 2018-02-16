@@ -12,7 +12,7 @@ import warnings
 import BaseImage
 
 # --- setup logging
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 file = logging.FileHandler(filename="error.log")
 file.setLevel(logging.WARNING)
@@ -52,13 +52,17 @@ def worker(filei, nfiles, fname, args, lconfig, processQueue):
     makeDir(fname_outdir)
 
     logging.info(f"-----Working on:\t{fname}\t\t{filei} of {nfiles}")
-    s = BaseImage.BaseImage(fname, fname_outdir, dict(lconfig.items("BaseImage.BaseImage")))
+    try:
+        s = BaseImage.BaseImage(fname, fname_outdir, dict(lconfig.items("BaseImage.BaseImage")))
 
-    for process, process_params in processQueue:
-        process(s, process_params)
-        s["completed"].append(process.__name__)
+        for process, process_params in processQueue:
+            process(s, process_params)
+            s["completed"].append(process.__name__)
+    except Exception as e:
+        e.args += (process.__name__, fname)
+        raise e
 
-    s["os_handle"] = None #need to get rid of handle because it can't be pickled
+    s["os_handle"] = None  # need to get rid of handle because it can't be pickled
     return s
 
 
@@ -89,25 +93,20 @@ def worker_callback(s):
 
 
 def worker_error(e):
-    #     fname = e.args
-    print("ERROR!")
-    print(e)
-    #add to failed here!
-
-#     err_string = " ".join((str(e.__class__), e.__doc__, str(e)))
-#     logging.error("--->Error analyzing file (skipping):\t", fname)
-#     logging.error("--->Error was ", err_string)
-#     failed.append((fname, err_string))
-
+    func = e.args[1]
+    fname = e.args[2]
+    err_string = " ".join((str(e.__class__), e.__doc__, str(e)))
+    logging.error(f"{fname} - \t{func} - Error analyzing file (skipping): \t {err_string}")
+    failed.append((fname, err_string))
 
 def load_pipeline(lconfig):
     lprocessQueue = []
-    in_main=multiprocessing.current_process()._identity==()
-    if(in_main):
+    in_main = multiprocessing.current_process()._identity == ()
+    if (in_main):
         logging.info("Pipeline will use these steps:")
     for process in lconfig.get('pipeline', 'steps').splitlines():
         mod_name, func_name = process.split('.')
-        if(in_main):
+        if (in_main):
             logging.info(f"\t\t{mod_name}\t{func_name}")
         try:
             mod = import_module(mod_name)
@@ -181,17 +180,26 @@ if __name__ == '__main__':
 
     files = glob.glob(args.input_pattern)
     for filei, fname in enumerate(files):
-        res = pool.apply_async(worker, args=(filei, len(files), fname, args, config, processQueue),
-                               callback=worker_callback, error_callback=worker_error)
-        # res = pool.apply_async(worker, args=(filei, len(files), fname, args, config, processQueue))
+        if args.nthreads > 1:
+            res = pool.apply_async(worker, args=(filei, len(files), fname, args, config, processQueue),
+                                   callback=worker_callback, error_callback=worker_error)
+        else:
+            try:
+                s = worker(filei, len(files), fname, args, config, processQueue)
+                worker_callback(s)
+            except Exception as e:
+                worker_error(e)
+                continue
 
-    pool.close()
-    pool.join()
+    if args.nthreads > 1:
+        pool.close()
+        pool.join()
+
     csv_report.close()
     shutil.move("error.log", args.outdir + os.sep + "error.log")  # move error log to output directory
 
     logging.info("------------Done---------\n")
     logging.info("These images failed (available also in error.log), warnings are listed in warnings column in output:")
 
-    for fname, error in failed:  # TODO: FIX
+    for fname, error in failed:
         logging.info(fname, error, sep="\t")
