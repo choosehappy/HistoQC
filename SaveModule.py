@@ -10,6 +10,6 @@ def saveImages(s,params):
 
 def saveThumbnail(s,params):
     print("\tsaveThumbnail")
-    img=s.getImgThumb(int(params.get("size",500)))
+    img=s.getImgThumb(float(params.get("image_work_size",500)))
     io.imsave(s["outdir"] + os.sep + s["filename"] + "_thumb.png",img)
     return
