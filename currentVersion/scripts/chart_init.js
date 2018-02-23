@@ -92,9 +92,9 @@ var initialize_chart_view = function (dataset, chart_type = "bar_chart", attribu
 			.on('mouseout', tip.hide)
 			.on('click', function(d) {
 				if (CURRENT_SELECTED == d.case_name) {
-					exit_detail_mode();
+					exit_select_mode();
 				} else {
-					enter_detail_mode(d.case_name);
+					enter_select_mode(d.case_name);
 				}
 			});
 
@@ -112,8 +112,8 @@ var update_chart_view = function (dataset, chart_type, attributes) {
 }
 
 
-var enter_detail_chart_view = function (case_name) {
-	exit_detail_chart_view();
+var enter_select_chart_view = function (case_name) {
+	exit_select_chart_view();
 
 	d3.selectAll(".bar")
 		.classed("selected-bar", function(d) {
@@ -133,7 +133,7 @@ var enter_detail_chart_view = function (case_name) {
 }
 
 
-var exit_detail_chart_view = function () {
+var exit_select_chart_view = function () {
 	d3.selectAll(".selected-bar")
 		.classed("bar", true)
 		.classed("selected-bar", false);
