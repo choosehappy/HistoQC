@@ -1,3 +1,4 @@
+import logging
 import os
 import numpy as np
 from skimage import io
@@ -8,7 +9,7 @@ global_holder = {}
 
 
 def getHistogram(s, params):
-    print("\tgetHistogram")
+    logging.info(f"{s['filename']} - \tgetHistogram")
     limit_to_mask = strtobool(params.get("limit_to_mask", True))
     bins = int(params.get("bins", 20))
 
@@ -41,6 +42,7 @@ def computeHistogram(img, bins, mask=-1):
 
 
 def compareToTemplates(s, params):
+    logging.info(f"{s['filename']} - \tcompareToTemplates")
     bins = int(params.get("bins", 20))
     limit_to_mask = strtobool(params.get("limit_to_mask", True))
     if (not global_holder.get("templates", False)):

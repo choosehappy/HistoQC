@@ -1,10 +1,11 @@
+import logging
 import os
 import numpy as np
 from skimage import io, morphology
 
 
 def removeSmallObjects(s,params):
-    print("\tremoveSmallObjects")
+    logging.info(f"{s['filename']} - \tremoveSmallObjects")
     min_size=int(params.get("min_size",64))
     img_reduced=morphology.remove_small_objects(s["img_mask_use"], min_size=min_size)
     img_small= np.invert(img_reduced) &  s["img_mask_use"]
@@ -16,7 +17,7 @@ def removeSmallObjects(s,params):
 
 
 def fillSmallHoles(s,params):
-    print("\tfillSmallHoles")
+    logging.info(f"{s['filename']} - \tfillSmallHoles")
     min_size=int(params.get("min_size",64))
     img_reduced=morphology.remove_small_holes(s["img_mask_use"], min_size=min_size)
     img_small= img_reduced &  np.invert(s["img_mask_use"])

@@ -1,9 +1,10 @@
+import logging
 from distutils.util import strtobool
 from skimage.morphology import remove_small_objects
 
 
 def getBasicStats(s, params):
-    print("\tgetBasicStats")
+    logging.info(f"{s['filename']} - \tgetBasicStats")
     osh = s["os_handle"]
     s.addToPrintList("type", osh.properties["openslide.vendor"])
     s.addToPrintList("levels", osh.properties["openslide.level-count"])
@@ -16,13 +17,14 @@ def getBasicStats(s, params):
 
 
 def getMag(s, params):
-    print("\tgetMag")
+    logging.info(f"{s['filename']} - \tgetMag")
     osh = s["os_handle"]
     mag = osh.properties["openslide.objective-power"]
     if (mag is None or strtobool(
             params.get("confirm", False))):  # TODO: Don't know what previous call returns when not available....
-        # do DL work here
-        print("Unknown magnification for file, need to implement: " + s["filename"])
+        # do analysis work here
+        logging.warning(f"{s['filename']} - Unknown magnification for file")
+        s["warnings"].append(f"{s['filename']} - Unknown magnification for file")
     s.addToPrintList("Magnification", mag)
     return
 

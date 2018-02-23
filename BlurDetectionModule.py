@@ -1,3 +1,4 @@
+import logging
 import os
 
 import skimage
@@ -13,11 +14,12 @@ import numpy as np
 
 
 def identifyBlurryRegions(s, params):
-    print("\tidentifyBlurryRegions")
+    logging.info(f"{s['filename']} - \tidentifyBlurryRegions")
+
     blur_radius = int(params.get("blur_radius", 7))
     blur_threshold = float(params.get("blur_threshold", .02))
 
-    img = s.getImgThumb(5000)
+    img = s.getImgThumb(float(params.get("image_work_size", 5000)))
     img = rgb2gray(img)
     img_laplace = np.abs(skimage.filters.laplace(rgb2gray(img)))
     mask = skimage.filters.gaussian(img_laplace, sigma=blur_radius) <= blur_threshold

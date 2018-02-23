@@ -1,3 +1,4 @@
+import logging
 import os
 import sys
 
@@ -13,7 +14,7 @@ from sklearn.naive_bayes import GaussianNB
 
 
 def identifyPenMarking(s,params):
-    print("\tidentifyPenMarkings")
+    logging.info(f"{s['filename']} - \tidentifyPenMarkings")
 
     blur_radius=int(params.get("blur_radius",7))
     blur_threshold= float(params.get("blur_threshold", .2))
@@ -21,7 +22,7 @@ def identifyPenMarking(s,params):
     fname = params.get("tsv_file", "")
 
     if fname == "":
-        print("tsv_file not set in PenMarkingModule.identifypenmarking")
+        logging.error(f"{s['filename']} - tsv_file not set in PenMarkingModule.identifypenmarking")
         sys.exit(1)
         return
 
