@@ -5,3 +5,10 @@ concept of "img_mask_use" going through iterative refinements
 
 discuss ordering of things in pipeline
 discuss idea of requiring certain things to be completed (e.g., histogram)
+
+
+For example, if some images caused errors because of out of memory, you can rerun pipeline simply by deleting their output directories. they are easily found because they don't have thumbnail images. matlab code to do this:
+
+iterative process:
+1) detect magnification / levels  -- > homogenety, break into smaller groups
+2) detect overall contrast differences and break into groups (light group, dark group) expect same paramters to work for both?

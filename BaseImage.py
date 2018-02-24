@@ -57,9 +57,9 @@ class BaseImage():
                 if dim >= osh.level_count:
                     dim = osh.level_count - 1
                     calling_class=inspect.stack()[1][3]
-                    logging.error(f"{self.s['filename']}: Desired Image Level {dim} does not exist! Instead using level {osh.level_count-1}! Downstream output may not be correct")
+                    logging.error(f"{self.s['filename']}: Desired Image Level {dim+1} does not exist! Instead using level {osh.level_count-1}! Downstream output may not be correct")
                     self.s["warnings"].append(
-                        f"Desired Image Level {dim} does not exist! Instead using level {osh.level_count-1}! Downstream output may not be correct")
+                        f"Desired Image Level {dim+1} does not exist! Instead using level {osh.level_count-1}! Downstream output may not be correct")
                 logging.info(f"{self.s['filename']} - \t\tloading image from level {dim} of size {osh.level_dimensions[dim]}")
                 img = osh.read_region((0, 0), dim, osh.level_dimensions[dim])
                 self.s[key] = np.asarray(img)[:, :, 0:3]

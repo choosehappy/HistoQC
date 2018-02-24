@@ -143,17 +143,19 @@ def byExampleWithFeatures(s, params):
 
     examples = params.get("examples", "")
     if examples == "":
-        logging.error(f"{s['filename']} - No examples provided in ClassificationModule.byExample for ", name, "!!")
+        logging.error(f"{s['filename']} - No examples provided in ClassificationModule.byExample for {name} !!")
         sys.exit(1)
         return
 
     if params.get("features", "") == "":
-        logging.error(f"{s['filename']} - No features provided in ClassificationModule.byExample for ", name, "!!")
+        logging.error(f"{s['filename']} - No features provided in ClassificationModule.byExample for {name} !!")
         sys.exit(1)
         return
 
     with params["lock"]:
         if not params["shared_dict"].get("model_" + name, False):
+            logging.info(f"{s['filename']} - Training model ClassificationModule.byExample:{name}")
+
             model_vals = []
             model_labels = np.empty([0, 1])
 
@@ -172,6 +174,8 @@ def byExampleWithFeatures(s, params):
             clf = RandomForestClassifier(n_jobs=-1)
             clf.fit(model_vals, model_labels.ravel())
             params["shared_dict"]["model_" + name] = clf
+            logging.info(f"{s['filename']} - Training model ClassificationModule.byExample:{name}....done")
+
 
     clf = params["shared_dict"]["model_" + name]
     img = s.getImgThumb(s["image_work_size"])
