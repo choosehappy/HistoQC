@@ -186,6 +186,7 @@ if __name__ == '__main__':
     files = glob.glob(args.input_pattern)
     logging.info(f"Number of files detected by pattern:\t{len(files)}")
     for filei, fname in enumerate(files):
+        fname = os.path.realpath(fname)
         if args.nthreads > 1:
             res = pool.apply_async(worker,
                                    args=(filei, len(files), fname, args, config, processQueue, lock, shared_dict),
