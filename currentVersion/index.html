@@ -73,12 +73,25 @@
 					<option value="8">pen_markings</option>
 				</select>
 			</div>
-			<div id="gallery"></div>
-			<div id="detail-gallery"></div>
+			<div id="exit-image-select-view-btn">
+				<button class="btn btn-outline-secondary">back</button>
+			</div>
+			<div id="overview-gallery"></div>
+			<div id="select-image-view">
+				<div id="select-image-container"></div>
+				<div id="select-candidate-container"></div>
+			</div>
+		</div>
+
+		<div id="overlay-container">
+			<div id="overlay-image">
+				<div id="detail-image-name"><span>file name</span></div>
+				<img src="../../Data/TCGA-BH-A0BQ-01A-01-BSA.bad7666c-e404-4d97-af8d-2335bf33f31c.svs_thumb.png">
+				<div><span>Click to go back to overview</span></div>
+			</div>
 		</div>
 
 		<script type="text/javascript">
-			// var DATA_PATH = "../Data/large/";
 			var DATA_PATH = "./Data/";
 
 			var CURRENT_SELECTED = "";
@@ -88,6 +101,8 @@
 				CURRENT_CASE_LIST = [];
 
 			var TABLE;
+
+			var DETAIL_MODE_FLAG = false;
 
 			var DEFAULT_IMAGE_EXTENSIONS = [
 				"_thumb.png",
@@ -179,7 +194,7 @@
 		</script>
 
 		<script type="text/javascript" src="scripts/data_load.js"></script>
-		<script type="text/javascript" src="scripts/detail_mode.js"></script>
+		<script type="text/javascript" src="scripts/select_mode.js"></script>
 		<script type="text/javascript" src="scripts/table_init.js"></script>
 		<script type="text/javascript" src="scripts/chart_init.js"></script>
 		<script type="text/javascript" src="scripts/image_init.js"></script>
@@ -194,7 +209,7 @@
 					$("#image-view").css("display", "block")
 						.outerHeight($(window).height() - $("header").outerHeight(includeMargin=true) - $("#table-view").outerHeight(includeMargin=true) - $("#chart-view").outerHeight(includeMargin=true));
 					update_chart_view(CURRENT_DATASET, "bar_chart", [CURRENT_ATTRIBUTE])
-				})
+				});
 			});
 
 		</script>

@@ -32,7 +32,6 @@ html {
 
 #image-view {
 	display: none;
-	overflow-y: scroll;
 }
 
 #result-table_wrapper {
@@ -53,11 +52,16 @@ html {
 }
 
 /* img view */
-
+#exit-image-select-view-btn,
 #img-select-button {
 	position: fixed;
 	padding-left: 15px;
 	padding-top: 15px;
+	z-index: 1;
+}
+
+#exit-image-select-view-btn {
+	display: none;
 }
 
 #img-select-button > select {
@@ -65,19 +69,122 @@ html {
 	height: 40px;
 }
 
-#gallery {
-	padding-left: 15px;
+#overview-gallery {
+	height: 100%;
+    display: flex;
+    flex-wrap: wrap;
+   	padding-left: 15px;
 	padding-top: 15px;
 	padding-bottom: 15px;
 	padding-right: 15px;
+	overflow-y: scroll;
 }
 
-#gallery > img {
-	margin-right: 5px;
-	margin-bottom: 5px;
+.overview-image-block {
+    height: 200px;
+    margin-right: 5px;
+    margin-bottom: 5px;
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
 }
 
-#detail-gallery {
+.overview-image-block > img {
+	height: 200px;
+}
+
+.overview-image-block > div {
+    position: absolute;
+    height: 15px;
+    }
+
+.overview-image-block > div > span {
+    font-size: 13px;
+    line-height: 1;
+    display: inherit;
+	color: white;
+    text-shadow: 1px 0px 2px #000;
+}
+
+#select-image-view {
+	height: 100%;
+	width: 100%;
+	align-items: center;
+	padding: 15px;
+	display: none;
+}
+
+
+#select-image-container {
+	order: 0;
+	height: 100%;
+	width: 30%;
+	display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 1px 0px 4px #ccc;
+    margin-right: 30px;
+}
+
+#select-image-container > img {
+	max-height: 100%;
+	max-width: 100%;
+}
+
+
+#select-image-container > div {
+    position: absolute;
+    height: 15px;
+    align-self: flex-end;
+    }
+
+#select-image-container > div > span {
+    font-size: 13px;
+    line-height: 1;
+    display: inherit;
+	color: white;
+    text-shadow: 1px 0px 2px #000;
+}
+
+
+#select-candidate-container {
+	order: 1;
+	height: 100%;
+	width: 70%;
+    display: flex;
+    flex-wrap: wrap;
+	overflow-y: scroll;
+}
+
+.candidate-image-block {
+    height: 150px;
+    margin-right: 5px;
+    margin-bottom: 5px;
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+.candidate-image-block > img {
+	height: 150px;
+}
+
+.candidate-image-block > div {
+    position: absolute;
+    height: 15px;
+    }
+
+.candidate-image-block > div > span {
+    font-size: 13px;
+    line-height: 1;
+    display: inherit;
+	color: white;
+    text-shadow: 1px 0px 2px #000;
+}
+
+/*#select-gallery {
 	display: none;
 	padding-left: 15px;
 	padding-top: 15px;
@@ -100,7 +207,7 @@ html {
 	padding-right: 5px;
 	padding-bottom: 5px;
 }
-
+*/
 /* bar chart */
 
 .axis path,
@@ -178,4 +285,51 @@ html {
 	height: 300px;
 	overflow-y: scroll;
 }
+
+/* overlay image */
+
+#overlay-container {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	z-index: 2;
+	background-color: rgba(0, 0, 0, 0.9);
+	width: 100%;
+	height: 100%;
+	pointer-events: none; /* later control by jquery */
+	opacity: 0; /* later control by jquery */
+}
+
+#overlay-image {
+    position: absolute;
+    top: 2%;
+    left: 2%;
+    width: 96%;
+    height: 96%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+#overlay-image > img {
+	max-width: 100%;
+	max-height: 90%;
+}
+
+#overlay-image > div {
+	height: 5%;
+    width: 100%;
+    background-color: rgba(255,255,255,0.05);
+    border-radius: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#overlay-image > div > span {
+	color: #aaa;
+	text-shadow: 1px 1px 2px #555;
+}
+
 

@@ -17,7 +17,7 @@ var initialize_data_table = function (dataset, table_config = {}) {
 
 	$("#result-table > tbody > tr").on("click", function () {
 		var case_name = $(this).find("td:first-child").text();
-		enter_detail_mode(case_name, true);
+		enter_select_mode(case_name, true);
 	});
 
 	$table.removeClass("display")

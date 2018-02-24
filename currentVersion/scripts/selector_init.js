@@ -21,4 +21,13 @@ var initialize_selector = function (dataset) {
     	CURRENT_IMAGE_TYPE = $(this).val();
         update_image_view(CURRENT_CASE_LIST);
     });
+
+    $("#exit-image-select-view-btn > button").click(function () {
+    	exit_select_mode();
+    });
+
+    $("#overlay-image > img").click(function () {
+    	$("#overlay-container").css("pointer-events", "none")
+    						   .css("opacity", 0);
+    })
 }
