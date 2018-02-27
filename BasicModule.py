@@ -1,6 +1,10 @@
 import logging
+import os
 from distutils.util import strtobool
-from skimage.morphology import remove_small_objects
+from skimage.morphology import remove_small_objects, binary_opening, disk
+from skimage import io, color
+
+import matplotlib.pyplot as plt
 
 
 def getBasicStats(s, params):
@@ -34,6 +38,25 @@ def finalComputations(s, params):
     s.addToPrintList("pixels_to_use", str(len(mask.nonzero()[0])))
 
 
-def finalProcessing(s, params):
-    mask = remove_small_objects(s["img_mask_use"], min_size=int(params.get("area_thresh", "")), in_place=True)
-    s["img_mask_use"] = mask > 0
+def finalProcessingSpur(s, params):
+    logging.info(f"{s['filename']} - \tfinalProcessingSpur")
+    disk_radius = int(params.get("disk_radius ", 25))
+    selem = disk(disk_radius)
+    mask = s["img_mask_use"]
+    mask_opened = binary_opening(mask, selem)
+    mask_spur = ~mask_opened & mask
+    s.addToPrintList("spur_pixels", str(len(mask_spur.nonzero()[0])))
+    io.imsave(s["outdir"] + os.sep + s["filename"] + "_spur.png", mask_spur * 255)
+    s["img_mask_use"] = mask_opened
+
+
+def finalProcessingArea(s, params):
+    logging.info(f"{s['filename']} - \tfinalProcessingArea")
+    mask = s["img_mask_use"]
+    mask_opened = remove_small_objects(mask, min_size=int(params.get("area_thresh", "")))
+    mask_removed_area = ~mask_opened & mask
+
+    s.addToPrintList("spur_pixels", str(len(mask_removed_area.nonzero()[0])))
+    io.imsave(s["outdir"] + os.sep + s["filename"] + "_areathresh.png", mask_removed_area* 255)
+
+    s["img_mask_use"] = mask_opened > 0

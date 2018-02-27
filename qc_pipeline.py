@@ -12,11 +12,11 @@ import warnings
 import BaseImage
 
 # --- setup logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 file = logging.FileHandler(filename="error.log")
 file.setLevel(logging.WARNING)
-file.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+file.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
 logging.getLogger('').addHandler(file)
 
 # --- setup plotting backend
@@ -45,9 +45,7 @@ def worker(filei, nfiles, fname, args, lconfig, processQueue, lock, shared_dict)
         if (args.force):  # remove entirey directory to ensure no old files are present
             shutil.rmtree(fname_outdir)
         else:  # otherwise skip it
-            logging.warning(fname,
-                            " already seems to be processed (output directory exists), skipping. To avoid this behavior use "
-                            "--force")
+            logging.warning(f"{fname} already seems to be processed (output directory exists), skipping. To avoid this behavior use --force")
         return
     makeDir(fname_outdir)
 
@@ -61,7 +59,7 @@ def worker(filei, nfiles, fname, args, lconfig, processQueue, lock, shared_dict)
             process(s, process_params)
             s["completed"].append(process.__name__)
     except Exception as e:
-        e.args += (process.__name__, fname)
+        e.args += (fname,str(e.__traceback__.tb_next.tb_frame.f_code))
         raise e
 
     s["os_handle"] = None  # need to get rid of handle because it can't be pickled
@@ -92,16 +90,18 @@ def worker_callback(s):
 
     csv_report.write("|".join(s["warnings"]) + "\n")
     csv_report.flush()
+    nfiledone += 1
 
 
 def worker_error(e):
-    err_string = " ".join((str(e.__class__), e.__doc__, str(e)))
-    logging.error(e)
-    logging.error(err_string)
-    func = e.args[1]
-    fname = e.args[2]
+    fname = e.args[1]
+    #func = e.args[2]
+    func=""
+    err_string = " ".join((str(e.__class__), e.__doc__, str(e), func))
+    err_string = err_string.replace("\n"," ")
     logging.error(f"{fname} - \t{func} - Error analyzing file (skipping): \t {err_string}")
     failed.append((fname, err_string))
+
 
 def load_pipeline(lconfig):
     lprocessQueue = []
@@ -154,7 +154,7 @@ if __name__ == '__main__':
     parser.add_argument('-f', '--force', help="force overwriting of existing files", action="store_true")
     parser.add_argument('-b', '--batch', help="break results file into subfiles of this size", type=int,
                         default=float("inf"))
-    parser.add_argument('-n', '--nthreads', help="number of threads to launch", type=int, default=2)
+    parser.add_argument('-n', '--nthreads', help="number of threads to launch", type=int, default=1)
     args = parser.parse_args()
 
     config = configparser.ConfigParser()
@@ -184,9 +184,12 @@ if __name__ == '__main__':
         csv_report = open(args.outdir + os.sep + "results.tsv", overwrite_flag, buffering=1)
 
     files = glob.glob(args.input_pattern)
+    logging.info(f"Number of files detected by pattern:\t{len(files)}")
     for filei, fname in enumerate(files):
+        fname = os.path.realpath(fname)
         if args.nthreads > 1:
-            res = pool.apply_async(worker, args=(filei, len(files), fname, args, config, processQueue, lock, shared_dict),
+            res = pool.apply_async(worker,
+                                   args=(filei, len(files), fname, args, config, processQueue, lock, shared_dict),
                                    callback=worker_callback, error_callback=worker_error)
         else:
             try:
@@ -201,10 +204,13 @@ if __name__ == '__main__':
         pool.join()
 
     csv_report.close()
-    shutil.move("error.log", args.outdir + os.sep + "error.log")  # move error log to output directory
+
 
     logging.info("------------Done---------\n")
     logging.info("These images failed (available also in error.log), warnings are listed in warnings column in output:")
 
     for fname, error in failed:
-        logging.info(fname, error, sep="\t")
+        logging.info(f"{fname}\t{error}")
+
+    logging.shutdown()
+    shutil.copy("error.log", args.outdir + os.sep + "error.log")  # copy error log to output directory. tried move but the filehandle is never released by logger no matter how hard i try
