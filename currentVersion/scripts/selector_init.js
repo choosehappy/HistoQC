@@ -17,8 +17,18 @@ var initialize_selector = function (dataset) {
 		update_chart_view(CURRENT_DATASET, "bar_chart", CURRENT_ATTRIBUTE);
 	});
 
-    $("#img-select-button > select").change(function () {
+    $("#img-select").change(function () {
     	CURRENT_IMAGE_TYPE = $(this).val();
+        update_image_view(CURRENT_CASE_LIST);
+    });
+
+    $("#comparison-select").change(function () {
+    	CURRENT_COMPARE_TYPE = $(this).val();
+    	if (CURRENT_COMPARE_TYPE != -1) {
+    		$("#comparison-select > option").last().text("none");
+    	} else {
+    		$("#comparison-select > option").last().text("compare ...");
+    	}
         update_image_view(CURRENT_CASE_LIST);
     });
 
@@ -26,8 +36,8 @@ var initialize_selector = function (dataset) {
     	exit_select_mode();
     });
 
-    $("#overlay-image > img").click(function () {
+    $("#overlay-image > figure > img").click(function () {
     	$("#overlay-container").css("pointer-events", "none")
     						   .css("opacity", 0);
-    })
+    });
 }

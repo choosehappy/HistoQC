@@ -1,5 +1,5 @@
-html {
-  line-height: 1.15; /* same as bootstrap.css */
+html, body {
+  line-height: 1; /* same as bootstrap.css */
 }
 
 .btn-outline-secondary {
@@ -64,10 +64,25 @@ html {
 	display: none;
 }
 
-#img-select-button > select {
+#img-select,
+#comparison-select,
+#chart-select {
 	border-width: 1.5px;
 	height: 40px;
+	color: #898f94;
+	border-color: #898f94;
+    text-shadow: 0.5px 0.5px 1px #000;
+    font-size: 18px;
+/*    box-shadow: 0px 0px 2px #555;*/
 }
+
+#img-select:hover,
+#comparison-select:hover,
+#chart-select:hover {
+	background-color: #898f94;
+	color: #fff;
+}
+
 
 #overview-gallery {
 	height: 100%;
@@ -81,6 +96,7 @@ html {
 }
 
 .overview-image-block {
+	min-width: 120px;
     height: 200px;
     margin-right: 5px;
     margin-bottom: 5px;
@@ -88,16 +104,20 @@ html {
     display: flex;
     align-items: flex-end;
     justify-content: center;
+	box-shadow: 1px 1px 2px #999;
 }
 
 .overview-image-block > img {
 	height: 200px;
 }
 
+.overview-image-block > img:nth-child(2) {
+	margin-left: 1px;
+}
+
 .overview-image-block > div {
     position: absolute;
-    height: 15px;
-    }
+}
 
 .overview-image-block > div > span {
     font-size: 13px;
@@ -184,30 +204,6 @@ html {
     text-shadow: 1px 0px 2px #000;
 }
 
-/*#select-gallery {
-	display: none;
-	padding-left: 15px;
-	padding-top: 15px;
-	padding-right: 15px;
-}
-
-#exibit-img {
-	margin-right: 5px;
-	margin-bottom: 5px;
-}
-
-#detail-list {
-	display: flex;
-	flex-wrap: wrap;
-  position: relative;
-  float: right;
-}
-
-#detail-list > img {
-	padding-right: 5px;
-	padding-bottom: 5px;
-}
-*/
 /* bar chart */
 
 .axis path,
@@ -215,6 +211,7 @@ html {
 	fill: none;
 	stroke: #000;
 	shape-rendering: crispEdges;
+    stroke-opacity: 0.1;
 }
 
 .selected-bar {
@@ -229,8 +226,14 @@ html {
 	fill: orangered;
 }
 
+.y.axis path,
 .x.axis path {
 	display: none;
+}
+
+.x.axis > g > text,
+.y.axis > g > text {
+	font-size: 15px;
 }
 
 .d3-tip {
@@ -240,6 +243,7 @@ html {
 	background: rgba(0, 0, 0, 0.8);
 	color: #fff;
 	border-radius: 3px;
+	z-index: 2;
 }
 
 /* Creates a small triangle extender for the tooltip */
@@ -289,6 +293,7 @@ html {
 /* overlay image */
 
 #overlay-container {
+	transition: opacity .5s;
 	position: absolute;
 	top: 0px;
 	left: 0px;
@@ -312,12 +317,33 @@ html {
     align-items: center;
 }
 
-#overlay-image > img {
+#overlay-image > figure {
+	/*background-image: url("../Data/output/68235.svs/68235.svs_mask_use.png");*/
+	background-image: url("../../../Data/TCGA-BH-A0BQ-01A-01-BSA.bad7666c-e404-4d97-af8d-2335bf33f31c.svs_thumb.png");
+	background-position: 50% 50%;
 	max-width: 100%;
 	max-height: 90%;
+	overflow: hidden;
+	cursor: zoom-in;
+	margin: 0;
+	display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
-#overlay-image > div {
+#overlay-image > figure > img {
+	transition: opacity .5s;
+	max-width: 100%;
+	max-height: 100%;
+}
+
+#overlay-image > figure > img:hover{
+	opacity: 0;
+}
+
+#detail-image-name,
+#detail-instruction-container {
 	height: 5%;
     width: 100%;
     background-color: rgba(255,255,255,0.05);
@@ -327,7 +353,8 @@ html {
     align-items: center;
 }
 
-#overlay-image > div > span {
+#detail-image-name > span,
+#detail-instruction-container > span {
 	color: #aaa;
 	text-shadow: 1px 1px 2px #555;
 }

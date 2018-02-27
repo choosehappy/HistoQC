@@ -13,7 +13,7 @@ var initialize_chart_view = function (dataset, chart_type = "bar_chart", attribu
 			};
 		});
 
-		var chart_margin = {top: 10, right: 0, bottom: 60, left: 0};
+		var chart_margin = {top: 10, right: 60, bottom: 60, left: 0};
 		if (data.length > 50) {
 			chart_margin.bottom = 20;
 		}
@@ -33,9 +33,12 @@ var initialize_chart_view = function (dataset, chart_type = "bar_chart", attribu
 
 		var yAxis = d3.svg.axis()
 			.scale(y)
-			.ticks(0)
-			.orient("left");
-
+			.ticks(4)
+			.orient("right")
+		    .innerTickSize(-chart_width)
+		    .outerTickSize(0)
+		    .tickPadding(10);
+		
 		var tip = d3.tip()
 			.attr('class', 'd3-tip')
 			.offset([-10, 0])
@@ -73,6 +76,11 @@ var initialize_chart_view = function (dataset, chart_type = "bar_chart", attribu
 				.selectAll("text")
 				.remove();
 		}
+
+		svg.append("g")
+			.attr("class", "y axis")
+			.attr("transform", "translate(" + chart_width + ", 0)")
+			.call(yAxis);
 
 		svg.selectAll(".bar")
 			.data(data)

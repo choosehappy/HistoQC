@@ -29,7 +29,18 @@ var data_loading = function () {
 			}
 			return d;
 		});
+
+		for (var i = 0; i < CURRENT_DATASET.length; i ++) {
+			CASE_DICT[CURRENT_DATASET[i]["filename"]] = {};
+			CASE_DICT[CURRENT_DATASET[i]["filename"]]["index"] = i;
+			for (var index in FEATURES_TO_MAP) {
+				CASE_DICT[CURRENT_DATASET[i]["filename"]][FEATURES_TO_MAP[index]] = CURRENT_DATASET[i][FEATURES_TO_MAP[index]];
+			}
+		}
+
 		CURRENT_CASE_LIST = CURRENT_DATASET.map(function(d){return d["filename"];});
+
+
 
 		console.log("Data loaded.");
 
