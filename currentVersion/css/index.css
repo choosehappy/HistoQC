@@ -1,5 +1,10 @@
-html {
-  line-height: 1.15; /* same as bootstrap.css */
+html, body {
+  line-height: 1; /* same as bootstrap.css */
+}
+
+.px-md-4 {
+	padding-left: 30px!important;
+	padding-right: 30px!important;
 }
 
 .btn-outline-secondary {
@@ -64,16 +69,31 @@ html {
 	display: none;
 }
 
-#img-select-button > select {
+#img-select,
+#comparison-select,
+#chart-select {
 	border-width: 1.5px;
 	height: 40px;
+	color: #898f94;
+	border-color: #898f94;
+	text-shadow: 0.5px 0.5px 1px #000;
+	font-size: 18px;
+/*    box-shadow: 0px 0px 2px #555;*/
 }
+
+#img-select:hover,
+#comparison-select:hover,
+#chart-select:hover {
+	background-color: #898f94;
+	color: #fff;
+}
+
 
 #overview-gallery {
 	height: 100%;
-    display: flex;
-    flex-wrap: wrap;
-   	padding-left: 15px;
+	display: flex;
+	flex-wrap: wrap;
+	padding-left: 15px;
 	padding-top: 15px;
 	padding-bottom: 15px;
 	padding-right: 15px;
@@ -81,30 +101,35 @@ html {
 }
 
 .overview-image-block {
-    height: 200px;
-    margin-right: 5px;
-    margin-bottom: 5px;
-    position: relative;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
+	min-width: 120px;
+	height: 200px;
+	margin-right: 5px;
+	margin-bottom: 5px;
+	position: relative;
+	display: flex;
+	align-items: flex-end;
+	justify-content: center;
+	box-shadow: 1px 1px 2px #999;
 }
 
 .overview-image-block > img {
 	height: 200px;
 }
 
+.overview-image-block > img:nth-child(2) {
+	margin-left: 1px;
+}
+
 .overview-image-block > div {
-    position: absolute;
-    height: 15px;
-    }
+	position: absolute;
+}
 
 .overview-image-block > div > span {
-    font-size: 13px;
-    line-height: 1;
-    display: inherit;
+	font-size: 13px;
+	line-height: 1;
+	display: inherit;
 	color: white;
-    text-shadow: 1px 0px 2px #000;
+	text-shadow: 1px 0px 2px #000;
 }
 
 #select-image-view {
@@ -121,10 +146,10 @@ html {
 	height: 100%;
 	width: 30%;
 	display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 1px 0px 4px #ccc;
-    margin-right: 30px;
+	align-items: center;
+	justify-content: center;
+	box-shadow: 1px 0px 4px #ccc;
+	margin-right: 30px;
 }
 
 #select-image-container > img {
@@ -134,17 +159,17 @@ html {
 
 
 #select-image-container > div {
-    position: absolute;
-    height: 15px;
-    align-self: flex-end;
-    }
+	position: absolute;
+	height: 15px;
+	align-self: flex-end;
+	}
 
 #select-image-container > div > span {
-    font-size: 13px;
-    line-height: 1;
-    display: inherit;
+	font-size: 13px;
+	line-height: 1;
+	display: inherit;
 	color: white;
-    text-shadow: 1px 0px 2px #000;
+	text-shadow: 1px 0px 2px #000;
 }
 
 
@@ -152,19 +177,19 @@ html {
 	order: 1;
 	height: 100%;
 	width: 70%;
-    display: flex;
-    flex-wrap: wrap;
+	display: flex;
+	flex-wrap: wrap;
 	overflow-y: scroll;
 }
 
 .candidate-image-block {
-    height: 150px;
-    margin-right: 5px;
-    margin-bottom: 5px;
-    position: relative;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
+	height: 150px;
+	margin-right: 5px;
+	margin-bottom: 5px;
+	position: relative;
+	display: flex;
+	align-items: flex-end;
+	justify-content: center;
 }
 
 .candidate-image-block > img {
@@ -172,42 +197,18 @@ html {
 }
 
 .candidate-image-block > div {
-    position: absolute;
-    height: 15px;
-    }
+	position: absolute;
+	height: 15px;
+	}
 
 .candidate-image-block > div > span {
-    font-size: 13px;
-    line-height: 1;
-    display: inherit;
+	font-size: 13px;
+	line-height: 1;
+	display: inherit;
 	color: white;
-    text-shadow: 1px 0px 2px #000;
+	text-shadow: 1px 0px 2px #000;
 }
 
-/*#select-gallery {
-	display: none;
-	padding-left: 15px;
-	padding-top: 15px;
-	padding-right: 15px;
-}
-
-#exibit-img {
-	margin-right: 5px;
-	margin-bottom: 5px;
-}
-
-#detail-list {
-	display: flex;
-	flex-wrap: wrap;
-  position: relative;
-  float: right;
-}
-
-#detail-list > img {
-	padding-right: 5px;
-	padding-bottom: 5px;
-}
-*/
 /* bar chart */
 
 .axis path,
@@ -215,6 +216,7 @@ html {
 	fill: none;
 	stroke: #000;
 	shape-rendering: crispEdges;
+	stroke-opacity: 0.1;
 }
 
 .selected-bar {
@@ -229,8 +231,14 @@ html {
 	fill: orangered;
 }
 
+.y.axis path,
 .x.axis path {
 	display: none;
+}
+
+.x.axis > g > text,
+.y.axis > g > text {
+	font-size: 15px;
 }
 
 .d3-tip {
@@ -240,6 +248,7 @@ html {
 	background: rgba(0, 0, 0, 0.8);
 	color: #fff;
 	border-radius: 3px;
+	z-index: 2;
 }
 
 /* Creates a small triangle extender for the tooltip */
@@ -289,6 +298,7 @@ html {
 /* overlay image */
 
 #overlay-container {
+	transition: opacity .5s;
 	position: absolute;
 	top: 0px;
 	left: 0px;
@@ -301,35 +311,97 @@ html {
 }
 
 #overlay-image {
-    position: absolute;
-    top: 2%;
-    left: 2%;
-    width: 96%;
-    height: 96%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+	position: absolute;
+	top: 2%;
+	left: 2%;
+	width: 96%;
+	height: 96%;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
 }
 
-#overlay-image > img {
+#overlay-image > figure {
+	/*background-image: url("../Data/output/68235.svs/68235.svs_mask_use.png");*/
+	background-image: url("../../../Data/TCGA-BH-A0BQ-01A-01-BSA.bad7666c-e404-4d97-af8d-2335bf33f31c.svs_thumb.png");
+	background-position: 50% 50%;
 	max-width: 100%;
 	max-height: 90%;
+	overflow: hidden;
+	cursor: zoom-in;
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
 }
 
-#overlay-image > div {
+#overlay-image > figure > img {
+	transition: opacity .5s;
+	max-width: 100%;
+	max-height: 100%;
+}
+
+#overlay-image > figure > img:hover{
+	opacity: 0;
+}
+
+#detail-image-name,
+#detail-instruction-container {
 	height: 5%;
-    width: 100%;
-    background-color: rgba(255,255,255,0.05);
-    border-radius: 5px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+	width: 100%;
+	background-color: rgba(255,255,255,0.05);
+	border-radius: 5px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
 }
 
-#overlay-image > div > span {
+#detail-image-name > span,
+#detail-instruction-container > span {
 	color: #aaa;
 	text-shadow: 1px 1px 2px #555;
 }
+
+
+/*editable*/
+
+.my-input-class {
+	padding: 3px 6px;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+}
+.my-confirm-class {
+	padding: 3px 6px;
+	font-size: 12px;
+	color: white;
+	text-align: center;
+	vertical-align: middle;
+	border-radius: 4px;
+	background-color: #337ab7;
+	text-decoration: none;
+}
+.my-cancel-class {
+	padding: 3px 6px;
+	font-size: 12px;
+	color: white;
+	text-align: center;
+	vertical-align: middle;
+	border-radius: 4px;
+	background-color: #a94442;
+	text-decoration: none;
+}
+
+/*table*/
+
+table.dataTable {
+	margin-top: 0px!important;
+}
+
+.table-content {
+	padding-right: 0px;
+}
+
 
 

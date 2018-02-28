@@ -10,10 +10,10 @@
 
 		<!-- Bootstrap Core CSS -->
 		<link rel="stylesheet" type="text/css" href="libs/bootstrap-4.0.0-dist/css/bootstrap.min.css"/>
-		<!-- Custom CSS -->
-		<link rel="stylesheet" type="text/css" href="css/index.css"/>
 		<!-- DataTables CSS -->
 		<link rel="stylesheet" type="text/css" href="libs/DataTables/datatables.min.css">
+		<!-- Custom CSS -->
+		<link rel="stylesheet" type="text/css" href="css/index.css"/>
 
 		<!-- d3js Core JavaScript -->
 		<script type="text/javascript" src="libs/d3-3.5.17/d3.min.js"></script>
@@ -24,10 +24,11 @@
 		<script type="text/javascript" src="libs/bootstrap-4.0.0-dist/js/bootstrap.min.js"></script>
 		<!-- DataTables JavaScript -->
 		<script type="text/javascript" src="libs/DataTables/datatables.min.js"></script>
+	    <script type="text/javascript" src="libs/DataTables/dataTables.cellEdit.js"></script>
 	</head>
 
 	<body>
-		<header class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-white border-bottom">
+		<header class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 bg-white border-bottom">
 			<h5 class="my-0 mr-md-auto font-weight-normal"><strong>HistoQc</strong></h5>
 			<nav class="my-2 my-md-0 mr-md-3">
 				<span id="dataset-tag" class="p-4 font-weight-light">Current Dataset: reslut.tsv</span>
@@ -60,7 +61,7 @@
 		</div>
 
 		<div id="image-view" class="m-container p-3 bg-light">
-			<div id="img-select-button">
+			<div id="img-select-button" class="btn-group">
 				<select id="img-select" class="btn btn-outline-secondary">
 					<option value="0" selected>thumb</option>
 					<option value="1">mask_use</option>
@@ -71,6 +72,18 @@
 					<option value="6">dark</option>
 					<option value="7">hist</option>
 					<option value="8">pen_markings</option>
+				</select>
+				<select id="comparison-select" class="btn btn-outline-secondary">
+					<option value="0">thumb</option>
+					<option value="1">mask_use</option>
+					<option value="2">nonwhite</option>
+					<option value="3">small_fill</option>
+					<option value="4">small_remove</option>
+					<option value="5">blurry</option>
+					<option value="6">dark</option>
+					<option value="7">hist</option>
+					<option value="8">pen_markings</option>
+					<option value="-1" selected>compare ...</option>
 				</select>
 			</div>
 			<div id="exit-image-select-view-btn">
@@ -86,133 +99,21 @@
 		<div id="overlay-container">
 			<div id="overlay-image">
 				<div id="detail-image-name"><span>file name</span></div>
-				<img src="../../Data/TCGA-BH-A0BQ-01A-01-BSA.bad7666c-e404-4d97-af8d-2335bf33f31c.svs_thumb.png">
-				<div><span>Click to go back to overview</span></div>
+<!-- 				<figure class="zoom"><img src="./Data/output/68235.svs/68235.svs_mask_use.png"></figure>
+ -->				<figure class="zoom"><img src="../../Data/TCGA-BH-A0BQ-01A-01-BSA.bad7666c-e404-4d97-af8d-2335bf33f31c.svs_thumb.png"></figure>
+				<div id="detail-instruction-container"><span>Click to go back to overview</span></div>
 			</div>
 		</div>
 
-		<script type="text/javascript">
-			var DATA_PATH = "./Data/";
-
-			var CURRENT_SELECTED = "";
-			var CURRENT_IMAGE_TYPE = 0;
-
-			var CURRENT_DATASET = [],
-				CURRENT_CASE_LIST = [];
-
-			var TABLE;
-
-			var DETAIL_MODE_FLAG = false;
-
-			var DEFAULT_IMAGE_EXTENSIONS = [
-				"_thumb.png",
-				"_mask_use.png",
-				"_nonwhite.png",
-				"_small_fill.png",
-				"_small_remove.png",
-				"_blurry.png",
-				"_dark.png",
-				"_hist.png",
-				"_pen_markings.png"
-			];
-
-			var DEFAULT_TABLE_COLUMNS = [
-				"filename",
-				"height",
-				"width"
-			];
-
-			var CURRENT_ATTRIBUTE = "percent_dark_tissue";
-
-			var DATA_TABLE_CONFIG = {
-				paging: true,
-				// pageLength: 2,
-				scrollY: "135px",
-				scrollX: true,
-				scroller: true,
-				scrollCollapse: true,
-				colReorder: true,
-				select: true,
-				dom: '<"table-content col-10"t><"table-control col-2"B>', //Blfrip
-				keys: true,
-				// columnDefs: [
-				// 	{
-				// 		targets: DEFAULT_TABLE_COLUMNS,
-				// 		visible: true
-				// 	}, 
-				// 	{
-				// 		targets: "_all",
-				// 		visible: false
-				// 	}
-				// ],
-				// fixedColumns: {
-				// 	leftColumns: 1
-				// },
-				buttons: [
-					{
-						extend: 'copy',
-						text: 'Copy to Clipboard',
-						exportOptions: {
-							columns: ':visible'
-						}
-					},
-					{
-						extend: 'csv',
-						text: 'Save',
-						fieldSeparator: "\t",
-						fieldBoundary: "",
-						filename: "results_revised",
-						extension: ".tsv"
-					},
-					{
-						text: 'Delete Rows',
-						action: function(e, dt, node, config) {
-							var indices = $('#result-table').DataTable().rows('.selected').indexes();
-							$('#result-table').DataTable().rows('.selected').remove().draw(false);
-
-							for (var i = 0; i < indices.length; i ++) {
-								CURRENT_DATASET.splice(indices[i], 1);
-							}
-							CURRENT_CASE_LIST = CURRENT_DATASET.map(function(d){return d["filename"];});
-							exit_detail_mode();
-
-							update_chart_view(CURRENT_DATASET, "bar_chart", [CURRENT_ATTRIBUTE]);
-							update_image_view(CURRENT_CASE_LIST);
-						}
-					},
-					{
-						text: 'Deselect All',
-						action: function(e, dt, node, config) {
-							$('#result-table').DataTable().rows('.selected').deselect();
-							exit_detail_mode();
-						}
-					},
-					'colvis'
-				]
-			};
-
-		</script>
-
+		<script type="text/javascript" src="scripts/global_config.js"></script>
 		<script type="text/javascript" src="scripts/data_load.js"></script>
 		<script type="text/javascript" src="scripts/select_mode.js"></script>
 		<script type="text/javascript" src="scripts/table_init.js"></script>
 		<script type="text/javascript" src="scripts/chart_init.js"></script>
 		<script type="text/javascript" src="scripts/image_init.js"></script>
 		<script type="text/javascript" src="scripts/selector_init.js"></script>
-
-		<script type="text/javascript">
-			$(document).ready(function () {
-				console.log("document ready.")
-				$("#file-input").change(data_loading);
-
-				$(window).resize(function () {
-					$("#image-view").css("display", "block")
-						.outerHeight($(window).height() - $("header").outerHeight(includeMargin=true) - $("#table-view").outerHeight(includeMargin=true) - $("#chart-view").outerHeight(includeMargin=true));
-					update_chart_view(CURRENT_DATASET, "bar_chart", [CURRENT_ATTRIBUTE])
-				});
-			});
-
-		</script>
+		<!-- programming begin -->
+		<script type="text/javascript" src="scripts/index.js"></script>
 
 	</body>
 

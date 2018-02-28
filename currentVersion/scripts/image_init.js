@@ -2,7 +2,7 @@ var initialize_image_view = function(case_list){
     $("#overview-gallery > *").remove();
     var $div = $("#overview-gallery");
     for (dir = 0; dir < case_list.length; dir++) {
-        $div.append(generate_img_block("overview-image-block", generate_img_src(case_list[dir], CURRENT_IMAGE_TYPE), case_list[dir]));
+        $div.append(generate_img_block("overview-image-block", generate_img_src(case_list[dir], CURRENT_IMAGE_TYPE), case_list[dir], CURRENT_COMPARE_TYPE));
     }
  
     $div.children("div").children("img").click(function(){
@@ -13,7 +13,6 @@ var initialize_image_view = function(case_list){
 
 
 var update_image_view = function(case_list){
-    $("#overview-gallery > *").remove();
     initialize_image_view(case_list);
 }
 
@@ -33,7 +32,7 @@ var enter_select_image_view = function(dir){
 
     $div = $("#select-candidate-container");
     for (i = 0; i < DEFAULT_IMAGE_EXTENSIONS.length; i++) {
-        $div.append(generate_img_block("candidate-image-block", generate_img_src(dir, i), DEFAULT_IMAGE_EXTENSIONS[i]));
+        $div.append(generate_img_block("candidate-image-block", generate_img_src(dir, i), DEFAULT_IMAGE_EXTENSIONS[i], -1));
     }
 
 	$("#select-candidate-container > div > img").click(function(){
@@ -67,26 +66,45 @@ var calculate_height = function ($div) {
 }
 
 
-var generate_img_block = function(blk_class, file_path, file_name) {
-    return  " \
-            <div class='" + blk_class + "'> \
-                <img src=" + file_path + " /> \
-                <div><span>" + file_name + "</span></div> \
-            </div> \
-            ";
+var generate_img_block = function(blk_class, file_path, file_name, compare_type) {
+    if (compare_type == -1) {
+        return  " \
+                <div class='" + blk_class + "'> \
+                    <img src=" + file_path + " /> \
+                    <div><span>" + file_name + "</span></div> \
+                </div> \
+                ";        
+    } else {
+        return  " \
+                <div class='" + blk_class + "'> \
+                    <img src=" + file_path + " /> \
+                    <img src=" + generate_img_src(file_name, compare_type) + " /> \
+                    <div><span>" + file_name + "</span></div> \
+                </div> \
+                ";                
+    }
 }
 
 
 var generate_img_src = function(file_name, img_type_index) {
-	return "'" + DATA_PATH + file_name + "/" + file_name + DEFAULT_IMAGE_EXTENSIONS[img_type_index] + "'"
+    var outdir = CASE_DICT[file_name]["outdir"];
+	return "'" + DATA_PATH + outdir.split('\\')[0] + "/" + file_name + "/" + file_name + DEFAULT_IMAGE_EXTENSIONS[img_type_index] + "'"
 }
 
 
 var enter_detail_image_view = function(src) {
     src_list = src.split('/');
     $("#detail-image-name > span").text(src_list[src_list.length-2]);
-    $("#overlay-image > img").attr("src", src);
+    $("#overlay-image > figure").css("width", "auto")
+        .css("background-image", "url(" + src + ")");
+    $("#overlay-image > figure > img").attr("src", src);
     $("#overlay-container").css("pointer-events", "all")
         .css("opacity", 1);
-
+    var figure_height = $("#overlay-image > figure").height(),
+        figure_width = $("#overlay-image > figure").width(),
+        img_height = $("#overlay-image > figure > img").height(),
+        img_width = $("#overlay-image > figure > img").width();
+    if (figure_height < img_height) {
+        $("#overlay-image > figure").width(img_width * (figure_height / img_height));
+    }
 }
