@@ -2,6 +2,11 @@ html, body {
   line-height: 1; /* same as bootstrap.css */
 }
 
+.px-md-4 {
+	padding-left: 30px!important;
+	padding-right: 30px!important;
+}
+
 .btn-outline-secondary {
 	border-width: 1.5px;
 }
@@ -71,8 +76,8 @@ html, body {
 	height: 40px;
 	color: #898f94;
 	border-color: #898f94;
-    text-shadow: 0.5px 0.5px 1px #000;
-    font-size: 18px;
+	text-shadow: 0.5px 0.5px 1px #000;
+	font-size: 18px;
 /*    box-shadow: 0px 0px 2px #555;*/
 }
 
@@ -86,9 +91,9 @@ html, body {
 
 #overview-gallery {
 	height: 100%;
-    display: flex;
-    flex-wrap: wrap;
-   	padding-left: 15px;
+	display: flex;
+	flex-wrap: wrap;
+	padding-left: 15px;
 	padding-top: 15px;
 	padding-bottom: 15px;
 	padding-right: 15px;
@@ -97,13 +102,13 @@ html, body {
 
 .overview-image-block {
 	min-width: 120px;
-    height: 200px;
-    margin-right: 5px;
-    margin-bottom: 5px;
-    position: relative;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
+	height: 200px;
+	margin-right: 5px;
+	margin-bottom: 5px;
+	position: relative;
+	display: flex;
+	align-items: flex-end;
+	justify-content: center;
 	box-shadow: 1px 1px 2px #999;
 }
 
@@ -116,15 +121,15 @@ html, body {
 }
 
 .overview-image-block > div {
-    position: absolute;
+	position: absolute;
 }
 
 .overview-image-block > div > span {
-    font-size: 13px;
-    line-height: 1;
-    display: inherit;
+	font-size: 13px;
+	line-height: 1;
+	display: inherit;
 	color: white;
-    text-shadow: 1px 0px 2px #000;
+	text-shadow: 1px 0px 2px #000;
 }
 
 #select-image-view {
@@ -141,10 +146,10 @@ html, body {
 	height: 100%;
 	width: 30%;
 	display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 1px 0px 4px #ccc;
-    margin-right: 30px;
+	align-items: center;
+	justify-content: center;
+	box-shadow: 1px 0px 4px #ccc;
+	margin-right: 30px;
 }
 
 #select-image-container > img {
@@ -154,17 +159,17 @@ html, body {
 
 
 #select-image-container > div {
-    position: absolute;
-    height: 15px;
-    align-self: flex-end;
-    }
+	position: absolute;
+	height: 15px;
+	align-self: flex-end;
+	}
 
 #select-image-container > div > span {
-    font-size: 13px;
-    line-height: 1;
-    display: inherit;
+	font-size: 13px;
+	line-height: 1;
+	display: inherit;
 	color: white;
-    text-shadow: 1px 0px 2px #000;
+	text-shadow: 1px 0px 2px #000;
 }
 
 
@@ -172,19 +177,19 @@ html, body {
 	order: 1;
 	height: 100%;
 	width: 70%;
-    display: flex;
-    flex-wrap: wrap;
+	display: flex;
+	flex-wrap: wrap;
 	overflow-y: scroll;
 }
 
 .candidate-image-block {
-    height: 150px;
-    margin-right: 5px;
-    margin-bottom: 5px;
-    position: relative;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
+	height: 150px;
+	margin-right: 5px;
+	margin-bottom: 5px;
+	position: relative;
+	display: flex;
+	align-items: flex-end;
+	justify-content: center;
 }
 
 .candidate-image-block > img {
@@ -192,16 +197,16 @@ html, body {
 }
 
 .candidate-image-block > div {
-    position: absolute;
-    height: 15px;
-    }
+	position: absolute;
+	height: 15px;
+	}
 
 .candidate-image-block > div > span {
-    font-size: 13px;
-    line-height: 1;
-    display: inherit;
+	font-size: 13px;
+	line-height: 1;
+	display: inherit;
 	color: white;
-    text-shadow: 1px 0px 2px #000;
+	text-shadow: 1px 0px 2px #000;
 }
 
 /* bar chart */
@@ -211,7 +216,7 @@ html, body {
 	fill: none;
 	stroke: #000;
 	shape-rendering: crispEdges;
-    stroke-opacity: 0.1;
+	stroke-opacity: 0.1;
 }
 
 .selected-bar {
@@ -306,15 +311,15 @@ html, body {
 }
 
 #overlay-image {
-    position: absolute;
-    top: 2%;
-    left: 2%;
-    width: 96%;
-    height: 96%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+	position: absolute;
+	top: 2%;
+	left: 2%;
+	width: 96%;
+	height: 96%;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
 }
 
 #overlay-image > figure {
@@ -327,9 +332,9 @@ html, body {
 	cursor: zoom-in;
 	margin: 0;
 	display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
 }
 
 #overlay-image > figure > img {
@@ -345,12 +350,12 @@ html, body {
 #detail-image-name,
 #detail-instruction-container {
 	height: 5%;
-    width: 100%;
-    background-color: rgba(255,255,255,0.05);
-    border-radius: 5px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+	width: 100%;
+	background-color: rgba(255,255,255,0.05);
+	border-radius: 5px;
+	display: flex;
+	justify-content: center;
+	align-items: center;
 }
 
 #detail-image-name > span,
@@ -358,5 +363,45 @@ html, body {
 	color: #aaa;
 	text-shadow: 1px 1px 2px #555;
 }
+
+
+/*editable*/
+
+.my-input-class {
+	padding: 3px 6px;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+}
+.my-confirm-class {
+	padding: 3px 6px;
+	font-size: 12px;
+	color: white;
+	text-align: center;
+	vertical-align: middle;
+	border-radius: 4px;
+	background-color: #337ab7;
+	text-decoration: none;
+}
+.my-cancel-class {
+	padding: 3px 6px;
+	font-size: 12px;
+	color: white;
+	text-align: center;
+	vertical-align: middle;
+	border-radius: 4px;
+	background-color: #a94442;
+	text-decoration: none;
+}
+
+/*table*/
+
+table.dataTable {
+	margin-top: 0px!important;
+}
+
+.table-content {
+	padding-right: 0px;
+}
+
 
 

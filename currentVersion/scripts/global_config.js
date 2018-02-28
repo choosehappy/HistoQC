@@ -25,10 +25,9 @@ var DEFAULT_IMAGE_EXTENSIONS = [
 	"_pen_markings.png"
 ];
 
-var DEFAULT_TABLE_COLUMNS = [
-	"filename",
-	"height",
-	"width"
+var DEFAULT_HIDDEN_COLUMNS = [
+	"outdir",
+	"comment"
 ];
 
 var CURRENT_ATTRIBUTE = "percent_dark_tissue";
@@ -36,31 +35,27 @@ var CURRENT_ATTRIBUTE = "percent_dark_tissue";
 var DATA_TABLE_CONFIG = {
 	paging: true,
 	// pageLength: 2,
-	scrollY: "135px",
+	scrollY: "200px",
 	scrollX: true,
 	scroller: true,
 	scrollCollapse: true,
 	colReorder: true,
 	select: true,
-	dom: '<"table-content col-10"t><"table-control col-2"B>', //Blfrip
+	dom: '<"table-content col-11"t><"table-control col-1"B>', //Blfrip
 	keys: true,
-	// columnDefs: [
-	// 	{
-	// 		targets: DEFAULT_TABLE_COLUMNS,
-	// 		visible: true
-	// 	}, 
-	// 	{
-	// 		targets: "_all",
-	// 		visible: false
-	// 	}
-	// ],
+	columnDefs: [
+		{
+			targets: "init_hidden",
+			visible: false
+		}
+	],
 	// fixedColumns: {
 	// 	leftColumns: 1
 	// },
 	buttons: [
 		{
 			extend: 'copy',
-			text: 'Copy to Clipboard',
+			text: 'Copy',
 			exportOptions: {
 				columns: ':visible'
 			}
@@ -74,26 +69,22 @@ var DATA_TABLE_CONFIG = {
 			extension: ".tsv"
 		},
 		{
-			text: 'Delete Rows',
+			text: 'Delete',
 			action: function(e, dt, node, config) {
-				var indices = $('#result-table').DataTable().rows('.selected').indexes();
-				$('#result-table').DataTable().rows('.selected').remove().draw(false);
+				var indices = TABLE.rows('.selected').indexes();
+				TABLE.rows('.selected').remove().draw(false);
 
 				for (var i = 0; i < indices.length; i ++) {
 					CURRENT_DATASET.splice(indices[i], 1);
 				}
-				CURRENT_CASE_LIST = CURRENT_DATASET.map(function(d){return d["filename"];});
-				exit_detail_mode();
-
-				update_chart_view(CURRENT_DATASET, "bar_chart", [CURRENT_ATTRIBUTE]);
-				update_image_view(CURRENT_CASE_LIST);
+				exit_select_mode();
+				update_views();
 			}
 		},
 		{
-			text: 'Deselect All',
+			text: 'Deselect',
 			action: function(e, dt, node, config) {
-				$('#result-table').DataTable().rows('.selected').deselect();
-				exit_detail_mode();
+				exit_select_mode();
 			}
 		},
 		'colvis'

@@ -8,7 +8,6 @@ var enter_select_mode = function (file_name, istable=false) {
 }
 
 var update_select_mode = function (file_name) {
-
 }
 
 var exit_select_mode = function () {
@@ -18,6 +17,16 @@ var exit_select_mode = function () {
 	exit_select_image_view();
 	exit_select_chart_view();
 	// select_row_in_table("NO SELECTED");
-	TABLE.$(".selected").removeClass("selected");
+	TABLE.rows('.selected').deselect();
 
 }
+
+var update_views = function () {
+	CURRENT_CASE_LIST = CURRENT_DATASET.map(function(d){return d["filename"];});
+
+	update_chart_view(CURRENT_DATASET, "bar_chart", [CURRENT_ATTRIBUTE]);
+	update_image_view(CURRENT_CASE_LIST);
+}
+
+
+

@@ -1,6 +1,5 @@
 var initialize_chart_view = function (dataset, chart_type = "bar_chart", attributes = []) {
 
-
 	$("#svg-container > *").remove();
 	var $div = $("#svg-container");
 

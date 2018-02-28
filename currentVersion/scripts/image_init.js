@@ -13,7 +13,6 @@ var initialize_image_view = function(case_list){
 
 
 var update_image_view = function(case_list){
-    $("#overview-gallery > *").remove();
     initialize_image_view(case_list);
 }
 
