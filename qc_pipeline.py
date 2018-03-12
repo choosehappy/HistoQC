@@ -153,7 +153,7 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--outdir', help="outputdir, default ./output/", default="output", type=str)
     parser.add_argument('-c', '--config', help="config file to use", default="./config.ini", type=str)
     parser.add_argument('-f', '--force', help="force overwriting of existing files", action="store_true")
-    parser.add_argument('-b', '--batch', help="break results file into subfiles of this size", type=int,
+    parser.add_argument('-b', '--batch', help="break results file into subsets of this size", type=int,
                         default=float("inf"))
     parser.add_argument('-n', '--nthreads', help="number of threads to launch", type=int, default=1)
     args = parser.parse_args()
