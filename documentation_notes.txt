@@ -12,3 +12,10 @@ For example, if some images caused errors because of out of memory, you can reru
 iterative process:
 1) detect magnification / levels  -- > homogenety, break into smaller groups
 2) detect overall contrast differences and break into groups (light group, dark group) expect same paramters to work for both?
+
+
+
+output images need to have same format, will automatically appear in dropdown  "[filename].svs_[format].png”. Is this always the case?
+
+
+http://people.brunel.ac.uk/~mastjjb/jeb/or/qcontrol.html
