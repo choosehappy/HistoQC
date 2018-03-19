@@ -1,4 +1,4 @@
-var enter_select_mode = function (file_name, istable=false) {
+function enter_select_mode (file_name, istable=false) {
 
     CURRENT_SELECTED = file_name;
 
@@ -7,10 +7,10 @@ var enter_select_mode = function (file_name, istable=false) {
     select_row_in_table(CURRENT_SELECTED, istable);
 }
 
-var update_select_mode = function (file_name) {
+function update_select_mode (file_name) {
 }
 
-var exit_select_mode = function () {
+function exit_select_mode () {
 
 	CURRENT_SELECTED = "";
 
@@ -21,10 +21,10 @@ var exit_select_mode = function () {
 
 }
 
-var update_views = function () {
+function update_views () {
 	CURRENT_CASE_LIST = CURRENT_DATASET.map(function(d){return d["filename"];});
 
-	update_chart_view(CURRENT_DATASET, "bar_chart", [CURRENT_ATTRIBUTE]);
+	update_chart_view(CURRENT_DATASET, "bar_chart", [CURRENT_CHART_ATTRIBUTE]);
 	update_image_view(CURRENT_CASE_LIST);
 }
 

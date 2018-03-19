@@ -35,13 +35,13 @@
 				<a class="p-2 text-dark" href="#">About</a>
 				<a class="p-2 text-dark" href="#">Instruction</a>
 			</nav>
-			<button class="btn btn-outline-primary" onClick="window.location.reload();">Reset</button>
+			<button id="reset-button" class="btn btn-outline-primary">Reset</button>
 		</header>
 
 		<div id="upload-button" class="container pt-md-5 text-center">
 			<label>
 				<span class="btn btn-outline-secondary btn-lg">
-					Upload Dataset <input id="file-input" type="file" accept=".tsv" multiple>
+					Upload Dataset <input id="upload-input" type="file" accept=".tsv" multiple>
 				</span>
 			</label>
 		</div>
@@ -62,29 +62,8 @@
 
 		<div id="image-view" class="m-container p-3 bg-light">
 			<div id="img-select-button" class="btn-group">
-				<select id="img-select" class="btn btn-outline-secondary">
-					<option value="0" selected>thumb</option>
-					<option value="1">mask_use</option>
-					<option value="2">nonwhite</option>
-					<option value="3">small_fill</option>
-					<option value="4">small_remove</option>
-					<option value="5">blurry</option>
-					<option value="6">dark</option>
-					<option value="7">hist</option>
-					<option value="8">pen_markings</option>
-				</select>
-				<select id="comparison-select" class="btn btn-outline-secondary">
-					<option value="0">thumb</option>
-					<option value="1">mask_use</option>
-					<option value="2">nonwhite</option>
-					<option value="3">small_fill</option>
-					<option value="4">small_remove</option>
-					<option value="5">blurry</option>
-					<option value="6">dark</option>
-					<option value="7">hist</option>
-					<option value="8">pen_markings</option>
-					<option value="-1" selected>compare ...</option>
-				</select>
+				<select id="img-select" class="btn btn-outline-secondary"></select>
+				<select id="comparison-select" class="btn btn-outline-secondary"></select>
 			</div>
 			<div id="exit-image-select-view-btn">
 				<button class="btn btn-outline-secondary">back</button>
@@ -99,8 +78,7 @@
 		<div id="overlay-container">
 			<div id="overlay-image">
 				<div id="detail-image-name"><span>file name</span></div>
-<!-- 				<figure class="zoom"><img src="./Data/output/68235.svs/68235.svs_mask_use.png"></figure>
- -->				<figure class="zoom"><img src="../../Data/TCGA-BH-A0BQ-01A-01-BSA.bad7666c-e404-4d97-af8d-2335bf33f31c.svs_thumb.png"></figure>
+				<figure class="zoom"><img src=""></figure>
 				<div id="detail-instruction-container"><span>Click to go back to overview</span></div>
 			</div>
 		</div>

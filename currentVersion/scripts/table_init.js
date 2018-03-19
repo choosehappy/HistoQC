@@ -1,4 +1,4 @@
-var initialize_data_table = function (dataset, table_config = {}) {
+function initialize_data_table (dataset, table_config = {}) {
 
 	var $table = $("#result-table");
 
@@ -46,7 +46,7 @@ var initialize_data_table = function (dataset, table_config = {}) {
 }
 
 
-var generate_table = function (dataset, table) {
+function generate_table (dataset, table) {
 	
 	table_header = Object.keys(dataset[0]);
 
@@ -74,7 +74,7 @@ var generate_table = function (dataset, table) {
 }
 
 
-var select_row_in_table = function (case_name, table) {
+function select_row_in_table (case_name, table) {
 	if (table) return;
 
 	var offset = 0;

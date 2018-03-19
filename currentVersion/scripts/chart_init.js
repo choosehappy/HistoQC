@@ -1,7 +1,9 @@
-var initialize_chart_view = function (dataset, chart_type = "bar_chart", attributes = []) {
+function initialize_chart_view (dataset, chart_type = "bar_chart", attributes = []) {
 
 	$("#svg-container > *").remove();
 	var $div = $("#svg-container");
+
+	init_chart_selector();
 
 	if (chart_type == "bar_chart") {
 
@@ -108,18 +110,17 @@ var initialize_chart_view = function (dataset, chart_type = "bar_chart", attribu
 		return;
 	}
 	if (chart_type == "parallel_coordinate") {
-
 		return;
 	}
 }
 
 
-var update_chart_view = function (dataset, chart_type, attributes) {
+function update_chart_view (dataset, chart_type, attributes) {
 	initialize_chart_view(dataset, chart_type, attributes);
 }
 
 
-var enter_select_chart_view = function (case_name) {
+function enter_select_chart_view (case_name) {
 	exit_select_chart_view();
 
 	d3.selectAll(".bar")
@@ -140,8 +141,44 @@ var enter_select_chart_view = function (case_name) {
 }
 
 
-var exit_select_chart_view = function () {
+function exit_select_chart_view () {
 	d3.selectAll(".selected-bar")
 		.classed("bar", true)
 		.classed("selected-bar", false);
 }
+
+
+function init_chart_selector () {
+	$chart_selector = $("#chart-select");
+	$chart_selector.empty();
+
+	var sample_case = CURRENT_DATASET[0];
+
+	for (var index in Object.keys(sample_case)) {
+		var key = Object.keys(sample_case)[index];
+		if (typeof(sample_case[key]) == "number") {
+			if (key == CURRENT_CHART_ATTRIBUTE) {
+				$chart_selector.append(generate_option_html(key, key, true));
+			} else {
+				$chart_selector.append(generate_option_html(key, key));
+			}
+		}
+	}
+
+	$chart_selector.change(function () {
+		CURRENT_CHART_ATTRIBUTE = [$(this).val()];
+		update_chart_view(CURRENT_DATASET, "bar_chart", CURRENT_CHART_ATTRIBUTE);
+	});   
+
+
+	function generate_option_html (key, value, selected = false) {
+		if (selected) {
+			return "<option value='" + value + "' selected>" + key + "</option>";
+		} else {
+			return "<option value='" + value + "'>" + key + "</option>";
+		}
+	}
+}
+
+
+

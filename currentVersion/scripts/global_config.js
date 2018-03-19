@@ -1,41 +1,63 @@
+/**********************************************
+ ********* PRE-DEFINED CONFIGURATIONS *********
+ **********************************************/
+
+/***************** SYSTEM CONFIG **************/
 var DATA_PATH = "./Data/";
 
-var CURRENT_SELECTED = "";
-var CURRENT_IMAGE_TYPE = 0;
-var CURRENT_COMPARE_TYPE = -1;
-
-var CURRENT_DATASET = [],
-	CURRENT_CASE_LIST = [],
-	CASE_DICT = {},
-	FEATURES_TO_MAP = ["outdir"];
-
-var TABLE;
-
-var DETAIL_MODE_FLAG = false;
-
-var DEFAULT_IMAGE_EXTENSIONS = [
-	"_thumb.png",
-	"_mask_use.png",
-	"_nonwhite.png",
-	"_small_fill.png",
-	"_small_remove.png",
-	"_blurry.png",
-	"_dark.png",
-	"_hist.png",
-	"_pen_markings.png"
-];
-
+/****************** TABLE VIEW ****************/
 var DEFAULT_HIDDEN_COLUMNS = [
 	"outdir",
 	"comment"
 ];
 
-var CURRENT_ATTRIBUTE = "percent_dark_tissue";
+/****************** CHART VIEW ****************/
+// Initialize the bar chart on this attribute.
+var DEFAULT_CHART_ATTRIBUTE = "height"; 
 
+/****************** IMAGE VIEW ****************/
+// full set of image format identifiers. 
+var DEFAULT_IMAGE_EXTENSIONS = [
+	"_thumb.png",
+	"_bubble.png",
+	"_areathresh.png",
+	"_blurry.png",
+	"_edge.png",
+	"_nonwhite.png",
+	"_pen_markings.png",
+	"_small_fill.png",
+	"_small_remove.png",
+	"_spur.png",
+	"_dark.png",
+	"_hist.png",
+	"_fuse.png",
+	"_mask_use.png",
+	"_deconv_c2.png",
+	"_deconv_c1.png",
+	"_deconv_c0.png"
+];
+var DEFAULT_IMAGE_EXTENSION = "_thumb.png";
+
+
+/**********************************************
+ ****** RUN-TIME VARIABLES [DO NOT EDIT] ******
+ ****** initialized before document ready *****
+ **********************************************/
+
+/******************** DATASET *****************/
+var CURRENT_DATASET = [],
+	CURRENT_CASE_LIST = [],
+	CURRENT_CASE_DICT = {};
+var CURRENT_SELECTED = "";
+// decide which attributes to keep in CURRENT_CASE_DICT
+var FEATURES_TO_MAP = ["outdir"]; 
+
+/****************** TABLE VIEW ****************/
+var TABLE;
 var DATA_TABLE_CONFIG = {
 	paging: true,
 	// pageLength: 2,
-	scrollY: "200px",
+	scrollY: "191px",
 	scrollX: true,
 	scroller: true,
 	scrollCollapse: true,
@@ -49,9 +71,6 @@ var DATA_TABLE_CONFIG = {
 			visible: false
 		}
 	],
-	// fixedColumns: {
-	// 	leftColumns: 1
-	// },
 	buttons: [
 		{
 			extend: 'copy',
@@ -90,3 +109,13 @@ var DATA_TABLE_CONFIG = {
 		'colvis'
 	]
 };
+
+/****************** CHART VIEW ****************/
+var CURRENT_CHART_ATTRIBUTE = DEFAULT_CHART_ATTRIBUTE;
+
+/****************** IMAGE VIEW ****************/
+var SKIP_IMAGE_EXTENSIONS = [];
+var CHECK_IMAGE_EXTENSIONS = DEFAULT_IMAGE_EXTENSIONS.map(function () {return false;});
+var CURRENT_IMAGE_TYPE = 0,
+	CURRENT_COMPARE_TYPE = -1;
+var DETAIL_MODE_FLAG = false;

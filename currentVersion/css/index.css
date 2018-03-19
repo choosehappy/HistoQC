@@ -22,7 +22,7 @@ html, body {
 	color: #aaa;
 }
 
-#file-input {
+#upload-input {
 	display: none;
 }
 
@@ -36,6 +36,10 @@ html, body {
 }
 
 #image-view {
+	display: none;
+}
+
+#format-tester {
 	display: none;
 }
 
