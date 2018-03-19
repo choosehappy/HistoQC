@@ -41,15 +41,16 @@ failed = []
 # --- setup worker functions
 def worker(filei, nfiles, fname, args, lconfig, processQueue, lock, shared_dict):
     fname_outdir = args.outdir + os.sep + os.path.basename(fname)
+    fname_outdir = fname_outdir.replace("lnk.", "")
     if os.path.isdir(fname_outdir):  # directory exists
         if (args.force):  # remove entirey directory to ensure no old files are present
             shutil.rmtree(fname_outdir)
         else:  # otherwise skip it
             logging.warning(f"{fname} already seems to be processed (output directory exists), skipping. To avoid this behavior use --force")
-        return
+            return
     makeDir(fname_outdir)
 
-    logging.info(f"-----Working on:\t{fname}\t\t{filei} of {nfiles}")
+    logging.info(f"-----Working on:\t{fname}\t\t{filei+1} of {nfiles}")
     try:
         s = BaseImage.BaseImage(fname, fname_outdir, dict(lconfig.items("BaseImage.BaseImage")))
 
@@ -152,7 +153,7 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--outdir', help="outputdir, default ./output/", default="output", type=str)
     parser.add_argument('-c', '--config', help="config file to use", default="./config.ini", type=str)
     parser.add_argument('-f', '--force', help="force overwriting of existing files", action="store_true")
-    parser.add_argument('-b', '--batch', help="break results file into subfiles of this size", type=int,
+    parser.add_argument('-b', '--batch', help="break results file into subsets of this size", type=int,
                         default=float("inf"))
     parser.add_argument('-n', '--nthreads', help="number of threads to launch", type=int, default=1)
     args = parser.parse_args()
@@ -187,6 +188,7 @@ if __name__ == '__main__':
     logging.info(f"Number of files detected by pattern:\t{len(files)}")
     for filei, fname in enumerate(files):
         fname = os.path.realpath(fname)
+
         if args.nthreads > 1:
             res = pool.apply_async(worker,
                                    args=(filei, len(files), fname, args, config, processQueue, lock, shared_dict),
