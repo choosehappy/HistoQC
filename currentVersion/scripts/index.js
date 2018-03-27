@@ -19,7 +19,7 @@ $(document).ready(function () {
 			$("#chart-view").outerHeight(includeMargin=true)
 		);
 		// chart view
-		update_chart_view(CURRENT_DATASET, "bar_chart", [CURRENT_CHART_ATTRIBUTE]);
+		update_chart_view(CURRENT_VIS_TYPE, CURRENT_MULTI_SELECTED, [CURRENT_CHART_ATTRIBUTE]);
 	});
 
 	// detail view zoomability setup

@@ -13,7 +13,21 @@ var DEFAULT_HIDDEN_COLUMNS = [
 
 /****************** CHART VIEW ****************/
 // Initialize the bar chart on this attribute.
-var DEFAULT_CHART_ATTRIBUTE = "height"; 
+var DEFAULT_CHART_ATTRIBUTE = "height";
+var DEFAULT_PARAC_ATTRIBUTES = [
+	"width",
+	"height",
+	"template1_MSE_hist",
+	"template2_MSE_hist",
+	"template3_MSE_hist",
+	"michelson_contrast",
+	"rms_contrast",
+	"grayscale_brightness",
+	"chan1_brightness",
+	"chan2_brightness",
+	"chan3_brightness"
+];
+var DEFAULT_VIS_TYPE = "bar_chart"; // "bar_chart" | "parallel_coordinate"
 
 /****************** IMAGE VIEW ****************/
 // full set of image format identifiers. 
@@ -45,11 +59,13 @@ var DEFAULT_IMAGE_EXTENSION = "_thumb.png";
  **********************************************/
 
 /******************** DATASET *****************/
-var CURRENT_DATASET = [],
+var ORIGINAL_DATASET = [],
+	CURRENT_MULTI_SELECTED = [],
+	ORIGINAL_CASE_LIST = [],
 	CURRENT_CASE_LIST = [],
-	CURRENT_CASE_DICT = {};
+	ORIGINAL_CASE_DICT = {};
 var CURRENT_SELECTED = "";
-// decide which attributes to keep in CURRENT_CASE_DICT
+// decide which attributes to keep in ORIGINAL_CASE_DICT
 var FEATURES_TO_MAP = ["outdir"]; 
 
 /****************** TABLE VIEW ****************/
@@ -94,7 +110,7 @@ var DATA_TABLE_CONFIG = {
 				TABLE.rows('.selected').remove().draw(false);
 
 				for (var i = 0; i < indices.length; i ++) {
-					CURRENT_DATASET.splice(indices[i], 1);
+					ORIGINAL_DATASET.splice(indices[i], 1);
 				}
 				exit_select_mode();
 				update_views();
@@ -112,6 +128,15 @@ var DATA_TABLE_CONFIG = {
 
 /****************** CHART VIEW ****************/
 var CURRENT_CHART_ATTRIBUTE = DEFAULT_CHART_ATTRIBUTE;
+var CURRENT_PARAC_ATTRIBUTES;
+var $CHART = $("#chart-svg-container");
+var $PARAC = $("#parac-svg-container");
+var CURRENT_VIS_TYPE = DEFAULT_VIS_TYPE;
+var CHART_SVG,
+	PARAC_SVG,
+	CHART_MARGIN,
+	PARAC_MARGIN,
+	TIP;
 
 /****************** IMAGE VIEW ****************/
 var SKIP_IMAGE_EXTENSIONS = [];

@@ -9,7 +9,8 @@
 		<title>HistoQc</title>
 
 		<!-- Bootstrap Core CSS -->
-		<link rel="stylesheet" type="text/css" href="libs/bootstrap-4.0.0-dist/css/bootstrap.min.css"/>
+		<link rel="stylesheet" type="text/css" href="libs/bootstrap/css/bootstrap.min.css"/>
+		<link rel="stylesheet" type="text/css" href="libs/bootstrap/css/bootstrap-select.min.css"/>
 		<!-- DataTables CSS -->
 		<link rel="stylesheet" type="text/css" href="libs/DataTables/datatables.min.css">
 		<!-- Custom CSS -->
@@ -21,10 +22,12 @@
 		<!-- jQuery -->
 		<script type="text/javascript" src="libs/jquery-1.12.4/jquery.min.js"></script>
 		<!-- Bootstrap Core JavaScript -->
-		<script type="text/javascript" src="libs/bootstrap-4.0.0-dist/js/bootstrap.min.js"></script>
+		<script type="text/javascript" src="libs/bootstrap/js/popper.min.js"></script>
+		<script type="text/javascript" src="libs/bootstrap/js/bootstrap.min.js"></script>
+		<script type="text/javascript" src="libs/bootstrap/js/bootstrap-select.min.js"></script>
 		<!-- DataTables JavaScript -->
 		<script type="text/javascript" src="libs/DataTables/datatables.min.js"></script>
-	    <script type="text/javascript" src="libs/DataTables/dataTables.cellEdit.js"></script>
+		<script type="text/javascript" src="libs/DataTables/dataTables.cellEdit.js"></script>
 	</head>
 
 	<body>
@@ -32,6 +35,7 @@
 			<h5 class="my-0 mr-md-auto font-weight-normal"><strong>HistoQc</strong></h5>
 			<nav class="my-2 my-md-0 mr-md-3">
 				<span id="dataset-tag" class="p-4 font-weight-light">Current Dataset: reslut.tsv</span>
+				<!-- <span id="dataset-size-tag" class="p-4 font-weight-light"></span> -->
 				<a class="p-2 text-dark" href="#">About</a>
 				<a class="p-2 text-dark" href="#">Instruction</a>
 			</nav>
@@ -41,7 +45,7 @@
 		<div id="upload-button" class="container pt-md-5 text-center">
 			<label>
 				<span class="btn btn-outline-secondary btn-lg">
-					Upload Dataset <input id="upload-input" type="file" accept=".tsv" multiple>
+					View Results <input id="upload-input" type="file" accept=".tsv" multiple>
 				</span>
 			</label>
 		</div>
@@ -56,8 +60,11 @@
 		<div id="chart-view" class="m-container p-3">
 			<div id="chart-select-button">
 				<select id="chart-select" class="btn btn-outline-secondary"></select>
+<!-- 				<select id="parac-select" class="selectpicker" multiple></select> -->
+				<button id="vis-switch-btn" class="btn btn-outline-secondary">switch</button>
 			</div>
-			<div id="svg-container"></div>
+			<div id="chart-svg-container"></div>
+			<div id="parac-svg-container"></div>
 		</div>
 
 		<div id="image-view" class="m-container p-3 bg-light">
@@ -89,7 +96,6 @@
 		<script type="text/javascript" src="scripts/table_init.js"></script>
 		<script type="text/javascript" src="scripts/chart_init.js"></script>
 		<script type="text/javascript" src="scripts/image_init.js"></script>
-		<script type="text/javascript" src="scripts/selector_init.js"></script>
 		<!-- programming begin -->
 		<script type="text/javascript" src="scripts/index.js"></script>
 
