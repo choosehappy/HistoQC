@@ -1,5 +1,13 @@
+:root {
+	--selected-color: orangered;
+}
+
 html, body {
   line-height: 1; /* same as bootstrap.css */
+}
+
+th {
+	font-weight: normal;
 }
 
 .px-md-4 {
@@ -22,6 +30,34 @@ html, body {
 	color: #aaa;
 }
 
+#view-mngmt-btn-group {
+	display: none;
+}
+
+#table-btn,
+#chart-btn,
+#image-btn {
+	width: 80px;
+}
+
+.view-enabled {
+	display: inline-block;
+	color: #212529;
+	background-color: #f8f9fa;
+	border-color: #f8f9fa;
+}
+
+.view-disabled {
+	display: inline-block;
+	color: #212529;
+	background-color: transparent;
+	border-color: #efefef;
+}
+
+#view-mngmt-btn-hidden {
+	display: none;
+}
+
 #upload-button {
 	margin-top: 15%;
 }
@@ -32,11 +68,12 @@ html, body {
 
 #table-view {
 	display: none;
+	height: 230px;
 }
 
 #chart-view {
 	display: none;
-	height: 300px;
+	height: 330px;
 }
 
 #image-view {
@@ -80,6 +117,7 @@ html, body {
 #img-select,
 #comparison-select,
 #chart-select,
+#chart-sort-btn,
 #vis-switch-btn {
 	border-width: 1.5px;
 	height: 40px;
@@ -93,6 +131,7 @@ html, body {
 #img-select:hover,
 #comparison-select:hover,
 #chart-select:hover,
+#chart-sort-btn:hover,
 #vis-switch-btn:hover {
 	background-color: #898f94;
 	color: #fff;
@@ -248,7 +287,12 @@ html, body {
 
 .x.axis > g > text,
 .y.axis > g > text {
-	font-size: 15px;
+	font-size: 12px;
+}
+
+g.tick > text {
+	font-size: 12px;
+	opacity: 0.6;
 }
 
 .d3-tip {
@@ -287,11 +331,26 @@ html, body {
 	position: fixed;
 	padding-left: 15px;
 	padding-top: 15px;
+	width: 250px;
 }
 
-#chart-select-button > select {
+#chart-select-group {
+	display: flex;
+	width: 100%;
+}
+
+#chart-select {
 	border-width: 1.5px;
 	height: 40px;
+	width: 100%;
+}
+
+#chart-sort-btn {
+	width: 50px;
+}
+
+#vis-switch-btn {
+	width: 100%;
 }
 
 #chart-svg-container {
@@ -422,15 +481,24 @@ table.dataTable {
 
 /*parallel coordinate*/
 
-.background path {
+.background-path {
 	fill: none;
 	stroke: #ddd;
 	shape-rendering: crispEdges;
+	opacity: 0.5;
 }
 
-.foreground path {
+.foreground-path {
 	fill: none;
 	stroke: #007bff;
+	opacity: 0.5;
+}
+
+.selected-foreground-path {
+	fill: none;
+	stroke: var(--selected-color);
+	stroke-width: 2;
+	opacity: 1;
 }
 
 .brush .extent {

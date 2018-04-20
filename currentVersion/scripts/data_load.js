@@ -56,6 +56,9 @@ function data_loading () {
 			ORIGINAL_CASE_DICT[cur_file_name]["dom_id"] = cur_file_name.replace(/\.|\#/g, "-");
 		}
 
+		// build feature list
+		ORIGINAL_FEATURE_LIST = Object.keys(ORIGINAL_DATASET[0]);
+
 		CURRENT_MULTI_SELECTED = ORIGINAL_DATASET;
 
 		init_image_format_list();
@@ -68,16 +71,43 @@ function data_loading () {
 			if (check_sum == CHECK_IMAGE_EXTENSIONS.length) {
 				clearInterval (image_check_interval);
 
-				// initialize data table
-				initialize_data_table(ORIGINAL_DATASET, DATA_TABLE_CONFIG);
+				// initialize table view
+				initialize_data_table(ORIGINAL_DATASET);
+				if (!OPEN_WITH_TABLE) {
+					hide_view("table");
+				}
+				d3.select("#table-btn")
+					.classed("view-mngmt-btn-hidden", false)
+					.classed("view-enabled", OPEN_WITH_TABLE)
+					.classed("view-disabled", !OPEN_WITH_TABLE);
 
 				// initialize chart view
 				initialize_chart_view(ORIGINAL_DATASET, CURRENT_VIS_TYPE);
+				if (!OPEN_WITH_CHART) {
+					hide_view("chart");
+				}
+				d3.select("#chart-btn")
+					.classed("view-mngmt-btn-hidden", false)
+					.classed("view-enabled", OPEN_WITH_CHART)
+					.classed("view-disabled", !OPEN_WITH_CHART);
 
 				// initialize image view
 				initialize_image_view(ORIGINAL_CASE_LIST);
+				if (!OPEN_WITH_IMAGE) {
+					hide_view("image");
+				}
+				d3.select("#image-btn")
+					.classed("view-mngmt-btn-hidden", false)
+					.classed("view-enabled", OPEN_WITH_IMAGE)
+					.classed("view-disabled", !OPEN_WITH_IMAGE);
+
+				$("#view-mngmt-btn-group").css("display", "block");
+				d3.select("#page-title")
+					.classed("mr-md-auto", false)
+					.classed("mr-md-3", true);
 
 				console.log("App initialized.");
+				APP_INITIALIZED = true;
 			} else {
 				console.log("waiting for image type checking ...");
 			}
@@ -104,6 +134,7 @@ function data_sorting (keyword, desc=false) {
 		}
 	}
 
+	CURRENT_SORT_ATTRIBUTE = keyword;
 	ORIGINAL_DATASET.sort(compare);
 	ORIGINAL_CASE_LIST = ORIGINAL_DATASET.map(function (d) {return d["filename"];});
 	CURRENT_MULTI_SELECTED.sort(compare);
@@ -130,5 +161,3 @@ function init_image_format_list () {
 		img.src = src;
 	}
 }
-
-

@@ -6,8 +6,9 @@
 
 
 function initialize_image_view (case_list) {
-	$("#image-view").css("display", "block")
-		.outerHeight($(window).height() - $("header").outerHeight(includeMargin=true) - $("#table-view").outerHeight(includeMargin=true) - $("#chart-view").outerHeight(includeMargin=true));
+
+	show_view("image");
+	update_image_view_height();
 
 	var $div = $("#overview-gallery");
 	$div.empty();
@@ -30,8 +31,7 @@ function initialize_image_view (case_list) {
 function update_image_view (case_list) {
 	// TODO: rewrite update function.
 
-	$("#image-view").css("display", "block")
-		.outerHeight($(window).height() - $("header").outerHeight(includeMargin=true) - $("#table-view").outerHeight(includeMargin=true) - $("#chart-view").outerHeight(includeMargin=true));
+	update_image_view_height();
 
 	var $div = $("#overview-gallery");
 	$div.empty();
@@ -46,6 +46,16 @@ function update_image_view (case_list) {
 	});
 
 	update_multi_selected_image_view(case_list);
+}
+
+
+function update_image_view_height () {
+	$("#image-view").outerHeight(
+			$(window).height() - 
+			$("header").outerHeight(includeMargin=true) - 
+			$("#table-view").outerHeight(includeMargin=true) - 
+			$("#chart-view").outerHeight(includeMargin=true)
+		);
 }
 
 

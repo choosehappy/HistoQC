@@ -22,7 +22,7 @@ function exit_select_mode () {
 
 
 function update_views () {
-	update_chart_view(CURRENT_VIS_TYPE, CURRENT_MULTI_SELECTED, [CURRENT_CHART_ATTRIBUTE]);
+	update_chart_view(CURRENT_VIS_TYPE, CURRENT_MULTI_SELECTED);
 	update_image_view(CURRENT_CASE_LIST);
 }
 
@@ -38,6 +38,6 @@ function update_multi_selected (file_names) {
 	CURRENT_CASE_LIST = CURRENT_MULTI_SELECTED.map(function(d){return d["filename"];});
 	update_multi_selected_chart_view();
 	update_multi_selected_image_view(file_names);
-	update_multi_selected_table_view(file_names);
+	update_multi_selected_table_view();
 }
 

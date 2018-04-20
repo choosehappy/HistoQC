@@ -2,15 +2,14 @@
 
 function initialize_chart_view (dataset, vis_type="bar_chart") {
 
-	$("#chart-view").css("display", "block");
-
+	show_view("chart");
 	$CHART.empty();
 	$PARAC.empty();
 
 	// init global SVG and MARGIN
-	CHART_MARGIN = {top: 10, right: 60, bottom: 60, left: 0};
+	CHART_MARGIN = {top: 10, right: 60, bottom: 40, left: 0};
 	if (dataset.length > 50) {
-		CHART_MARGIN.bottom = 20;
+		CHART_MARGIN.bottom = 10;
 	}
 	PARAC_MARGIN = {top: 60, right: 10, bottom: 10, left: 10};
 
@@ -28,8 +27,9 @@ function initialize_chart_view (dataset, vis_type="bar_chart") {
 		.attr("transform", "translate(" + PARAC_MARGIN.left + "," + PARAC_MARGIN.top + ")");
 
 	CURRENT_CHART_ATTRIBUTE = DEFAULT_CHART_ATTRIBUTE;
-	CURRENT_PARAC_ATTRIBUTES = DEFAULT_PARAC_ATTRIBUTES;
-	init_bar_chart(dataset, [DEFAULT_CHART_ATTRIBUTE]);
+	CURRENT_PARAC_ATTRIBUTES = generate_current_parac_attributes();
+
+	init_bar_chart(dataset);
 	init_parallel_coordinate(dataset);
 	init_chart_selector(vis_type);
 
@@ -37,15 +37,18 @@ function initialize_chart_view (dataset, vis_type="bar_chart") {
 }
 
 
-function update_chart_view (vis_type, dataset, attributes) {
+function update_chart_view (vis_type, dataset) {
 
 	// can be optimized by differentiate update type (just switch from chart to parallel coordiate?)
 	show_chosen_vis(vis_type);
 
 	if (vis_type == "bar_chart") {
-		update_bar_chart(dataset, attributes);
-	} else {
-		update_parallel_coordinate();
+		update_bar_chart(dataset);
+	} else if (vis_type == "parallel_coordinate") {
+		update_parallel_coordinate(dataset);
+	} else if (vis_type == "both") {
+		update_bar_chart(dataset);
+		update_parallel_coordinate(dataset);
 	}
 }
 
@@ -66,8 +69,24 @@ function enter_select_chart_view (case_name) {
 				return false;
 			} else {
 				return true;
-			}           
+			}
+		});
+
+	d3.selectAll(".foreground-path")
+		.classed("selected-foreground-path", function (d) {
+			if (d.case_name == case_name) {
+				return true;
+			} else {
+				return false;
+			}
 		})
+		.classed("foreground-path", function (d) {
+			if (d.case_name == case_name) {
+				return false;
+			} else {
+				return true;
+			}
+		});
 }
 
 
@@ -75,14 +94,15 @@ function exit_select_chart_view () {
 	d3.selectAll(".selected-bar")
 		.classed("bar", true)
 		.classed("selected-bar", false);
+
+	d3.selectAll(".selected-foreground-path")
+		.classed("foreground-path", true)
+		.classed("selected-foreground-path", false);
 }
 
 
 
-
-
-
-function init_bar_chart (dataset, attributes) {
+function init_bar_chart (dataset) {
 	var svg = CHART_SVG;
 	var chart_width = $CHART.width() - CHART_MARGIN.left - CHART_MARGIN.right;
 	var chart_height = $CHART.height() - CHART_MARGIN.top - CHART_MARGIN.bottom;
@@ -90,7 +110,7 @@ function init_bar_chart (dataset, attributes) {
 	var data = dataset.map(function (d) {
 		return {
 			case_name: d["filename"],
-			attr_value: d[attributes[0]]
+			attr_value: d[CURRENT_CHART_ATTRIBUTE]
 		};
 	});
 
@@ -134,7 +154,7 @@ function init_bar_chart (dataset, attributes) {
 			.attr("y", 12)
 			.attr("x", 3)
 			.attr("dy", ".35em")
-			.attr("transform", "rotate(10)")
+			.attr("transform", "rotate(20)")
 			.style("text-anchor", "start");
 	} else {
 		svg.append("g")
@@ -177,9 +197,16 @@ function init_bar_chart (dataset, attributes) {
 
 function init_parallel_coordinate (dataset) {
 
+	$PARAC.css("display", "block");
+
 	var svg = PARAC_SVG;
 	var parac_width = $PARAC.width() - PARAC_MARGIN.left - PARAC_MARGIN.right;
 	var parac_height = $PARAC.height() - PARAC_MARGIN.top - PARAC_MARGIN.bottom;
+	svg.selectAll("*").remove();
+	
+	if (CURRENT_VIS_TYPE != "parallel_coordinate") {
+		$PARAC.css("display", "none");
+	}
 
 	var xScale = d3.scale.ordinal().rangePoints([0, parac_width], 1),
 		yScale = {},
@@ -200,9 +227,9 @@ function init_parallel_coordinate (dataset) {
 	});
 
 	xScale.domain(dimensions = d3.keys(data[0]).filter(function (d) {
-	return d != "case_name" && (yScale[d] = d3.scale.linear()
-		.domain(d3.extent(data, function (p) { return p[d]; }))
-		.range([parac_height, 0]));
+		return d != "case_name" && (yScale[d] = d3.scale.linear()
+			.domain(d3.extent(data, function (p) { return p[d]; }))
+			.range([parac_height, 0]));
 	}));
 
 	// Add grey background lines for context.
@@ -220,7 +247,13 @@ function init_parallel_coordinate (dataset) {
 		.selectAll("path")
 		.data(data)
 		.enter().append("path")
-		.attr("class", "foreground-path")
+		.attr("class", function (d) {
+			if (CURRENT_SELECTED == d.case_name) {
+				return "selected-foreground-path";
+			} else {
+				return "foreground-path";
+			}
+		})
 		.attr("d", path);
 
 	// Add a group element for each dimension.
@@ -330,7 +363,7 @@ function init_parallel_coordinate (dataset) {
 	}
 }
 
-function update_bar_chart (dataset, attributes) {
+function update_bar_chart (dataset) {
 
 	$CHART.css("display", "block");
 
@@ -349,7 +382,7 @@ function update_bar_chart (dataset, attributes) {
 	var data = dataset.map(function (d) {
 		return {
 			case_name: d["filename"],
-			attr_value: d[attributes[0]]
+			attr_value: d[CURRENT_CHART_ATTRIBUTE]
 		};
 	});
 
@@ -384,7 +417,7 @@ function update_bar_chart (dataset, attributes) {
 			.attr("y", 12)
 			.attr("x", 3)
 			.attr("dy", ".35em")
-			.attr("transform", "rotate(30)")
+			.attr("transform", "rotate(20)")
 			.style("text-anchor", "start");
 		} else {
 		CHART_SVG.selectAll("g.x.axis")
@@ -431,17 +464,30 @@ function update_bar_chart (dataset, attributes) {
 		.attr("height", function (d) { return chart_height - yScale(d.attr_value); });
 }
 
-function update_parallel_coordinate () {
+function update_parallel_coordinate (dataset) {
+	$PARAC.css("display", "block");
 
+	d3.select("#parac-svg")
+		.attr("width", $PARAC.width())
+		.attr("height", $PARAC.height());
+
+	if (CURRENT_VIS_TYPE != "parallel_coordinate") {
+		$PARAC.css("display", "none");
+	}
+
+	init_parallel_coordinate (dataset);
 }
 
 
 function update_multi_selected_chart_view () {
-	update_bar_chart(CURRENT_MULTI_SELECTED, [CURRENT_CHART_ATTRIBUTE]);
+	update_bar_chart(CURRENT_MULTI_SELECTED);
 }
 
 
 function init_chart_selector (vis_type) {
+
+	// TODO: clean up useless code
+
 	$chart_selector = $("#chart-select");
 	$parac_selector = $("#parac-select");
 	$chart_selector.empty();
@@ -469,7 +515,7 @@ function init_chart_selector (vis_type) {
 
 	$chart_selector.change(function () {
 		CURRENT_CHART_ATTRIBUTE = $(this).val();
-		update_chart_view("bar_chart", CURRENT_MULTI_SELECTED, [CURRENT_CHART_ATTRIBUTE]);
+		update_chart_view("bar_chart", CURRENT_MULTI_SELECTED);
 	});
 
 	$parac_selector.change(function () {
@@ -484,6 +530,14 @@ function init_chart_selector (vis_type) {
 		}
 	})
 
+	$("#chart-sort-btn").click(function () {
+		var sort_attribute = CURRENT_CHART_ATTRIBUTE;
+		var sort_attribute_index = ORIGINAL_FEATURE_LIST.indexOf(sort_attribute);
+		TABLE.order([sort_attribute_index, 'desc']).draw();
+		data_sorting(sort_attribute, true);
+		update_views();
+	})
+
 	function generate_option_html (key, value, selected = false) {
 		if (selected) {
 			return "<option value='" + value + "' selected>" + key + "</option>";
@@ -494,24 +548,27 @@ function init_chart_selector (vis_type) {
 }
 
 function show_chosen_vis (vis_type) {
-
-	// TODO: choose the selector to show
-
 	if (vis_type == "bar_chart") {
 		CURRENT_VIS_TYPE = "bar_chart";
 		$PARAC.css("display", "none");
 		$CHART.css("display", "block");
-		$("#chart-select").css("display", "block");
+		$("#chart-select-group").css("display", "flex");
 		$("#vis-switch-btn").text("Parallel Coordinate");
-	} else {
+	} else if (vis_type == "parallel_coordinate") {
 		CURRENT_VIS_TYPE = "parallel_coordinate";
 		$CHART.css("display", "none");
-		$("#chart-select").css("display", "none");
+		$("#chart-select-group").css("display", "none");
 		$PARAC.css("display", "block");
 		$("#vis-switch-btn").text("Bar Chart");
-	}
+	} 
 }
 
 
-
-
+function generate_current_parac_attributes () {
+	return ORIGINAL_FEATURE_LIST.filter(function (d) {
+		if (typeof(ORIGINAL_DATASET[0][d]) == "number" && CURRENT_HIDDEN_COLUMNS.indexOf(d) == -1) {
+			return true;
+		}
+		return false;
+	});
+}
