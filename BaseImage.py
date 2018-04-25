@@ -53,6 +53,6 @@ class BaseImage(dict):
                 self[key] = np.asarray(img)[:, :, 0:3]
             else:  # assume its an explicit size, *WARNING* this will likely cause different images to have different
                 # perceived magnifications!
-                logging.info(f"{self['filename']} - \t\tcreating image thumb of size ", str(dim))
+                logging.info(f"{self['filename']} - \t\tcreating image thumb of size {str(dim)}")
                 self[key] = np.array(osh.get_thumbnail((dim, dim)))
         return self[key]
