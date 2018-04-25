@@ -3,7 +3,7 @@ import os
 import numpy as np
 import inspect
 
-os.environ['PATH'] = '.\\openslide\\bin' + ';' + os.environ['PATH']
+#os.environ['PATH'] = '.\\openslide\\bin' + ';' + os.environ['PATH'] #can either specify openslide bin path in PATH, or add it dynamically
 import openslide
 
 
