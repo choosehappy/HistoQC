@@ -1,19 +1,22 @@
 /* Image View model.
  * initialize/update the image view, enter/exit selected stage & detailed stage for image view.
  * last modified: 03/17/2018 14:24:00
- * update log: init header and comments. Update the image selector initialization. Change behavior to skip unused image type.
+ * update log: Add id to image blocks. Add multi-select. Re-define the generate_img_block function.
  */ 
 
 
 function initialize_image_view (case_list) {
-	$("#image-view").css("display", "block")
-		.outerHeight($(window).height() - $("header").outerHeight(includeMargin=true) - $("#table-view").outerHeight(includeMargin=true) - $("#chart-view").outerHeight(includeMargin=true));
+
+	show_view("image");
+	update_image_view_height();
 
 	var $div = $("#overview-gallery");
 	$div.empty();
 
-	for (var dir = 0; dir < case_list.length; dir++) {
-		$div.append(generate_img_block("overview-image-block", generate_img_src(case_list[dir], CURRENT_IMAGE_TYPE), case_list[dir], CURRENT_COMPARE_TYPE));
+	CURRENT_CASE_LIST = ORIGINAL_CASE_LIST;
+
+	for (var i = 0; i < case_list.length; i++) {
+		$div.append(generate_img_block("overview-image-block", case_list[i], CURRENT_IMAGE_TYPE, CURRENT_COMPARE_TYPE, case_list[i]));
 	}
  
 	$div.children("div").children("img").click(function(){
@@ -28,20 +31,31 @@ function initialize_image_view (case_list) {
 function update_image_view (case_list) {
 	// TODO: rewrite update function.
 
-	$("#image-view").css("display", "block")
-		.outerHeight($(window).height() - $("header").outerHeight(includeMargin=true) - $("#table-view").outerHeight(includeMargin=true) - $("#chart-view").outerHeight(includeMargin=true));
+	update_image_view_height();
 
 	var $div = $("#overview-gallery");
 	$div.empty();
 
-	for (var dir = 0; dir < case_list.length; dir++) {
-		$div.append(generate_img_block("overview-image-block", generate_img_src(case_list[dir], CURRENT_IMAGE_TYPE), case_list[dir], CURRENT_COMPARE_TYPE));
+	for (var i = 0; i < ORIGINAL_CASE_LIST.length; i++) {
+		$div.append(generate_img_block("overview-image-block", ORIGINAL_CASE_LIST[i], CURRENT_IMAGE_TYPE, CURRENT_COMPARE_TYPE, ORIGINAL_CASE_LIST[i]));
 	}
  
 	$div.children("div").children("img").click(function(){
 		src_list = this.src.split('/');
 		enter_select_mode(src_list[src_list.length-2]);
 	});
+
+	update_multi_selected_image_view(case_list);
+}
+
+
+function update_image_view_height () {
+	$("#image-view").outerHeight(
+			$(window).height() - 
+			$("header").outerHeight(includeMargin=true) - 
+			$("#table-view").outerHeight(includeMargin=true) - 
+			$("#chart-view").outerHeight(includeMargin=true)
+		);
 }
 
 
@@ -63,8 +77,12 @@ function enter_select_image_view (dir) {
 		if (SKIP_IMAGE_EXTENSIONS.indexOf(i) >= 0) {
 			continue;
 		}
-		$div.append(generate_img_block("candidate-image-block", generate_img_src(dir, i), DEFAULT_IMAGE_EXTENSIONS[i], -1));
+		$div.append(generate_img_block("candidate-image-block", dir, i, -1, DEFAULT_IMAGE_EXTENSIONS[i]));
 	}
+
+	$("#select-candidate-container > div > img").dblclick(function(){
+		enter_detail_image_view(this.src);
+	});
 
 	$("#select-candidate-container > div > img").click(function(){
 		$("#exibit-img").attr("src", this.src);
@@ -87,6 +105,17 @@ function exit_select_image_view () {
 }
 
 
+function update_multi_selected_image_view (file_names) {
+	ORIGINAL_CASE_LIST.forEach(function (d) {
+		if (file_names.indexOf(d) == -1) {
+			$("#" + ORIGINAL_CASE_DICT[d]["dom_id"]).css("display", "none");
+		} else {
+			$("#" + ORIGINAL_CASE_DICT[d]["dom_id"]).css("display", "flex");
+		}
+	});
+}
+
+
 function calculate_height ($div) {
 	var num_thumbs = DEFAULT_IMAGE_EXTENSIONS.length;
 	var max_width = Math.floor($div.width() / Math.ceil(num_thumbs / 2)) - 5;
@@ -97,28 +126,19 @@ function calculate_height ($div) {
 }
 
 
-function generate_img_block (blk_class, file_path, file_name, compare_type) {
-	if (compare_type == -1) {
-		return  " \
-				<div class='" + blk_class + "'> \
-					<img src=" + file_path + " onerror=\"this.style.display='none'\"/> \
-					<div><span>" + file_name + "</span></div> \
-				</div> \
-				";        
-	} else {
-		return  " \
-				<div class='" + blk_class + "'> \
-					<img src=" + file_path + "  onerror=\"this.style.display='none'\"/> \
-					<img src=" + generate_img_src(file_name, compare_type) + "  onerror=\"this.style.display='none'\"/> \
-					<div><span>" + file_name + "</span></div> \
-				</div> \
-				";                
+function generate_img_block (blk_class, file_name, img_type, compare_type, img_label) {
+	var img_block = "<div id='" + ORIGINAL_CASE_DICT[file_name]["dom_id"] + "' class='" + blk_class + "'>" +
+					"<img src=" + generate_img_src(file_name, img_type) + " onerror=\"this.style.display='none'\"/>";
+	if (compare_type != -1) {
+		img_block += "<img src=" + generate_img_src(file_name, compare_type) + " onerror=\"this.style.display='none'\"/>";
 	}
+	img_block += "<div><span>" + img_label + "</span></div></div>";
+	return img_block;
 }
 
 
 function generate_img_src (file_name, img_type_index) {
-	var outdir = CURRENT_CASE_DICT[file_name]["outdir"];
+	var outdir = ORIGINAL_CASE_DICT[file_name]["outdir"];
 	return "'" + DATA_PATH + outdir + "/" + file_name + DEFAULT_IMAGE_EXTENSIONS[img_type_index] + "'"
 }
 

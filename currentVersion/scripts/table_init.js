@@ -1,29 +1,22 @@
-function initialize_data_table (dataset, table_config = {}) {
+function initialize_data_table (dataset) {
 
+	show_view("table");
 	var $table = $("#result-table");
 
-	// TODO: is it necessary to check the length of the dataset?
-
 	generate_table(dataset, $table);
+	generate_config(dataset);
 
-	TABLE = $table.DataTable(table_config);
+	TABLE = $table.DataTable(DATA_TABLE_CONFIG);
 
-	$(".table-control > div.dt-buttons").removeClass("btn-group").addClass("btn-group-vertical");
-	$(".table-control > div.dt-buttons > button").removeClass("btn-secondary").addClass("btn-outline-secondary");
-	$(".buttons-colvis > span").text("Cols");
+	init_visibility();
+	init_editability();
+	init_button_style();
 
-	TABLE.MakeCellsEditable({
-		"confirmationButton": { //https://github.com/ejbeaty/CellEdit
-			"confirmCss": 'my-confirm-class', //can use columns to limit to particular columns
-			"cancelCss": 'my-cancel-class'
-		},
-		"inputCss": 'my-input-class',
-		"columns": [2]
-	});
+	CURRENT_SORT_ATTRIBUTE = ORIGINAL_FEATURE_LIST[TABLE.order()[0][0]];
 
-	$("#result-table > tbody > tr > td").on("click", function (e) {
-		if ($(TABLE.column(e.currentTarget.cellIndex).header()).text().trim() != "comments") {
-			console.log("!")
+	$table.find("tbody").on("click", 'td', function () {
+
+		if ($(TABLE.column($(this).index() + ":visIdx").header()).text().trim() != "comments") {
 			var case_name = $(this).parent().find("td:first-child").text();
 
 			if (case_name != CURRENT_SELECTED) {
@@ -32,7 +25,7 @@ function initialize_data_table (dataset, table_config = {}) {
 				exit_select_mode();
 			}
 		} else {
-			TABLE.$("tr.selected").removeClass("selected");			
+			$("tr.selected").removeClass("selected");
 		}
 	});
 
@@ -40,31 +33,23 @@ function initialize_data_table (dataset, table_config = {}) {
 		data_sorting($(this).text(), (TABLE.order()[0][1] == 'desc'));
 		update_views();
 	});
-
-	$table.removeClass("display")
-		.addClass("table table-striped table-bordered");
 }
 
 
 function generate_table (dataset, table) {
 	
-	table_header = Object.keys(dataset[0]);
+	var thead_content = "<tr>";
 
-	thead_content = "<tr>";
-	table_header.forEach(function (d) {
-		if (DEFAULT_HIDDEN_COLUMNS.indexOf(d) != -1) {
-			thead_content += ("<th class='init_hidden'>" + d + "</th>");
-		} else {
-			thead_content += ("<th>" + d + "</th>");
-		}
+	ORIGINAL_FEATURE_LIST.forEach(function (d, i) {
+		thead_content += ("<th>" + d + "</th>");
 	});
 	thead_content += "</tr>";
 
 	tbody_content = "";
 	for (var i = 0; i < dataset.length; i++) {
 		tbody_content += "<tr>";
-		for (var j = 0; j < table_header.length; j++) {
-			tbody_content += ("<td>" + dataset[i][table_header[j]] + "</td>");
+		for (var j = 0; j < ORIGINAL_FEATURE_LIST.length; j++) {
+			tbody_content += ("<td>" + dataset[i][ORIGINAL_FEATURE_LIST[j]] + "</td>");
 		}
 		tbody_content += "</tr>";
 	}
@@ -74,8 +59,95 @@ function generate_table (dataset, table) {
 }
 
 
-function select_row_in_table (case_name, table) {
-	if (table) return;
+function generate_config (dataset) {
+
+	// 1. named column
+	// 2. customized colvis
+
+	var colvis_action = function (e, dt, node, config) {
+		var column_name = node[0].text;
+		if (this.active()) {
+			// update the table column
+			this.active(false);
+			TABLE.column(column_name + ":name").visible(false);
+			
+			CURRENT_HIDDEN_COLUMNS.push(column_name);
+			
+			// update parallel coordinate -> delete from CURRENT_PARAC_ATTRIBUTES
+			CURRENT_PARAC_ATTRIBUTES = generate_current_parac_attributes();
+			update_chart_view("parallel_coordinate", CURRENT_MULTI_SELECTED);
+
+		} else {
+			// update the table column
+			this.active(true);
+			TABLE.column(column_name + ":name").visible(true);
+			
+			var index = CURRENT_HIDDEN_COLUMNS.indexOf(column_name);
+			if (index > -1) {
+				CURRENT_HIDDEN_COLUMNS.splice(index, 1);
+			} else {
+				console.log("[DEBUG] " + column_name + " is not in CURRENT_HIDDEN_COLUMNS.")
+			}
+
+			// update parallel coordinate
+			CURRENT_PARAC_ATTRIBUTES = generate_current_parac_attributes();
+			update_chart_view("parallel_coordinate", CURRENT_MULTI_SELECTED);
+
+		}
+	};
+
+	DATA_TABLE_CONFIG["columns"] = [];
+	var colvis_buttons_config = []; // customized colvis buttons list (every header) 
+
+	ORIGINAL_FEATURE_LIST.forEach(function (header) {
+		DATA_TABLE_CONFIG["columns"].push({
+			name: header
+		});
+		colvis_buttons_config.push({
+			text: header,
+			className: DEFAULT_HIDDEN_COLUMNS.indexOf(header) == -1 ? 'active' : null,
+			action: colvis_action
+		});
+	});
+
+	var colvis_config = {
+		extend: 'collection',
+		text: 'Cols',
+		buttons: colvis_buttons_config,
+		fade: 500
+	};
+
+	DATA_TABLE_CONFIG["buttons"].push(colvis_config);
+}
+
+
+function init_visibility () {
+	DEFAULT_HIDDEN_COLUMNS.forEach(function (hidden_header) {
+		TABLE.column(hidden_header + ":name").visible(false);
+	});
+}
+
+
+function init_editability () {
+	TABLE.MakeCellsEditable({
+		"confirmationButton": { //https://github.com/ejbeaty/CellEdit
+			"confirmCss": 'my-confirm-class', //can use columns to limit to particular columns
+			"cancelCss": 'my-cancel-class'
+		},
+		"inputCss": 'my-input-class',
+		"columns": [2]
+	});
+}
+
+
+function init_button_style () {
+	$(".table-control > div.dt-buttons").removeClass("btn-group").addClass("btn-group-vertical");
+	$(".table-control > div.dt-buttons > button").removeClass("btn-secondary").addClass("btn-outline-secondary");
+}
+
+
+function select_row_in_table (case_name, from_table) {
+	if (from_table) return;
 
 	var offset = 0;
 
@@ -91,3 +163,8 @@ function select_row_in_table (case_name, table) {
 	TABLE.row(target_index + offset).scrollTo();
 }
 
+
+function update_multi_selected_table_view (case_names) {
+	TABLE.clear();
+	TABLE.rows.add(CURRENT_MULTI_SELECTED.map(function(d) {return Object.values(d);})).draw();
+}

@@ -17,9 +17,6 @@ function data_loading () {
 		cur_file = $this.get(0).files[0];
 	}
 
-	// show the current loaded dataset name
-	$("#dataset-tag").css("display", "inline")
-					 .text("Current dataset: " + cur_file.name);
 	// hide the "Upload Dataset" button
 	$("#upload-button").css("display", "none");
 
@@ -32,7 +29,7 @@ function data_loading () {
 		console.log("App initializing...");
 
 		// load dataset as list.
-		CURRENT_DATASET = d3.tsv.parse(fileReader.result, function (d) {
+		ORIGINAL_DATASET = d3.tsv.parse(fileReader.result, function (d) {
 			if (d.hasOwnProperty("")) delete d[""];
 			for (var key in d) {
 				if ($.isNumeric(d[key])) {
@@ -42,16 +39,27 @@ function data_loading () {
 			return d;
 		});
 
+		// show the current loaded dataset name
+		$("#dataset-tag").css("display", "inline")
+						 .text("Current dataset: " + cur_file.name + " | Size: " + ORIGINAL_DATASET.length + " slides");
+
 		// build case list.		
-		CURRENT_CASE_LIST = CURRENT_DATASET.map(function(d){return d["filename"];});
+		ORIGINAL_CASE_LIST = ORIGINAL_DATASET.map(function(d){return d["filename"];});
 
 		// build case dict with casename as key. 
-		for (var i = 0; i < CURRENT_DATASET.length; i ++) {
-			CURRENT_CASE_DICT[CURRENT_DATASET[i]["filename"]] = {};
+		for (var i = 0; i < ORIGINAL_DATASET.length; i ++) {
+			var cur_file_name = ORIGINAL_DATASET[i]["filename"];
+			ORIGINAL_CASE_DICT[cur_file_name] = {};
 			for (var index in FEATURES_TO_MAP) {
-				CURRENT_CASE_DICT[CURRENT_DATASET[i]["filename"]][FEATURES_TO_MAP[index]] = CURRENT_DATASET[i][FEATURES_TO_MAP[index]];
+				ORIGINAL_CASE_DICT[cur_file_name][FEATURES_TO_MAP[index]] = ORIGINAL_DATASET[i][FEATURES_TO_MAP[index]];
 			}
+			ORIGINAL_CASE_DICT[cur_file_name]["dom_id"] = cur_file_name.replace(/\.|\#/g, "-");
 		}
+
+		// build feature list
+		ORIGINAL_FEATURE_LIST = Object.keys(ORIGINAL_DATASET[0]);
+
+		CURRENT_MULTI_SELECTED = ORIGINAL_DATASET;
 
 		init_image_format_list();
 
@@ -63,18 +71,43 @@ function data_loading () {
 			if (check_sum == CHECK_IMAGE_EXTENSIONS.length) {
 				clearInterval (image_check_interval);
 
-				// initialize data table
-				$("#table-view").css("display", "block");
-				initialize_data_table(CURRENT_DATASET, DATA_TABLE_CONFIG);
+				// initialize table view
+				initialize_data_table(ORIGINAL_DATASET);
+				if (!OPEN_WITH_TABLE) {
+					hide_view("table");
+				}
+				d3.select("#table-btn")
+					.classed("view-mngmt-btn-hidden", false)
+					.classed("view-enabled", OPEN_WITH_TABLE)
+					.classed("view-disabled", !OPEN_WITH_TABLE);
 
 				// initialize chart view
-				$("#chart-view").css("display", "block");
-				initialize_chart_view(CURRENT_DATASET, "bar_chart", [DEFAULT_CHART_ATTRIBUTE]);
+				initialize_chart_view(ORIGINAL_DATASET, CURRENT_VIS_TYPE);
+				if (!OPEN_WITH_CHART) {
+					hide_view("chart");
+				}
+				d3.select("#chart-btn")
+					.classed("view-mngmt-btn-hidden", false)
+					.classed("view-enabled", OPEN_WITH_CHART)
+					.classed("view-disabled", !OPEN_WITH_CHART);
 
 				// initialize image view
-				initialize_image_view(CURRENT_CASE_LIST);
+				initialize_image_view(ORIGINAL_CASE_LIST);
+				if (!OPEN_WITH_IMAGE) {
+					hide_view("image");
+				}
+				d3.select("#image-btn")
+					.classed("view-mngmt-btn-hidden", false)
+					.classed("view-enabled", OPEN_WITH_IMAGE)
+					.classed("view-disabled", !OPEN_WITH_IMAGE);
+
+				$("#view-mngmt-btn-group").css("display", "block");
+				d3.select("#page-title")
+					.classed("mr-md-auto", false)
+					.classed("mr-md-3", true);
 
 				console.log("App initialized.");
+				APP_INITIALIZED = true;
 			} else {
 				console.log("waiting for image type checking ...");
 			}
@@ -101,14 +134,18 @@ function data_sorting (keyword, desc=false) {
 		}
 	}
 
-	CURRENT_DATASET.sort(compare);
+	CURRENT_SORT_ATTRIBUTE = keyword;
+	ORIGINAL_DATASET.sort(compare);
+	ORIGINAL_CASE_LIST = ORIGINAL_DATASET.map(function (d) {return d["filename"];});
+	CURRENT_MULTI_SELECTED.sort(compare);
+	CURRENT_CASE_LIST = CURRENT_MULTI_SELECTED.map(function (d) {return d["filename"];});
 }
 
 
 function init_image_format_list () {
 
-	var test_file = CURRENT_DATASET[0]["filename"];
-	var test_out_dir = CURRENT_DATASET[0]["outdir"];
+	var test_file = ORIGINAL_DATASET[0]["filename"];
+	var test_out_dir = ORIGINAL_DATASET[0]["outdir"];
 
 	for (var img_type_index = 0; img_type_index < DEFAULT_IMAGE_EXTENSIONS.length; img_type_index ++) {
 		var src = DATA_PATH + test_out_dir + "/" + test_file + DEFAULT_IMAGE_EXTENSIONS[img_type_index];
@@ -124,5 +161,3 @@ function init_image_format_list () {
 		img.src = src;
 	}
 }
-
-
