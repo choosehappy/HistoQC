@@ -14,8 +14,8 @@ def getBasicStats(s, params):
     s.addToPrintList("levels", osh.properties["openslide.level-count"])
     s.addToPrintList("height", osh.properties["openslide.level[0].height"])
     s.addToPrintList("width", osh.properties["openslide.level[0].width"])
-    s.addToPrintList("mpp-x", osh.properties["openslide.mpp-x"])
-    s.addToPrintList("mpp-y", osh.properties["openslide.mpp-y"])
+    s.addToPrintList("mpp_x", osh.properties["openslide.mpp-x"])
+    s.addToPrintList("mpp_y", osh.properties["openslide.mpp-y"])
     s.addToPrintList("comment", osh.properties["openslide.comment"].replace("\n", " ").replace("\r", " "))
     return
 
