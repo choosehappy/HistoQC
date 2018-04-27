@@ -158,7 +158,7 @@ if __name__ == '__main__':
     parser.add_argument('-p', '--basepath',
                         help="base path to add to file names, helps when producing data using existing file as input",
                         default="", type=str)
-    parser.add_argument('-c', '--config', help="config file to use", default="./config.ini", type=str)
+    parser.add_argument('-c', '--config', help="config file to use", default="./config.ini", type=str, required=True)
     parser.add_argument('-f', '--force', help="force overwriting of existing files", action="store_true")
     parser.add_argument('-b', '--batch', help="break results file into subsets of this size", type=int,
                         default=float("inf"))
@@ -193,8 +193,9 @@ if __name__ == '__main__':
 
     # get list of files, there are 3 options:
     files = []
-    basepath = args.basepath #
-    basepath = basepath + os.sep if len(basepath) > 0 else "" #if the user supplied a different basepath, make sure it ends with an os.sep
+    basepath = args.basepath  #
+    basepath = basepath + os.sep if len(
+        basepath) > 0 else ""  # if the user supplied a different basepath, make sure it ends with an os.sep
     if len(args.input_pattern) > 1:  # bash has sent us a list of files
         files = args.input_pattern
     elif args.input_pattern[0].endswith("tsv"):  # user sent us an input file
@@ -203,13 +204,13 @@ if __name__ == '__main__':
             for line in f:
                 if line[0] == "#":
                     continue
-                files.append(basepath+line.split("\t")[0])
+                files.append(basepath + line.split("\t")[0])
     else:  # user sent us a wildcard, need to use glob to find files
-            files = glob.glob(args.basepath + args.input_pattern[0])
+        files = glob.glob(args.basepath + args.input_pattern[0])
 
     logging.info(f"Number of files detected by pattern:\t{len(files)}")
 
-    #now do analysis of files
+    # now do analysis of files
     for filei, fname in enumerate(files):
         fname = os.path.realpath(fname)
 
