@@ -31,7 +31,7 @@ And the following additional python package:
 ```  
 C:\Research\code\qc>python qc_pipeline.py --help
 usage: qc_pipeline.py [-h] [-o OUTDIR] [-p BASEPATH] [-c CONFIG] [-f]
-                      [-b BATCH] [-n NTHREADS]
+                      [-b BATCH] [-n NTHREADS] [-s]
                       [input_pattern [input_pattern ...]]
 
 positional arguments:
@@ -42,10 +42,10 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
   -o OUTDIR, --outdir OUTDIR
-                        outputdir, default ./output/
+                        outputdir, default ./histoqc_output
   -p BASEPATH, --basepath BASEPATH
                         base path to add to file names, helps when producing
-                        data using existing file as input
+                        data using existing output file as input
   -c CONFIG, --config CONFIG
                         config file to use
   -f, --force           force overwriting of existing files
@@ -53,12 +53,17 @@ optional arguments:
                         break results file into subsets of this size
   -n NTHREADS, --nthreads NTHREADS
                         number of threads to launch
+  -s, --symlinkoff      turn OFF symlink creation
 
 ```
-                            
+
+
+Prefered usage is to run from the HistoQC directory, .e.g,:  HistoQC> python qc_pipeline.py -c config.ini -n 4 remote_file_location/*.svs 
+(Note: filenames in config.ini are *relative* to directory of execution, unless absolute paths are used)
+
 In case of errors, HistoQC can be run with the same output directory and will begin where it left off, identifying completed images by the presence of an existing directory.
                             
-Afterwards, double click index.html to open front end user interface, and select results.tsv. 
+Afterwards, double click index.html to open front end user interface, select the respective results.tsv file from the Data directory
 
 This can also be done remotely, but is a bit more complex, see advanced usage.
 

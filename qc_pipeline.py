@@ -10,6 +10,7 @@ import multiprocessing, logging
 from importlib import import_module
 import warnings
 import BaseImage
+import sys
 
 # --- setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -41,7 +42,7 @@ failed = []
 # --- setup worker functions
 def worker(filei, nfiles, fname, args, lconfig, processQueue, lock, shared_dict):
     fname_outdir = args.outdir + os.sep + os.path.basename(fname)
-    fname_outdir = fname_outdir.replace("lnk.", "")
+    # fname_outdir = fname_outdir.replace("lnk.", "")
     if os.path.isdir(fname_outdir):  # directory exists
         if (args.force):  # remove entirey directory to ensure no old files are present
             shutil.rmtree(fname_outdir)
@@ -82,7 +83,7 @@ def worker_callback(s):
 
     if first and overwrite_flag == "w":  # add headers to output file, don't do this if we're in append mode
         first = False
-        csv_report.write("#")
+        # csv_report.write("#")
         for field in s["output"]:
             csv_report.write(field + "\t")
         csv_report.write("warnings")  # always add warnings field
@@ -154,18 +155,29 @@ if __name__ == '__main__':
     parser.add_argument('input_pattern',
                         help="input filename pattern (try: *.svs or target_path/*.svs ), or tsv file containing list of files to analyze",
                         nargs="*")
-    parser.add_argument('-o', '--outdir', help="outputdir, default ./output/", default="output", type=str)
+    parser.add_argument('-o', '--outdir', help="outputdir, default ./histoqc_output", default="./histqc_output/", type=str)
     parser.add_argument('-p', '--basepath',
-                        help="base path to add to file names, helps when producing data using existing file as input",
+                        help="base path to add to file names, helps when producing data using existing output file as input",
                         default="", type=str)
-    parser.add_argument('-c', '--config', help="config file to use", default="./config.ini", type=str, required=True)
+    parser.add_argument('-c', '--config', help="config file to use", type=str)
     parser.add_argument('-f', '--force', help="force overwriting of existing files", action="store_true")
     parser.add_argument('-b', '--batch', help="break results file into subsets of this size", type=int,
                         default=float("inf"))
     parser.add_argument('-n', '--nthreads', help="number of threads to launch", type=int, default=1)
+    parser.add_argument('-s', '--symlinkoff', help="turn OFF symlink creation", action="store_true")
+
+    if len(sys.argv) == 1:
+        parser.print_help(sys.stderr)
+        sys.exit(1)
+
     args = parser.parse_args()
 
     config = configparser.ConfigParser()
+
+    if args.config is None:
+        args.config=os.path.dirname(os.path.realpath(__file__))+"/config.ini"
+        logging.warning(f"Configuration file not set (--config), using default: {args.config}")
+
     config.read(args.config)
 
     processQueue = load_pipeline(config)
@@ -202,8 +214,8 @@ if __name__ == '__main__':
         # load first column here and store into files
         with open(args.input_pattern[0], 'r') as f:
             for line in f:
-                if line[0] == "#":
-                    continue
+                #                if line[0] == "#":
+                #                    continue
                 files.append(basepath + line.split("\t")[0])
     else:  # user sent us a wildcard, need to use glob to find files
         files = glob.glob(args.basepath + args.input_pattern[0])
@@ -238,6 +250,17 @@ if __name__ == '__main__':
     for fname, error in failed:
         logging.info(f"{fname}\t{error}")
 
+    if not args.symlinkoff:
+        try:
+            os.symlink(os.path.realpath(args.outdir),
+                       os.path.dirname(os.path.realpath(__file__)) + "/UserInterface/Data/" + args.outdir,
+                       target_is_directory=True)
+        except FileExistsError:
+            pass
+
+        logging.info("Symlink to output directory created")
+
     logging.shutdown()
     shutil.copy("error.log",
                 args.outdir + os.sep + "error.log")  # copy error log to output directory. tried move but the filehandle is never released by logger no matter how hard i try
+
