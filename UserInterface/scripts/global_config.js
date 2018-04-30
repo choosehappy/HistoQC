@@ -26,7 +26,7 @@ var DEFAULT_VIS_TYPE = "bar_chart";
 /****************** IMAGE VIEW ****************/
 // full set of image format identifiers. 
 var DEFAULT_IMAGE_EXTENSIONS = [
-	"_thumb.png",
+	"_thumb_small.png",
 	"_bubble.png",
 	"_areathresh.png",
 	"_blurry.png",
@@ -44,4 +44,4 @@ var DEFAULT_IMAGE_EXTENSIONS = [
 	"_deconv_c1.png",
 	"_deconv_c0.png"
 ];
-var DEFAULT_IMAGE_EXTENSION = "_thumb.png";
+var DEFAULT_IMAGE_EXTENSION = "_thumb_small.png";
