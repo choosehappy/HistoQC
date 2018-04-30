@@ -1,25 +1,39 @@
 import logging
 import numpy as np
-from skimage import color
+from skimage.color import convert_colorspace, rgb2gray
 from distutils.util import strtobool
 
-
-def getBrightness(s,params):
+def getBrightnessGray(s,params):
     logging.info(f"{s['filename']} - \tgetContrast")
-    limit_to_mask = strtobool(params.get("limit_to_mask", True))
+    limit_to_mask = strtobool(params.get("limit_to_mask", "True"))
+
     img = s.getImgThumb(s["image_work_size"])
 
-    img_g=color.rgb2gray(img)
+    img_g = rgb2gray(img)
     if (limit_to_mask):
-        img_g= img_g[s["img_mask_use"]]
+        img_g = img_g[s["img_mask_use"]]
 
     s.addToPrintList("grayscale_brightness", str(img_g.mean()))
+
+    return
+
+
+def getBrightnessByChannelinColorSpace(s,params):
+    logging.info(f"{s['filename']} - \tgetContrast")
+    limit_to_mask = strtobool(params.get("limit_to_mask", "True"))
+    to_color_space = params.get("to_color_space","RGB")
+    img = s.getImgThumb(s["image_work_size"])
+
+    suffix=""
+    if(to_color_space != "RGB"):
+        img = convert_colorspace(img,"RGB",to_color_space)
+        suffix="_"+to_color_space
 
     for chan in range(0,3):
         vals=img[:, :, chan]
         if (limit_to_mask):
             vals= vals[s["img_mask_use"]]
-        s.addToPrintList(("chan%d_brightness") % (chan+1), str(vals.mean()))
+        s.addToPrintList(("chan%d_brightness"+suffix) % (chan+1), str(vals.mean()))
 
     return
 
@@ -28,7 +42,7 @@ def getContrast(s,params):
     logging.info(f"{s['filename']} - \tgetContrast")
     limit_to_mask = strtobool(params.get("limit_to_mask", True))
     img = s.getImgThumb(s["image_work_size"])
-    img = color.rgb2gray(img)
+    img = rgb2gray(img)
 
     if (limit_to_mask):
         img = img[s["img_mask_use"]]
