@@ -18,13 +18,16 @@ var DEFAULT_HIDDEN_COLUMNS = [
 /****************** CHART VIEW ****************/
 // Initialize the bar chart on this attribute.
 var DEFAULT_CHART_ATTRIBUTE = "height";
-// Temporarily deprecated. 
-var DEFAULT_PARAC_ATTRIBUTES = [];
+
+// Initialize the parallel coordinate on these attributes.
+// Temporarily DEPRECATED. 
+// var DEFAULT_PARAC_ATTRIBUTES = [];
+
 // "bar_chart" | "parallel_coordinate"
-var DEFAULT_VIS_TYPE = "bar_chart";
+var DEFAULT_VIS_TYPE = "parallel_coordinate";
 
 /****************** IMAGE VIEW ****************/
-// full set of image format identifiers. 
+// full set of possible image format identifiers. 
 var DEFAULT_IMAGE_EXTENSIONS = [
 	"_thumb.png",
 	"_bubble.png",
