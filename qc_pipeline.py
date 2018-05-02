@@ -110,7 +110,9 @@ def load_pipeline(lconfig):
     in_main = multiprocessing.current_process()._identity == ()
     if (in_main):
         logging.info("Pipeline will use these steps:")
-    for process in lconfig.get('pipeline', 'steps').splitlines():
+    steps = lconfig.get('pipeline', 'steps').splitlines()
+    headers.append("pipeline: "+" ".join(steps))
+    for process in steps:
         mod_name, func_name = process.split('.')
         if (in_main):
             logging.info(f"\t\t{mod_name}\t{func_name}")

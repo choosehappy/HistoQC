@@ -6,7 +6,6 @@ from ast import literal_eval as make_tuple
 
 from distutils.util import strtobool
 
-import scipy
 from skimage import io
 from skimage.filters import gabor_kernel, frangi, gaussian, median, laplace
 from skimage.color import rgb2gray
@@ -15,7 +14,6 @@ from skimage.feature import local_binary_pattern
 
 from skimage.transform import rescale, resize, downscale_local_mean
 
-from scipy import ndimage as ndi
 from math import ceil
 
 from sklearn.naive_bayes import GaussianNB
