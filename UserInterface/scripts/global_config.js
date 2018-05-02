@@ -45,6 +45,12 @@ var DEFAULT_IMAGE_EXTENSIONS = [
 	"_mask_use.png",
 	"_deconv_c2.png",
 	"_deconv_c1.png",
-	"_deconv_c0.png"
+	"_deconv_c0.png",
+	"_coverslip_edge.png"
 ];
+// list of image types that have a corresponding _xxx_small.png version
+var SMALL_IMAGE_EXTENSIONS = [
+	"_thumb.png"
+];
+// Default image type
 var DEFAULT_IMAGE_EXTENSION = "_thumb.png";

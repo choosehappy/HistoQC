@@ -28,8 +28,17 @@ function data_loading () {
 
 		console.log("App initializing...");
 
+		var file_text = fileReader.result;
+
+		var absdirRe = /#outdir:?\s*([^\s]*)\s*\n/;
+		var abs_outdir = absdirRe.exec(file_text)[1];
+		var reldirRe = /([^\\\/]*)$/;
+		var rel_outdir = reldirRe.exec(abs_outdir)[1];
+		DATA_PATH = DATA_PATH + rel_outdir + "/";
+		dataset_text = file_text.split(/#dataset:\s?/)[1];
+
 		// load dataset as list.
-		ORIGINAL_DATASET = d3.tsv.parse(fileReader.result, function (d) {
+		ORIGINAL_DATASET = d3.tsv.parse(dataset_text, function (d) {
 			if (d.hasOwnProperty("")) delete d[""];
 			for (var key in d) {
 				if ($.isNumeric(d[key])) {
@@ -148,7 +157,7 @@ function init_image_format_list () {
 	var test_out_dir = ORIGINAL_DATASET[0]["outdir"];
 
 	for (var img_type_index = 0; img_type_index < DEFAULT_IMAGE_EXTENSIONS.length; img_type_index ++) {
-		var src = DATA_PATH + test_out_dir + "/" + test_file + DEFAULT_IMAGE_EXTENSIONS[img_type_index];
+		var src = DATA_PATH + test_file + "/" + test_file + DEFAULT_IMAGE_EXTENSIONS[img_type_index];
 		var img = new Image();
 		img.typeidx = img_type_index;
 		img.onload = (function () {
