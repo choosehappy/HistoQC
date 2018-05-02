@@ -22,7 +22,7 @@ class BaseImage(dict):
 
         self["comments"] = " "
 
-        self["output"] = ["filename", "outdir", "comments"]
+        self["output"] = ["filename", "comments"]
 
         self["completed"] = []
 

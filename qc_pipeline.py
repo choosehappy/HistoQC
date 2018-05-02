@@ -11,6 +11,7 @@ from importlib import import_module
 import warnings
 import BaseImage
 import sys
+import datetime
 
 # --- setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -37,6 +38,7 @@ nfiledone = 0
 csv_report = None
 first = True
 failed = []
+headers = []
 
 
 # --- setup worker functions
@@ -83,16 +85,12 @@ def worker_callback(s):
 
     if first and overwrite_flag == "w":  # add headers to output file, don't do this if we're in append mode
         first = False
-        # csv_report.write("#")
-        for field in s["output"]:
-            csv_report.write(field + "\t")
-        csv_report.write("warnings")  # always add warnings field
-        csv_report.write("\n")
 
-    for field in s["output"]:
-        csv_report.write(s[field] + "\t")
+        csv_report.write("\n".join(["#" + s for s in headers])+"\n")
+        csv_report.write("#dataset:"+"\t".join(s["output"])+"warnings\n") #always add warnings field last
 
-    csv_report.write("|".join(s["warnings"]) + "\n")
+    csv_report.write("\t".join([s[field] for field in s["output"]])+"|".join(s["warnings"]) + "\n")
+
     csv_report.flush()
     nfiledone += 1
 
@@ -150,7 +148,7 @@ if __name__ == '__main__':
     manager = multiprocessing.Manager()
     lock = manager.Lock()
     shared_dict = manager.dict()
-
+    headers.append(f"start_time:\t{datetime.datetime.now()}")
     parser = argparse.ArgumentParser(description='')
     parser.add_argument('input_pattern',
                         help="input filename pattern (try: *.svs or target_path/*.svs ), or tsv file containing list of files to analyze",
@@ -187,6 +185,9 @@ if __name__ == '__main__':
     logging.info("----------")
     # make output directory and create report file
     makeDir(args.outdir)
+    headers.append(f"outdir:\t{os.path.realpath(args.outdir)}")
+    headers.append(f"config_file:\t{os.path.realpath(args.config)}")
+    headers.append(f"command_line_args:\t{' '.join(sys.argv)}")
 
     if len(glob.glob(args.outdir + os.sep + "results*.tsv")) > 0:
         if (args.force):
@@ -214,8 +215,8 @@ if __name__ == '__main__':
         # load first column here and store into files
         with open(args.input_pattern[0], 'r') as f:
             for line in f:
-                #                if line[0] == "#":
-                #                    continue
+                if line[0] == "#":
+                    continue
                 files.append(basepath + line.split("\t")[0])
     else:  # user sent us a wildcard, need to use glob to find files
         files = glob.glob(args.basepath + args.input_pattern[0])
