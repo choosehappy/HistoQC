@@ -155,7 +155,7 @@ if __name__ == '__main__':
     parser.add_argument('input_pattern',
                         help="input filename pattern (try: *.svs or target_path/*.svs ), or tsv file containing list of files to analyze",
                         nargs="*")
-    parser.add_argument('-o', '--outdir', help="outputdir, default ./histoqc_output", default="./histqc_output/", type=str)
+    parser.add_argument('-o', '--outdir', help="outputdir, default ./histoqc_output", default="./histoqc_output/", type=str)
     parser.add_argument('-p', '--basepath',
                         help="base path to add to file names, helps when producing data using existing output file as input",
                         default="", type=str)
