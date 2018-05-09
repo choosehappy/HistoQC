@@ -7,6 +7,8 @@ from skimage.color import rgb2gray
 from skimage.filters import rank
 import numpy as np
 
+import matplotlib.pyplot as plt
+
 
 # Analysis of focus measure operators for shape-from-focus
 # Said Pertuza,, Domenec Puiga, Miguel Angel Garciab, 2012
@@ -17,9 +19,9 @@ def identifyBlurryRegions(s, params):
     logging.info(f"{s['filename']} - \tidentifyBlurryRegions")
 
     blur_radius = int(params.get("blur_radius", 7))
-    blur_threshold = float(params.get("blur_threshold", .02))
+    blur_threshold = float(params.get("blur_threshold", .1))
 
-    img = s.getImgThumb(params.get("image_work_size", 5000))
+    img = s.getImgThumb(params.get("image_work_size", "2.5x"))
     img = rgb2gray(img)
     img_laplace = np.abs(skimage.filters.laplace(rgb2gray(img)))
     mask = skimage.filters.gaussian(img_laplace, sigma=blur_radius) <= blur_threshold
