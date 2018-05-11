@@ -48,6 +48,9 @@ def finalProcessingSpur(s, params):
     s.addToPrintList("spur_pixels", str(len(mask_spur.nonzero()[0])))
     io.imsave(s["outdir"] + os.sep + s["filename"] + "_spur.png", mask_spur * 255)
     s["img_mask_use"] = mask_opened
+    if len(s["img_mask_use"].nonzero()[0])==0:  #add warning in case the final tissue is empty
+        logging.warning(f"{s['filename']} - After BasicModule.finalProcessingSpur NO tissue remains detectable! Downstream modules likely to be incorrect/fail")
+        s["warnings"].append(f"After BasicModule.finalProcessingSpur NO tissue remains detectable! Downstream modules likely to be incorrect/fail")
 
 
 def finalProcessingArea(s, params):
@@ -60,3 +63,8 @@ def finalProcessingArea(s, params):
     io.imsave(s["outdir"] + os.sep + s["filename"] + "_areathresh.png", mask_removed_area* 255)
 
     s["img_mask_use"] = mask_opened > 0
+    if len(s["img_mask_use"].nonzero()[0])==0:  #add warning in case the final tissue is empty
+        logging.warning(f"{s['filename']} - After BasicModule.finalProcessingArea NO tissue remains detectable! Downstream modules likely to be incorrect/fail")
+        s["warnings"].append(f"After BasicModule.finalProcessingArea NO tissue remains detectable! Downstream modules likely to be incorrect/fail")
+
+
