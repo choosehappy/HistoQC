@@ -3,7 +3,7 @@
 
 HistoQC is an open-source quality control tool for digital pathology slides
 
-< IMAGE HERE >
+![screenshot](https://user-images.githubusercontent.com/9681868/40330248-a39603a2-5d4c-11e8-9d16-cc13fd9e21d4.png)
 
 # Requirements
 ---
@@ -70,7 +70,7 @@ This can also be done remotely, but is a bit more complex, see advanced usage.
 # Advanced Usage
 ---
 
-See docs [LINK]
+See [wiki] (https://github.com/choosehappy/HistoQC/wiki)
 
 
 # Citation
