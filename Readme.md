@@ -70,7 +70,7 @@ This can also be done remotely, but is a bit more complex, see advanced usage.
 # Advanced Usage
 ---
 
-See [wiki] (https://github.com/choosehappy/HistoQC/wiki)
+See [wiki](https://github.com/choosehappy/HistoQC/wiki)
 
 
 # Citation
