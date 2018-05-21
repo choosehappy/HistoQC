@@ -25,20 +25,20 @@ import matplotlib.pyplot as plt
 
 global_holder = {}
 
-
-def pixelWise(s, params):
+#WARNING: Not as robust as other modules
+def roiWise(s, params):
     name = params.get("name", "classTask")
     print("\tpixelWise:\t", name, end="")
 
     level = int(params.get("level", 1))
-    win_size = int(params.get("win_size", 2048))
+    win_size = int(params.get("win_size", 2048)) #the size of the ROI which will be iteratively considered
 
     osh = s["os_handle"]
 
     dim_base = osh.level_dimensions[0]
     dims = osh.level_dimensions[level]
 
-    ratio_x = dim_base[0] / dims[0]
+    ratio_x = dim_base[0] / dims[0] #figure out the difference between desi
     ratio_y = dim_base[1] / dims[1]
 
     frangi_scale_range = (1, 6)

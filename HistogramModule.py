@@ -5,7 +5,7 @@ from skimage import io
 import matplotlib.pyplot as plt
 from distutils.util import strtobool
 
-global_holder = {}
+global_holder = {} #this holds a local copy of the histograms of the template images so that they need only be computed once
 
 
 def getHistogram(s, params):
@@ -45,7 +45,7 @@ def compareToTemplates(s, params):
     logging.info(f"{s['filename']} - \tcompareToTemplates")
     bins = int(params.get("bins", 20))
     limit_to_mask = strtobool(params.get("limit_to_mask", True))
-    if (not global_holder.get("templates", False)):
+    if (not global_holder.get("templates", False)): #if the histograms haven't already been computed, compute and store them now
         templates = {}
         for template in params["templates"].splitlines():
             templates[os.path.splitext(os.path.basename(template))[0]] = computeHistogram(io.imread(template), bins)

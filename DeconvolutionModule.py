@@ -6,7 +6,7 @@ from skimage import io, color
 from skimage.exposure import rescale_intensity
 from skimage.color import separate_stains
 from skimage.color import hed_from_rgb, hdx_from_rgb, fgx_from_rgb, bex_from_rgb, rbd_from_rgb
-from skimage.color import gdx_from_rgb, hax_from_rgb, bro_from_rgb, bpx_from_rgb, ahx_from_rgb, hpx_from_rgb
+from skimage.color import gdx_from_rgb, hax_from_rgb, bro_from_rgb, bpx_from_rgb, ahx_from_rgb, hpx_from_rgb #need to load all of these in case the user selects them
 from distutils.util import strtobool
 
 import matplotlib.pyplot as plt

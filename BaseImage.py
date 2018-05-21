@@ -17,12 +17,12 @@ class BaseImage(dict):
         self["outdir"] = fname_outdir
 
         self["os_handle"] = openslide.OpenSlide(fname)
-        self["image_work_size"] = params.get("image_work_size", 3)
+        self["image_work_size"] = params.get("image_work_size", "1.25x")
         self["img_mask_use"] = np.ones(self.getImgThumb(self["image_work_size"]).shape[0:2], dtype=bool)
 
         self["comments"] = " "
 
-        self["output"] = ["filename", "comments"]
+        self["output"] = ["filename", "comments"] #these 2 need to be first for UI to work
 
         self["completed"] = []
 
@@ -57,7 +57,7 @@ class BaseImage(dict):
                     # perceived magnifications!
                     logging.info(f"{self['filename']} - \t\tcreating image thumb of size {str(dim)}")
                     self[key] = np.array(osh.get_thumbnail((dim, dim)))
-            elif "X" in dim.upper():
+            elif "X" in dim.upper(): #specifies a desired operating magnification
                 os = self["os_handle"]
                 base_mag = float(os.properties["openslide.objective-power"])
                 target_mag = float(dim.upper().split("X")[0])

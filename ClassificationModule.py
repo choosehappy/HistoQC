@@ -88,8 +88,6 @@ def compute_median(img, params):
 
 
 def compute_gabor(img, params):
-
-
     if not params["shared_dict"].get("gabor_kernels", False):
         gabor_theta = int(params.get("gabor_theta", 4))
         gabor_sigma = make_tuple(params.get("gabor_sigma", "(1,3)"))
@@ -152,7 +150,8 @@ def byExampleWithFeatures(s, params):
         sys.exit(1)
         return
 
-    with params["lock"]:
+    with params["lock"]: #this lock is shared across all threads such that only one thread needs to train the model
+                         #then it is shared with all other modules
         if not params["shared_dict"].get("model_" + name, False):
             logging.info(f"{s['filename']} - Training model ClassificationModule.byExample:{name}")
 
