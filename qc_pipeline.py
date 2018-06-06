@@ -255,7 +255,8 @@ if __name__ == '__main__':
 
     if not args.symlinkoff:
         origin = os.path.realpath(args.outdir)
-        target = (os.path.dirname(os.path.realpath(__file__)) + "/UserInterface/Data/" + args.outdir).rstrip('/')
+        target = os.path.normpath(os.path.dirname(os.path.realpath(__file__)) + "/UserInterface/Data/" +
+                                  os.path.basename(os.path.normpath(args.outdir)))
         try:
             os.symlink( origin, target, target_is_directory=True)
             logging.info("Symlink to output directory created")
@@ -263,6 +264,7 @@ if __name__ == '__main__':
         except (FileExistsError,FileNotFoundError):
             logging.error(f"Error creating symlink to output in UserInterface/Data, need to perform this manually for output to work! ln -s {origin} {target}")
             pass
+
 
     logging.shutdown()
     shutil.copy("error.log",
