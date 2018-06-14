@@ -21,13 +21,14 @@ function data_loading () {
 	$("#upload-button").css("display", "none");
 
 	// read dataset from the file
-	console.log("Read in file: " + cur_file.name);
+	FILE_NAME = cur_file.name.split(".")[0];
+	console.log("Read in file: " + FILE_NAME);
 	var fileReader = new FileReader();
 	fileReader.readAsText(cur_file);
 	fileReader.onload = function () {
 
 		console.log("App initializing...");
-
+		console.log(fileReader);
 		var file_text = fileReader.result;
 
 		var absdirRe = /#outdir:?\s*([^\s]*)\s*\n/;
@@ -35,6 +36,7 @@ function data_loading () {
 		var reldirRe = /([^\\\/]*)$/;
 		var rel_outdir = reldirRe.exec(abs_outdir)[1];
 		DATA_PATH = DATA_PATH + rel_outdir + "/";
+		FILE_HEADER = file_text.split(/#dataset:\s?/)[0] + "#dataset: ";
 		dataset_text = file_text.split(/#dataset:\s?/)[1];
 
 		// load dataset as list.

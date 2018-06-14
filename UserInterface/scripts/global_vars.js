@@ -20,6 +20,8 @@ var ORIGINAL_VIEWS = ["table", "chart", "image"];
 // current showing views
 var CURRENT_DISPLAY_VIEWS = [];
 var APP_INITIALIZED = false;
+var FILE_NAME = "";
+var FILE_HEADER = "";
 
 
 /****************** TABLE VIEW ****************/
@@ -47,8 +49,11 @@ var DATA_TABLE_CONFIG = {
 			text: 'Save',
 			fieldSeparator: "\t",
 			fieldBoundary: "",
-			filename: "results_revised",
-			extension: ".tsv"
+			filename: "result_revised",
+			extension: ".tsv",
+			customize: function (csv) {
+				return FILE_HEADER + csv;
+			}
 		},
 		{
 			text: 'Delete',
