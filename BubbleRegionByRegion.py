@@ -5,6 +5,7 @@ import sys
 from ast import literal_eval as make_tuple
 
 from distutils.util import strtobool
+from BaseImage import printMaskHelper
 
 from skimage import io
 from skimage.filters import gabor_kernel, frangi, gaussian, median, laplace
@@ -74,6 +75,11 @@ def roiWise(s, params):
         mask = remove_small_objects(mask, min_size=int(params.get("area_thresh", "")), in_place=True)
 
     s.addToPrintList(name, str(mask.mean()))
+
+    #TODO, migrate to printMaskHelper, but currently don't see how this output affects final mask
+    #s.addToPrintList(name,
+    #                 printMaskHelper(params.get("mask_statistics", s["mask_statistics"]), prev_mask, s["img_mask_use"]))
+
     io.imsave(s["outdir"] + os.sep + s["filename"] + "_BubbleBounds.png", mask.astype(np.uint8) * 255)
 
     return

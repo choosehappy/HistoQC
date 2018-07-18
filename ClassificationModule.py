@@ -6,6 +6,7 @@ from ast import literal_eval as make_tuple
 
 from distutils.util import strtobool
 
+from BaseImage import printMaskHelper
 from skimage import io
 from skimage.filters import gabor_kernel, frangi, gaussian, median, laplace
 from skimage.color import rgb2gray
@@ -46,9 +47,15 @@ def pixelWise(s, params):
     mask = s["img_mask_use"] & (mask > 0)
 
     s.addToPrintList(name, str(mask.mean()))
+
+
     io.imsave(s["outdir"] + os.sep + s["filename"] + "_" + name + ".png", mask * 255)
     s["img_mask_" + name] = (mask * 255) > 0
+    prev_mask = s["img_mask_use"]
     s["img_mask_use"] = s["img_mask_use"] & ~s["img_mask_" + name]
+
+    s.addToPrintList(name,
+                     printMaskHelper(params.get("mask_statistics", s["mask_statistics"]), prev_mask, s["img_mask_use"]))
 
     return
 
@@ -189,9 +196,14 @@ def byExampleWithFeatures(s, params):
 
     mask = s["img_mask_use"] & (mask > 0)
 
-    s.addToPrintList(name, str(mask.mean()))
     io.imsave(s["outdir"] + os.sep + s["filename"] + "_" + name + ".png", mask * 255)
     s["img_mask_" + name] = (mask * 255) > 0
+    prev_mask = s["img_mask_use"]
     s["img_mask_use"] = s["img_mask_use"] & ~s["img_mask_" + name]
+
+    s.addToPrintList(name,
+                     printMaskHelper(params.get("mask_statistics", s["mask_statistics"]), prev_mask, s["img_mask_use"]))
+
     s["completed"].append(f"byExampleWithFeatures:{name}")
+
     return

@@ -2,6 +2,7 @@ import logging
 import os
 
 import skimage
+from BaseImage import printMaskHelper
 from skimage import io
 from skimage.color import rgb2gray
 from skimage.filters import rank
@@ -26,12 +27,17 @@ def identifyBlurryRegions(s, params):
     img_laplace = np.abs(skimage.filters.laplace(rgb2gray(img)))
     mask = skimage.filters.gaussian(img_laplace, sigma=blur_radius) <= blur_threshold
 
-    mask = skimage.transform.resize(mask, s.getImgThumb(s["image_work_size"]).shape, order=0)[:, :, 1]  # for some reason resize takes a grayscale and produces a 3chan
+    mask = skimage.transform.resize(mask, s.getImgThumb(s["image_work_size"]).shape, order=0)[:, :,
+           1]  # for some reason resize takes a grayscale and produces a 3chan
     mask = s["img_mask_use"] & (mask > 0)
 
-    s.addToPrintList("percent_blurry", str(mask.mean()))
     io.imsave(s["outdir"] + os.sep + s["filename"] + "_blurry.png", mask * 255)
     s["img_mask_blurry"] = (mask * 255) > 0
+
+    prev_mask = s["img_mask_use"]
     s["img_mask_use"] = s["img_mask_use"] & ~s["img_mask_blurry"]
+
+    s.addToPrintList("percent_blurry",
+                     printMaskHelper(params.get("mask_statistics", s["mask_statistics"]), prev_mask, s["img_mask_use"]))
 
     return

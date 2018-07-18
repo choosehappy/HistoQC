@@ -3,8 +3,19 @@ import os
 import numpy as np
 import inspect
 
-#os.environ['PATH'] = '.\\openslide\\bin' + ';' + os.environ['PATH'] #can either specify openslide bin path in PATH, or add it dynamically
+# os.environ['PATH'] = '.\\openslide\\bin' + ';' + os.environ['PATH'] #can either specify openslide bin path in PATH, or add it dynamically
 import openslide
+
+
+def printMaskHelper(type, prev_mask, curr_mask):
+    if type == "relative2mask":
+        return str(1-len(curr_mask.nonzero()[0])/len(prev_mask.nonzero()[0]))
+    elif type == "relative2image":
+        return str(len(curr_mask.nonzero()[0]) / np.prod(curr_mask.shape))
+    elif type == "absolute":
+        return str(len(curr_mask.nonzero()[0]))
+    else:
+        return str(-1)
 
 
 class BaseImage(dict):
@@ -18,14 +29,21 @@ class BaseImage(dict):
 
         self["os_handle"] = openslide.OpenSlide(fname)
         self["image_work_size"] = params.get("image_work_size", "1.25x")
+        self["mask_statistics"] = params.get("mask_statistics", "relative2mask")
+
+        mask_statistics_types=["relative2mask", "absolute", "relative2image"]
+        if(self["mask_statistics"] not in mask_statistics_types):
+            logging.error(
+                f"mask_statistic type '{self['mask_statistics']}' is not one of the 3 supported options relative2mask, absolute, relative2image!")
+            exit()
+
         self["img_mask_use"] = np.ones(self.getImgThumb(self["image_work_size"]).shape[0:2], dtype=bool)
 
         self["comments"] = " "
 
-        self["output"] = ["filename", "comments"] #these 2 need to be first for UI to work
+        self["output"] = ["filename", "comments"]  # these 2 need to be first for UI to work
 
         self["completed"] = []
-
 
     def addToPrintList(self, name, val):
         self[name] = val
@@ -36,7 +54,7 @@ class BaseImage(dict):
         if key not in self:
             osh = self["os_handle"]
             if dim.isdigit():
-                dim=float(dim)
+                dim = float(dim)
                 if dim < 1 and not dim.is_integer():  # specifying a downscale factor from base
                     new_dim = np.asarray(osh.dimensions) * dim
                     self[key] = np.array(osh.get_thumbnail(new_dim))
@@ -57,9 +75,9 @@ class BaseImage(dict):
                     # perceived magnifications!
                     logging.info(f"{self['filename']} - \t\tcreating image thumb of size {str(dim)}")
                     self[key] = np.array(osh.get_thumbnail((dim, dim)))
-            elif "X" in dim.upper(): #specifies a desired operating magnification
+            elif "X" in dim.upper():  # specifies a desired operating magnification
                 os = self["os_handle"]
-                base_mag = float(os.properties["openslide.objective-power"])
+                base_mag = 40  # float(os.properties["openslide.objective-power"])
                 target_mag = float(dim.upper().split("X")[0])
 
                 down_factor = base_mag / target_mag
