@@ -26,6 +26,8 @@ def getMag(s, params):
     logging.info(f"{s['filename']} - \tgetMag")
     osh = s["os_handle"]
     mag = osh.properties.get("openslide.objective-power", "NA")
+    if(mag == "NA"): # openslide doesn't set objective-power for all SVS files: https://github.com/openslide/openslide/issues/247
+        mag = osh.properties.get("aperio.AppMag","NA")
     if (mag == "NA" or strtobool(
             params.get("confirm_base_mag", False))):
         # do analysis work here
@@ -63,6 +65,7 @@ class BaseImage(dict):
             exit()
 
         self["img_mask_use"] = np.ones(self.getImgThumb(self["image_work_size"]).shape[0:2], dtype=bool)
+        self["img_mask_force"] =[]
 
         self["completed"] = []
 
