@@ -1,5 +1,5 @@
 import logging
-import os
+import os, time
 import errno
 import glob
 import argparse
@@ -155,7 +155,7 @@ if __name__ == '__main__':
     parser.add_argument('input_pattern',
                         help="input filename pattern (try: *.svs or target_path/*.svs ), or tsv file containing list of files to analyze",
                         nargs="*")
-    parser.add_argument('-o', '--outdir', help="outputdir, default ./histoqc_output", default="./histoqc_output/", type=str)
+    parser.add_argument('-o', '--outdir', help="outputdir, default ./histoqc_output", default="./histoqc_output_DATE_TIME", type=str)
     parser.add_argument('-p', '--basepath',
                         help="base path to add to file names, helps when producing data using existing output file as input",
                         default="", type=str)
@@ -186,6 +186,8 @@ if __name__ == '__main__':
                                     initargs=(config,))  # start worker processes
     logging.info("----------")
     # make output directory and create report file
+    if(args.outdir=="./histoqc_output_DATE_TIME"):
+        args.outdir="./histoqc_output_"+time.strftime("%Y%m%d-%H%M%S")
     makeDir(args.outdir)
     headers.append(f"outdir:\t{os.path.realpath(args.outdir)}")
     headers.append(f"config_file:\t{os.path.realpath(args.config)}")
@@ -219,7 +221,7 @@ if __name__ == '__main__':
             for line in f:
                 if line[0] == "#":
                     continue
-                files.append(basepath + line.split("\t")[0])
+                files.append(basepath + line.strip().split("\t")[0])
     else:  # user sent us a wildcard, need to use glob to find files
         files = glob.glob(args.basepath + args.input_pattern[0])
 
