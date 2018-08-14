@@ -7,7 +7,7 @@ from skimage import io, morphology
 from scipy import ndimage as ndi
 
 import matplotlib.pyplot as plt  # these 2 are used for debugging
-from SaveModule import blend2Images
+from SaveModule import blend2Images #for easier debugging
 
 
 def removeSmallObjects(s, params):
@@ -43,7 +43,7 @@ def remove_large_objects(img, max_size):
 
 def removeFatlikeTissue(s, params):
     logging.info(f"{s['filename']} - \tremoveFatlikeTissue")
-    fat_cell_size = int(params.get("fat_cell_size ", 64))
+    fat_cell_size = int(params.get("fat_cell_size", 64))
     kernel_size = int(params.get("kernel_size", 3))
     max_keep_size = int(params.get("max_keep_size", 1000))
 
