@@ -7,10 +7,12 @@ from ast import literal_eval as make_tuple
 from distutils.util import strtobool
 from BaseImage import printMaskHelper
 
+import scipy.signal
+
 from skimage import io
 from skimage.filters import gabor_kernel, frangi, gaussian, median, laplace
 from skimage.color import rgb2gray
-from skimage.morphology import remove_small_objects, disk
+from skimage.morphology import remove_small_objects, disk, binary_opening
 from skimage.feature import local_binary_pattern
 
 from skimage.transform import rescale, resize, downscale_local_mean
@@ -19,6 +21,9 @@ from math import ceil
 
 from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import RandomForestClassifier
+
+from skimage import io, color
+
 
 import numpy as np
 
@@ -83,3 +88,41 @@ def roiWise(s, params):
     io.imsave(s["outdir"] + os.sep + s["filename"] + "_BubbleBounds.png", mask.astype(np.uint8) * 255)
 
     return
+
+
+def detectSmoothness(s, params):
+        logging.info(f"{s['filename']} - \tBubbleRegionByRegion.detectSmoothness")
+        thresh = float(params.get("threshold", ".01" ))
+        kernel_size = int(params.get("kernel_size", "10"))
+        min_object_size = int(params.get("min_object_size", "100"))
+
+        img = s.getImgThumb(s["image_work_size"])
+        img = color.rgb2gray(img)
+        avg = np.ones((kernel_size, kernel_size)) / (kernel_size**2)
+
+        imf = scipy.signal.convolve2d(img, avg, mode="same")
+        mask_flat = abs(imf - img) < thresh
+
+        mask_flat = remove_small_objects(mask_flat, min_size=min_object_size)
+        mask_flat = ~remove_small_objects(~mask_flat, min_size=min_object_size)
+
+        prev_mask = s["img_mask_use"]
+        s["img_mask_flat"] = mask_flat
+
+        io.imsave(s["outdir"] + os.sep + s["filename"] + "_flat.png", (mask_flat & prev_mask)* 255)
+
+        s["img_mask_use"] = s["img_mask_use"] & ~s["img_mask_flat"]
+
+
+        s.addToPrintList("flat_areas",
+                         printMaskHelper(params.get("mask_statistics", s["mask_statistics"]), prev_mask,
+                                         s["img_mask_use"]))
+
+        if len(s["img_mask_use"].nonzero()[0]) == 0:  # add warning in case the final tissue is empty
+            logging.warning(f"{s['filename']} - After BubbleRegionByRegion.detectSmoothness: NO tissue "
+                            f"remains detectable! Downstream modules likely to be incorrect/fail")
+            s["warnings"].append(f"After BubbleRegionByRegion.detectSmoothness: NO tissue remains "
+                                 f"detectable! Downstream modules likely to be incorrect/fail")
+
+        return
+
