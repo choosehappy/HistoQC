@@ -80,7 +80,7 @@ def compute_lbp(img, params):
 
 
 def compute_gaussian(img, params):
-    gaussian_sigma = int(params.get("gaussian_sigma ", 1))
+    gaussian_sigma = int(params.get("gaussian_sigma", 1))
     gaussian_multichan = strtobool(params.get("gaussian_multichan", False))
 
     if (gaussian_multichan):
