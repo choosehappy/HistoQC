@@ -10,7 +10,7 @@ from BaseImage import printMaskHelper
 from skimage import io
 from skimage.filters import gabor_kernel, frangi, gaussian, median, laplace
 from skimage.color import rgb2gray
-from skimage.morphology import remove_small_objects, disk
+from skimage.morphology import remove_small_objects, disk, dilation
 from skimage.feature import local_binary_pattern
 
 from scipy import ndimage as ndi
@@ -21,6 +21,7 @@ from sklearn.ensemble import RandomForestClassifier
 import numpy as np
 
 import matplotlib.pyplot as plt
+
 
 def pixelWise(s, params):
     name = params.get("name", "classTask")
@@ -48,7 +49,6 @@ def pixelWise(s, params):
 
     s.addToPrintList(name, str(mask.mean()))
 
-
     io.imsave(s["outdir"] + os.sep + s["filename"] + "_" + name + ".png", mask * 255)
     s["img_mask_" + name] = (mask * 255) > 0
     prev_mask = s["img_mask_use"]
@@ -66,14 +66,14 @@ def compute_rgb(img, params):
     return img
 
 
-
-def compute_laplace(img,params):
-    laplace_ksize= int(params.get("laplace_ksize", 3))
+def compute_laplace(img, params):
+    laplace_ksize = int(params.get("laplace_ksize", 3))
     return laplace(rgb2gray(img), ksize=laplace_ksize)[:, :, None]
+
 
 def compute_lbp(img, params):
     lbp_radius = float(params.get("lbp_radius", 3))
-    lbp_points = int(params.get("lbp_points", 24)) #example sets radius * 8
+    lbp_points = int(params.get("lbp_points", 24))  # example sets radius * 8
     lbp_method = params.get("lbp_method", "default")
 
     return local_binary_pattern(rgb2gray(img), P=lbp_points, R=lbp_radius, method=lbp_method)[:, :, None]
@@ -157,8 +157,8 @@ def byExampleWithFeatures(s, params):
         sys.exit(1)
         return
 
-    with params["lock"]: #this lock is shared across all threads such that only one thread needs to train the model
-                         #then it is shared with all other modules
+    with params["lock"]:  # this lock is shared across all threads such that only one thread needs to train the model
+        # then it is shared with all other modules
         if not params["shared_dict"].get("model_" + name, False):
             logging.info(f"{s['filename']} - Training model ClassificationModule.byExample:{name}")
 
@@ -182,7 +182,6 @@ def byExampleWithFeatures(s, params):
             params["shared_dict"]["model_" + name] = clf
             logging.info(f"{s['filename']} - Training model ClassificationModule.byExample:{name}....done")
 
-
     clf = params["shared_dict"]["model_" + name]
     img = s.getImgThumb(s["image_work_size"])
     feats = compute_features(img, params)
@@ -191,8 +190,13 @@ def byExampleWithFeatures(s, params):
 
     mask = cal[:, :, 1] > thresh
 
-    if params.get("area_thresh", "") != "":
-        mask = remove_small_objects(mask, min_size=int(params.get("area_thresh", "")), in_place=True)
+    area_thresh = int(params.get("area_thresh", "5"))
+    if area_thresh > 0:
+        mask = remove_small_objects(mask, min_size=area_thresh, in_place=True)
+
+    dilate_kernel_size = int(params.get("dilate_kernel_size", "0"))
+    if dilate_kernel_size > 0:
+        mask = dilation(mask, selem=np.ones((dilate_kernel_size, dilate_kernel_size)))
 
     mask = s["img_mask_use"] & (mask > 0)
 
@@ -204,6 +208,7 @@ def byExampleWithFeatures(s, params):
     s.addToPrintList(name,
                      printMaskHelper(params.get("mask_statistics", s["mask_statistics"]), prev_mask, s["img_mask_use"]))
 
+    s["img_mask_force"].append("img_mask_" + name)
     s["completed"].append(f"byExampleWithFeatures:{name}")
 
     return

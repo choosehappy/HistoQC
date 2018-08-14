@@ -27,7 +27,7 @@ def finalComputations(s, params):
 
 def finalProcessingSpur(s, params):
     logging.info(f"{s['filename']} - \tfinalProcessingSpur")
-    disk_radius = int(params.get("disk_radius ", 25))
+    disk_radius = int(params.get("disk_radius", "25"))
     selem = disk(disk_radius)
     mask = s["img_mask_use"]
     mask_opened = binary_opening(mask, selem)
@@ -50,8 +50,10 @@ def finalProcessingSpur(s, params):
 
 def finalProcessingArea(s, params):
     logging.info(f"{s['filename']} - \tfinalProcessingArea")
+    area_thresh = int(params.get("area_thresh", "1000"))
     mask = s["img_mask_use"]
-    mask_opened = remove_small_objects(mask, min_size=int(params.get("area_thresh", "")))
+
+    mask_opened = remove_small_objects(mask, min_size=area_thresh)
     mask_removed_area = ~mask_opened & mask
 
     io.imsave(s["outdir"] + os.sep + s["filename"] + "_areathresh.png", mask_removed_area * 255)
