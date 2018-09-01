@@ -52,6 +52,7 @@ var DATA_TABLE_CONFIG = {
 			filename: "result_revised",
 			extension: ".tsv",
 			customize: function (csv) {
+				console.log(csv);
 				return FILE_HEADER + csv;
 			}
 		},

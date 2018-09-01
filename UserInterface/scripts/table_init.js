@@ -129,13 +129,25 @@ function init_visibility () {
 
 
 function init_editability () {
+
+	var comments_index = 1;
+	if (ORIGINAL_FEATURE_LIST[1] != "comments") {
+		comments_index = ORIGINAL_FEATURE_LIST.indexOf("comments");
+		if (comments_index == -1) {
+			console.log("[ERROR] cannot find 'comments' attribute in the dataset.");
+			return;
+		} else {
+			console.log("[LOG] 'comments' is at " + comments_index + ".");
+		}
+	}
+
 	TABLE.MakeCellsEditable({
 		"confirmationButton": { //https://github.com/ejbeaty/CellEdit
 			"confirmCss": 'my-confirm-class', //can use columns to limit to particular columns
 			"cancelCss": 'my-cancel-class'
 		},
 		"inputCss": 'my-input-class',
-		"columns": [2]
+		"columns": [comments_index]
 	});
 }
 

@@ -5,7 +5,7 @@
  */ 
 
 $(document).ready(function () {
-	console.log("Document ready.")
+	console.log("[LOG] Document ready.")
 
 	$("#upload-input").change(data_loading); // app entrance. func `data_loading` at data_load.js.
 	$("#reset-button").click(function(){window.location.reload(); console.log("App reset.")}); // app exit. back to the uploading page, reset to the init structure.

@@ -22,13 +22,12 @@ function data_loading () {
 
 	// read dataset from the file
 	FILE_NAME = cur_file.name.split(".")[0];
-	console.log("Read in file: " + FILE_NAME);
+	console.log("[LOG] Read in file: " + FILE_NAME);
 	var fileReader = new FileReader();
 	fileReader.readAsText(cur_file);
 	fileReader.onload = function () {
 
-		console.log("App initializing...");
-		console.log(fileReader);
+		console.log("[LOG] App initializing...");
 		var file_text = fileReader.result;
 
 		var absdirRe = /#outdir:?\s*([^\s]*)\s*\n/;
@@ -117,7 +116,7 @@ function data_loading () {
 					.classed("mr-md-auto", false)
 					.classed("mr-md-3", true);
 
-				console.log("App initialized.");
+				console.log("[LOG] App initialized.");
 				APP_INITIALIZED = true;
 			} else {
 				console.log("waiting for image type checking ...");
