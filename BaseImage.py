@@ -19,15 +19,15 @@ def printMaskHelper(type, prev_mask, curr_mask):
         return str(-1)
 
 
-
 # this function is seperated out because in the future we hope to have automatic detection of
 # magnification if not present in open slide, and/or to confirm openslide base magnification
 def getMag(s, params):
     logging.info(f"{s['filename']} - \tgetMag")
     osh = s["os_handle"]
     mag = osh.properties.get("openslide.objective-power", "NA")
-    if(mag == "NA"): # openslide doesn't set objective-power for all SVS files: https://github.com/openslide/openslide/issues/247
-        mag = osh.properties.get("aperio.AppMag","NA")
+    if (
+            mag == "NA"):  # openslide doesn't set objective-power for all SVS files: https://github.com/openslide/openslide/issues/247
+        mag = osh.properties.get("aperio.AppMag", "NA")
     if (mag == "NA" or strtobool(
             params.get("confirm_base_mag", False))):
         # do analysis work here
@@ -37,6 +37,7 @@ def getMag(s, params):
         mag = float(mag)
 
     return mag
+
 
 class BaseImage(dict):
 
@@ -56,7 +57,7 @@ class BaseImage(dict):
         self["os_handle"] = openslide.OpenSlide(fname)
         self["image_work_size"] = params.get("image_work_size", "1.25x")
         self["mask_statistics"] = params.get("mask_statistics", "relative2mask")
-        self.addToPrintList("base_mag", getMag(self,params))
+        self.addToPrintList("base_mag", getMag(self, params))
 
         mask_statistics_types = ["relative2mask", "absolute", "relative2image"]
         if (self["mask_statistics"] not in mask_statistics_types):
@@ -65,7 +66,7 @@ class BaseImage(dict):
             exit()
 
         self["img_mask_use"] = np.ones(self.getImgThumb(self["image_work_size"]).shape[0:2], dtype=bool)
-        self["img_mask_force"] =[]
+        self["img_mask_force"] = []
 
         self["completed"] = []
 
@@ -77,7 +78,7 @@ class BaseImage(dict):
         key = "img_" + str(dim)
         if key not in self:
             osh = self["os_handle"]
-            if dim.isdigit():
+            if dim.replace(".", "0", 1).isdigit(): #check to see if dim is a number
                 dim = float(dim)
                 if dim < 1 and not dim.is_integer():  # specifying a downscale factor from base
                     new_dim = np.asarray(osh.dimensions) * dim
