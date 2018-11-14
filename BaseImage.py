@@ -29,7 +29,7 @@ def getMag(s, params):
             mag == "NA"):  # openslide doesn't set objective-power for all SVS files: https://github.com/openslide/openslide/issues/247
         mag = osh.properties.get("aperio.AppMag", "NA")
     if (mag == "NA" or strtobool(
-            params.get("confirm_base_mag", False))):
+            params.get("confirm_base_mag", "False"))):
         # do analysis work here
         logging.warning(f"{s['filename']} - Unknown base magnification for file")
         s["warnings"].append(f"{s['filename']} - Unknown base magnification for file")
