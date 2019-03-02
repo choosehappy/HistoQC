@@ -77,5 +77,5 @@ See [wiki](https://github.com/choosehappy/HistoQC/wiki)
 ---
 If you find this software useful, please drop me a line and/or consider citing it:
 
-{ bibtex, ref }
+"HistoQC: An Open-Source Quality Control Tool for Digital Pathology Slides", Janowczyk A., Zuo R., Gilmore H., Feldman M., Madabhushi A., JCO Clinical Cancer Informatics, 2019 (In Press)
 
