@@ -1,0 +1,6 @@
+openslide-python
+scikit-image
+scikit-learn
+numpy
+scipy
+matplotlib
