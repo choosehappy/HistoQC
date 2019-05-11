@@ -125,7 +125,7 @@ def compute_frangi(img, params):
     frangi_beta1 = float(params.get("frangi_beta1", .5))
     frangi_beta2 = float(params.get("frangi_beta2", 15))
     frangi_black_ridges = strtobool(params.get("frangi_black_ridges", "True"))
-    feat = frangi(rgb2gray(img), frangi_scale_range, frangi_scale_step, frangi_beta1, frangi_beta2, frangi_black_ridges)
+    feat = frangi(rgb2gray(img), scale_range = frangi_scale_range, scale_step =frangi_scale_step, beta =frangi_beta1, gamma=frangi_beta2, black_ridges  =frangi_black_ridges)
     return feat[:, :, None]  # add singleton dimension
 
 
