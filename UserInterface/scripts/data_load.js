@@ -30,7 +30,7 @@ function data_loading () {
 		console.log("[LOG] App initializing...");
 		var file_text = fileReader.result;
 
-		var absdirRe = /#outdir:?\s*([^\s]*)\s*\n/;
+		var absdirRe = /#outdir:?\s*([^\n]*)\n/;
 		var abs_outdir = absdirRe.exec(file_text)[1];
 		var reldirRe = /([^\\\/]*)$/;
 		var rel_outdir = reldirRe.exec(abs_outdir)[1];
