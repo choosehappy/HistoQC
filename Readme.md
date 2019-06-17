@@ -24,6 +24,11 @@ And the following additional python package:
 6. sklearn
 
 
+You can likely install the python requirements using something like (note python 3+ requirement):
+
+pip3 install -r requirements.txt
+
+Openslide binaries will have to be installed separately as per individual o/s instructions
 
 # Basic Usage
 ---
