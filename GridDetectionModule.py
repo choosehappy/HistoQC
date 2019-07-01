@@ -1,7 +1,5 @@
 import numpy as np
 from scipy.fftpack import fft
-# from skimage import morphology
-# from skimage.filters import rank
 from skimage.morphology import disk, closing
 from skimage.filters import threshold_otsu, laplace, gaussian, sobel_v
 from skimage.filters.rank import equalize
@@ -11,19 +9,22 @@ from abc import ABC, abstractmethod
 from typing import Callable, Dict, Any, Tuple, Type
 from skimage.transform import radon, iradon
 import cv2
-from .BaseImage import BaseImage, printMaskHelper
+from BaseImage import BaseImage, printMaskHelper
+
+import logging
+logging.basicConfig(level=logging.DEBUG)
 
 
 class AbstractGrid(ABC, Callable):
     __DEFAULT_PROPERTY_GRAY: str = '__GRAY'
     @property
     def image(self) -> np.ndarray:
-        return self.image
+        return self._image
 
     @property
     def gray(self) -> np.ndarray:
         if not hasattr(self, type(self).__DEFAULT_PROPERTY_GRAY):
-            img_gray = rgb2gray(self.image) if self.image.ndim > 3 else self.image
+            img_gray = rgb2gray(self.image) if self.image.ndim > 2 else self.image
             setattr(self, type(self).__DEFAULT_PROPERTY_GRAY, img_gray)
         return getattr(self, type(self).__DEFAULT_PROPERTY_GRAY)
 
@@ -61,6 +62,11 @@ class GridRadon(AbstractGrid):
         mask = grid_background < threshold
         return mask
 
+    @staticmethod
+    def __validate_mute(radon_data, column):
+        for row_idx, data_row in enumerate(radon_data):
+            assert (np.take(data_row, column, mode='wrap')==0 ).all(), f"Not muted. Row:{row_idx}"
+
     @classmethod
     def clear_background(cls, radon_data: np.ndarray, theta: np.ndarray,
                          orientation: float, deg_range: float, step: float):
@@ -71,10 +77,18 @@ class GridRadon(AbstractGrid):
             f"Use a smaller step. Current: step={step}. Diff={delta.min()}"
         index = delta.argmin(axis=0)
         radius = deg_range//step
+        logging.debug(f'orientation:{orientation}. radius:{radius}, index{index}. Shape:{radon_data.shape}')
         # <index - radius, index + radius> is the interval for streaks. Mute everything else.
         # <right, 180 + left> with wrap mode. pre-condition right-left smaller than 180 --> radius < 90
-        background_interval = np.arange(index + radius + 1, radon_data.shape[1] + index - radius + 1)
-        np.put(radon_data[:, ], background_interval, 0, mode='wrap')
+        # note length already includes the +1 for the right-side
+        ind_left = index + radius + 1
+        ind_right = radon_data.shape[1] + index - radius
+        background_interval = np.arange(ind_left, ind_right)
+        logging.debug(f"Range:{ind_left} to {ind_right} exclusive right")
+        for data_row in radon_data[:, ]:
+            np.put(data_row[:, ], background_interval, 0, mode='wrap')
+        cls.__validate_mute(radon_data, background_interval)
+        return radon_data, background_interval
 
     def fit(self, params: Dict[str, Any]):
         step: float = params.get('step', 1)
@@ -94,11 +108,15 @@ class GridRadon(AbstractGrid):
         reconstruct_bp = cv2.normalize(reconstruct_bp, None, norm_type=cv2.NORM_MINMAX)
         # clip todo
         padded_size = tuple((x-y)/2.0 for (x, y) in zip(reconstruct_bp.shape, self.gray.shape))
-        slices = [slice(np.floor(offset), self.gray.shape[idx]+np.ceil(offset))
-                  for idx, offset in enumerate(padded_size)]
-        assert len(slices) == 2
-        background = reconstruct_bp[slices[0], slices[1]]
-        return background
+        slices_list = [slice(np.floor(offset).astype(int), self.gray.shape[idx]+np.ceil(offset).astype(int))
+                       for idx, offset in enumerate(padded_size)]
+        assert len(slices_list) == 2
+        logging.debug(f"{reconstruct_bp.shape},{slices_list[0]},{slices_list[1]}")
+        background_grid = reconstruct_bp[slices_list[0], slices_list[1]]
+        logging.debug(f"dim-reconstruction[truncated]{background_grid.shape}")
+        assert background_grid.shape == self.gray.shape, f'Shape of Output disagree with input gray-scale image' \
+            f'{background_grid.shape} vs. {self.gray.shape}'
+        return background_grid
 
 
 class GridFourier(AbstractGrid):
@@ -141,8 +159,6 @@ class GridFourier(AbstractGrid):
         grid_thresh_scale = params.get("grid_thresh_scale", 0.3)
         sanitized = closing(sobel_v(grid_background))
         return sanitized > grid_thresh_scale * sanitized.max()
-
-
 
 
 method_map: Dict[str, Type[AbstractGrid]] = {
