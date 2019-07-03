@@ -30,6 +30,8 @@ pip3 install -r requirements.txt
 
 Openslide binaries will have to be installed separately as per individual o/s instructions
 
+The most basic docker image can be created with the included (7-line) Dockerfile. 
+
 # Basic Usage
 ---
 
