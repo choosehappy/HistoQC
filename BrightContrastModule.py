@@ -54,6 +54,6 @@ def getContrast(s,params):
     s.addToPrintList("michelson_contrast", str(contrast))
 
     #RMS contrast
-    rms_contrast=np.sqrt(pow(img - img.mean(), 2).sum() /len(img))
+    rms_contrast=np.sqrt(pow(img - img.mean(), 2).sum() / img.size)
     s.addToPrintList("rms_contrast", str(rms_contrast))
     return
