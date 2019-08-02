@@ -14,6 +14,7 @@ def getBrightnessGray(s,params):
         img_g = img_g[s["img_mask_use"]]
 
     s.addToPrintList("grayscale_brightness", str(img_g.mean()))
+    s.addToPrintList("grayscale_brightness_std", str(img_g.std()))
 
     return
 
@@ -34,6 +35,7 @@ def getBrightnessByChannelinColorSpace(s,params):
         if (limit_to_mask):
             vals= vals[s["img_mask_use"]]
         s.addToPrintList(("chan%d_brightness"+suffix) % (chan+1), str(vals.mean()))
+        s.addToPrintList(("chan%d_brightness_std" + suffix) % (chan + 1), str(vals.std()))
 
     return
 

@@ -41,11 +41,13 @@ def seperateStains(s, params):
             dc_max = dc_sub.max()
 
             s.addToPrintList(f"deconv_c{c}_mean", str(dc_sub.mean()))
+            s.addToPrintList(f"deconv_c{c}_std", str(dc_sub.std()))
         else:
             mask = 1.0
             dc_min = dc.min()
             dc_max = dc.max()
             s.addToPrintList(f"deconv_c{c}_mean", str(dc.mean()))
+            s.addToPrintList(f"deconv_c{c}_std", str(dc.std()))
 
         dc = (dc - dc_min) / float(dc_max - dc_min) * mask
         io.imsave(s["outdir"] + os.sep + s["filename"] + f"_deconv_c{c}.png", dc)
