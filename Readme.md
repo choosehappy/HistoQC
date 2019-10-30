@@ -80,6 +80,14 @@ This can also be done remotely, but is a bit more complex, see advanced usage.
 See [wiki](https://github.com/choosehappy/HistoQC/wiki)
 
 
+# Notes
+
+Information from HistoQC users appears below:
+
+1. the new Pannoramic 1000 scanner, objective-magnification is given as 20, when a 20x objective lense and a 2x aperture boost is used, i.e. image magnification is actually 40x. While their own CaseViewer somehow determines that a boost exists and ends up with 40x when objective-magnification in Slidedat.ini is at 20, openslide and bioformats give 20x.
+
+1.1. When converted to svs by CaseViewer, the MPP entry in ImageDescription meta-parameter give the average of the x and y mpp. Both values are slightly different for the new P1000 and can be found in meta-parameters of svs as tiff.XResolution and YResolution (inverse values, so have to be converted, also respecting ResolutionUnit as centimeter or inch
+
 # Citation
 ---
 If you find this software useful, please drop me a line and/or consider citing it:
