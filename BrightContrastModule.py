@@ -1,5 +1,6 @@
 import logging
 import numpy as np
+from skimage.filters import filters
 from skimage.color import convert_colorspace, rgb2gray
 from distutils.util import strtobool
 
@@ -58,4 +59,10 @@ def getContrast(s,params):
     #RMS contrast
     rms_contrast=np.sqrt(pow(img - img.mean(), 2).sum() / img.size)
     s.addToPrintList("rms_contrast", str(rms_contrast))
+         
+    #TenenGrad contrast
+    tmp = sobel(img)
+    tenenGrad_contrast=np.sqrt(np.sum(tmp**2))/img.size
+    s.addToPrintList("tenenGrad_contrast", str(tenenGrad_contrast))
+                 
     return
