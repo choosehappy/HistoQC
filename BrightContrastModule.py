@@ -1,6 +1,6 @@
 import logging
 import numpy as np
-from skimage.filters import filters
+from skimage.filters import filters, sobel
 from skimage.color import convert_colorspace, rgb2gray
 from distutils.util import strtobool
 
@@ -62,5 +62,11 @@ def getContrast(s,params):
     tmp = sobel(img)
     tenenGrad_contrast=np.sqrt(np.sum(tmp**2))/img.size
     s.addToPrintList("tenenGrad_contrast", str(tenenGrad_contrast))
+
+    if len(s["img_mask_use"].nonzero()[0]) == 0:  # add warning in case the final tissue is empty
+        logging.warning(f"{s['filename']} - After BrightContrastModule.getContrast:{name} NO tissue remains "
+                        f"detectable! Downstream modules likely to be incorrect/fail")
+        s["warnings"].append(f"After BrightContrastModule.getContrast:{name} NO tissue remains detectable! "
+                             f"Downstream modules likely to be incorrect/fail")
                  
     return
