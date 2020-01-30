@@ -25,6 +25,13 @@ def removeSmallObjects(s, params):
     s.addToPrintList("percent_small_tissue_removed",
                      printMaskHelper(params.get("mask_statistics", s["mask_statistics"]), prev_mask, s["img_mask_use"]))
 
+    if len(s["img_mask_use"].nonzero()[0]) == 0 or len(
+            prev_mask.nonzero()[0]) == 0:  # add warning in case the final tissue is empty or the prev_mask is empty
+        logging.warning(
+            f"{s['filename']} - After MorphologyModule.removeSmallObjects NO tissue remains detectable! Downstream modules likely to be incorrect/fail")
+        s["warnings"].append(
+            f"After MorphologyModule.removeSmallObjects NO tissue remains detectable! Downstream modules likely to be incorrect/fail")
+
     return
 
 
@@ -65,6 +72,13 @@ def removeFatlikeTissue(s, params):
     s.addToPrintList("percent_fatlike_tissue_removed",
                      printMaskHelper(params.get("mask_statistics", s["mask_statistics"]), prev_mask, s["img_mask_use"]))
 
+    if len(s["img_mask_use"].nonzero()[0]) == 0 or len(
+            prev_mask.nonzero()[0]) == 0:  # add warning in case the final tissue is empty or the prev_mask is empty
+        logging.warning(
+            f"{s['filename']} - After MorphologyModule.removeFatlikeTissue NO tissue remains detectable! Downstream modules likely to be incorrect/fail")
+        s["warnings"].append(
+            f"After MorphologyModule.removeFatlikeTissue NO tissue remains detectable! Downstream modules likely to be incorrect/fail")
+
 
 def fillSmallHoles(s, params):
     logging.info(f"{s['filename']} - \tfillSmallHoles")
@@ -80,5 +94,12 @@ def fillSmallHoles(s, params):
 
     s.addToPrintList("percent_small_tissue_filled",
                      printMaskHelper(params.get("mask_statistics", s["mask_statistics"]), prev_mask, s["img_mask_use"]))
+
+    if len(s["img_mask_use"].nonzero()[0]) == 0 or len(
+            prev_mask.nonzero()[0]) == 0:  # add warning in case the final tissue is empty or the prev_mask is empty
+        logging.warning(
+            f"{s['filename']} - After MorphologyModule.fillSmallHoles NO tissue remains detectable! Downstream modules likely to be incorrect/fail")
+        s["warnings"].append(
+            f"After MorphologyModule.fillSmallHoles NO tissue remains detectable! Downstream modules likely to be incorrect/fail")
 
     return

@@ -40,7 +40,8 @@ def identifyBlurryRegions(s, params):
     s.addToPrintList("percent_blurry",
                      printMaskHelper(params.get("mask_statistics", s["mask_statistics"]), prev_mask, s["img_mask_use"]))
 
-    if (len(s["img_mask_use"].nonzero()[0])*len(prev_mask.nonzero()[0])) == 0:  # add warning in case the final tissue is empty or the prev_mask is empty
+    if len(s["img_mask_use"].nonzero()[0]) == 0 or len(
+            prev_mask.nonzero()[0]) == 0:  # add warning in case the final tissue is empty or the prev_mask is empty
         logging.warning(
             f"{s['filename']} - After BlurDectionModule.identifyBlurryRegions NO tissue remains detectable! Downstream modules likely to be incorrect/fail")
         s["warnings"].append(

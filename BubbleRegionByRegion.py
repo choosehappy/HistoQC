@@ -118,7 +118,8 @@ def detectSmoothness(s, params):
                          printMaskHelper(params.get("mask_statistics", s["mask_statistics"]), prev_mask,
                                          s["img_mask_use"]))
 
-        if len(s["img_mask_use"].nonzero()[0]) == 0:  # add warning in case the final tissue is empty
+        if len(s["img_mask_use"].nonzero()[0]) == 0 or len(
+                prev_mask.nonzero()[0]) == 0:  # add warning in case the final tissue is empty or the prev_mask is empty
             logging.warning(f"{s['filename']} - After BubbleRegionByRegion.detectSmoothness: NO tissue "
                             f"remains detectable! Downstream modules likely to be incorrect/fail")
             s["warnings"].append(f"After BubbleRegionByRegion.detectSmoothness: NO tissue remains "
