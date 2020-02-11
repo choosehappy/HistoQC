@@ -87,9 +87,9 @@ def worker_callback(s):
         first = False
 
         csv_report.write("\n".join(["#" + s for s in headers])+"\n")
-        csv_report.write("#dataset:"+"\t".join(s["output"])+"warnings\n") #always add warnings field last
+        csv_report.write("#dataset:"+"\t".join(s["output"])+"\twarnings\n") #always add warnings field last
 
-    csv_report.write("\t".join([str(s[field]) for field in s["output"]])+"|".join(s["warnings"]) + "\n")
+    csv_report.write("\t".join([str(s[field]) for field in s["output"]])+"\t"+"|".join(s["warnings"]) + "\n")
 
     csv_report.flush()
     nfiledone += 1

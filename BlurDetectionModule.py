@@ -3,7 +3,7 @@ import os
 
 import skimage
 from BaseImage import printMaskHelper
-from skimage import io
+from skimage import io, img_as_ubyte
 from skimage.color import rgb2gray
 from skimage.filters import rank
 import numpy as np
@@ -31,7 +31,7 @@ def identifyBlurryRegions(s, params):
            1]  # for some reason resize takes a grayscale and produces a 3chan
     mask = s["img_mask_use"] & (mask > 0)
 
-    io.imsave(s["outdir"] + os.sep + s["filename"] + "_blurry.png", mask * 255)
+    io.imsave(s["outdir"] + os.sep + s["filename"] + "_blurry.png", img_as_ubyte(mask))
     s["img_mask_blurry"] = (mask * 255) > 0
 
     prev_mask = s["img_mask_use"]
@@ -39,5 +39,12 @@ def identifyBlurryRegions(s, params):
 
     s.addToPrintList("percent_blurry",
                      printMaskHelper(params.get("mask_statistics", s["mask_statistics"]), prev_mask, s["img_mask_use"]))
+
+    if len(s["img_mask_use"].nonzero()[0]) == 0:  # add warning in case the final tissue is empty
+        logging.warning(
+            f"{s['filename']} - After BlurDetectionModule.identifyBlurryRegions NO tissue remains detectable! Downstream modules likely to be incorrect/fail")
+        s["warnings"].append(
+            f"After BlurDetectionModule.identifyBlurryRegions NO tissue remains detectable! Downstream modules likely to be incorrect/fail")
+
 
     return

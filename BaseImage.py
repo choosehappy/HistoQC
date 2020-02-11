@@ -4,13 +4,16 @@ import numpy as np
 import inspect
 from distutils.util import strtobool
 
-# os.environ['PATH'] = '.\\openslide\\bin' + ';' + os.environ['PATH'] #can either specify openslide bin path in PATH, or add it dynamically
+#os.environ['PATH'] = '.\\openslide\\bin' + ';' + os.environ['PATH'] #can either specify openslide bin path in PATH, or add it dynamically
 import openslide
 
 
 def printMaskHelper(type, prev_mask, curr_mask):
     if type == "relative2mask":
-        return str(1 - len(curr_mask.nonzero()[0]) / len(prev_mask.nonzero()[0]))
+        if len(prev_mask.nonzero()[0]) == 0:
+            return str(-100)
+        else:
+            return str(1 - len(curr_mask.nonzero()[0]) / len(prev_mask.nonzero()[0]))
     elif type == "relative2image":
         return str(len(curr_mask.nonzero()[0]) / np.prod(curr_mask.shape))
     elif type == "absolute":
@@ -44,7 +47,7 @@ class BaseImage(dict):
     def __init__(self, fname, fname_outdir, params):
         dict.__init__(self)
 
-        self["warnings"] = []  # this needs to be first key in case anything else wants to add to it
+        self["warnings"] = ['']  # this needs to be first key in case anything else wants to add to it
         self["output"] = []
 
         # these 2 need to be first for UI to work

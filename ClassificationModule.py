@@ -7,7 +7,7 @@ from ast import literal_eval as make_tuple
 from distutils.util import strtobool
 
 from BaseImage import printMaskHelper
-from skimage import io
+from skimage import io, img_as_ubyte
 from skimage.filters import gabor_kernel, frangi, gaussian, median, laplace
 from skimage.color import rgb2gray
 from skimage.morphology import remove_small_objects, disk, dilation
@@ -49,13 +49,19 @@ def pixelWise(s, params):
 
     s.addToPrintList(name, str(mask.mean()))
 
-    io.imsave(s["outdir"] + os.sep + s["filename"] + "_" + name + ".png", mask * 255)
+    io.imsave(s["outdir"] + os.sep + s["filename"] + "_" + name + ".png", img_as_ubyte(mask))
     s["img_mask_" + name] = (mask * 255) > 0
     prev_mask = s["img_mask_use"]
     s["img_mask_use"] = s["img_mask_use"] & ~s["img_mask_" + name]
 
     s.addToPrintList(name,
                      printMaskHelper(params.get("mask_statistics", s["mask_statistics"]), prev_mask, s["img_mask_use"]))
+
+    if len(s["img_mask_use"].nonzero()[0]) == 0:  # add warning in case the final tissue is empty
+        logging.warning(f"{s['filename']} - After ClassificationModule.pixelWise:{name} NO tissue "
+                        f"remains detectable! Downstream modules likely to be incorrect/fail")
+        s["warnings"].append(f"After ClassificationModule.pixelWise:{name} NO tissue remains "
+                             f"detectable! Downstream modules likely to be incorrect/fail")
 
     return
 
@@ -200,13 +206,19 @@ def byExampleWithFeatures(s, params):
 
     mask = s["img_mask_use"] & (mask > 0)
 
-    io.imsave(s["outdir"] + os.sep + s["filename"] + "_" + name + ".png", mask * 255)
+    io.imsave(s["outdir"] + os.sep + s["filename"] + "_" + name + ".png", img_as_ubyte(mask))
     s["img_mask_" + name] = (mask * 255) > 0
     prev_mask = s["img_mask_use"]
     s["img_mask_use"] = s["img_mask_use"] & ~s["img_mask_" + name]
 
     s.addToPrintList(name,
                      printMaskHelper(params.get("mask_statistics", s["mask_statistics"]), prev_mask, s["img_mask_use"]))
+
+    if len(s["img_mask_use"].nonzero()[0]) == 0:  # add warning in case the final tissue is empty
+        logging.warning(f"{s['filename']} - After ClassificationModule.byExampleWithFeatures:{name} NO tissue "
+                        f"remains detectable! Downstream modules likely to be incorrect/fail")
+        s["warnings"].append(f"After ClassificationModule.byExampleWithFeatures:{name} NO tissue remains "
+                             f"detectable! Downstream modules likely to be incorrect/fail")
 
     s["img_mask_force"].append("img_mask_" + name)
     s["completed"].append(f"byExampleWithFeatures:{name}")

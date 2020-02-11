@@ -2,7 +2,7 @@ import logging
 import os
 import numpy as np
 from BaseImage import printMaskHelper
-from skimage import io, morphology
+from skimage import io, morphology, img_as_ubyte
 
 from scipy import ndimage as ndi
 
@@ -16,7 +16,7 @@ def removeSmallObjects(s, params):
     img_reduced = morphology.remove_small_objects(s["img_mask_use"], min_size=min_size)
     img_small = np.invert(img_reduced) & s["img_mask_use"]
 
-    io.imsave(s["outdir"] + os.sep + s["filename"] + "_small_remove.png", img_small * 255)
+    io.imsave(s["outdir"] + os.sep + s["filename"] + "_small_remove.png", img_as_ubyte(img_small))
     s["img_mask_small_filled"] = (img_small * 255) > 0
 
     prev_mask = s["img_mask_use"]
@@ -24,6 +24,13 @@ def removeSmallObjects(s, params):
 
     s.addToPrintList("percent_small_tissue_removed",
                      printMaskHelper(params.get("mask_statistics", s["mask_statistics"]), prev_mask, s["img_mask_use"]))
+
+
+    if len(s["img_mask_use"].nonzero()[0]) == 0:  # add warning in case the final tissue is empty
+        logging.warning(f"{s['filename']} - After MorphologyModule.removeSmallObjects: NO tissue "
+                        f"remains detectable! Downstream modules likely to be incorrect/fail")
+        s["warnings"].append(f"After MorphologyModule.removeSmallObjects: NO tissue remains "
+                             f"detectable! Downstream modules likely to be incorrect/fail")
 
     return
 
@@ -56,7 +63,7 @@ def removeFatlikeTissue(s, params):
 
     mask_fat = mask_dilate & ~mask_dilate_removed
 
-    io.imsave(s["outdir"] + os.sep + s["filename"] + "_fatlike.png", mask_fat * 255)
+    io.imsave(s["outdir"] + os.sep + s["filename"] + "_fatlike.png", img_as_ubyte(mask_fat))
     s["img_mask_fatlike"] = (mask_fat * 255) > 0
 
     prev_mask = s["img_mask_use"]
@@ -65,6 +72,12 @@ def removeFatlikeTissue(s, params):
     s.addToPrintList("percent_fatlike_tissue_removed",
                      printMaskHelper(params.get("mask_statistics", s["mask_statistics"]), prev_mask, s["img_mask_use"]))
 
+    if len(s["img_mask_use"].nonzero()[0]) == 0:  # add warning in case the final tissue is empty
+        logging.warning(f"{s['filename']} - After MorphologyModule.removeFatlikeTissue: NO tissue "
+                        f"remains detectable! Downstream modules likely to be incorrect/fail")
+        s["warnings"].append(f"After MorphologyModule.removeFatlikeTissue: NO tissue remains "
+                             f"detectable! Downstream modules likely to be incorrect/fail")
+
 
 def fillSmallHoles(s, params):
     logging.info(f"{s['filename']} - \tfillSmallHoles")
@@ -72,7 +85,7 @@ def fillSmallHoles(s, params):
     img_reduced = morphology.remove_small_holes(s["img_mask_use"], min_size=min_size)
     img_small = img_reduced & np.invert(s["img_mask_use"])
 
-    io.imsave(s["outdir"] + os.sep + s["filename"] + "_small_fill.png", img_small * 255)
+    io.imsave(s["outdir"] + os.sep + s["filename"] + "_small_fill.png", img_as_ubyte(img_small))
     s["img_mask_small_removed"] = (img_small * 255) > 0
 
     prev_mask = s["img_mask_use"]
@@ -81,4 +94,9 @@ def fillSmallHoles(s, params):
     s.addToPrintList("percent_small_tissue_filled",
                      printMaskHelper(params.get("mask_statistics", s["mask_statistics"]), prev_mask, s["img_mask_use"]))
 
+    if len(s["img_mask_use"].nonzero()[0]) == 0:  # add warning in case the final tissue is empty
+        logging.warning(f"{s['filename']} - After MorphologyModule.fillSmallHoles: NO tissue "
+                        f"remains detectable! Downstream modules likely to be incorrect/fail")
+        s["warnings"].append(f"After MorphologyModule.fillSmallHoles: NO tissue remains "
+                             f"detectable! Downstream modules likely to be incorrect/fail")
     return

@@ -9,7 +9,7 @@ from BaseImage import printMaskHelper
 
 import scipy.signal
 
-from skimage import io
+from skimage import io, img_as_ubyte
 from skimage.filters import gabor_kernel, frangi, gaussian, median, laplace
 from skimage.color import rgb2gray
 from skimage.morphology import remove_small_objects, disk, binary_opening
@@ -85,7 +85,7 @@ def roiWise(s, params):
     #s.addToPrintList(name,
     #                 printMaskHelper(params.get("mask_statistics", s["mask_statistics"]), prev_mask, s["img_mask_use"]))
 
-    io.imsave(s["outdir"] + os.sep + s["filename"] + "_BubbleBounds.png", mask.astype(np.uint8) * 255)
+    io.imsave(s["outdir"] + os.sep + s["filename"] + "_BubbleBounds.png", img_as_ubyte(mask)) #.astype(np.uint8) * 255)
 
     return
 
@@ -109,7 +109,7 @@ def detectSmoothness(s, params):
         prev_mask = s["img_mask_use"]
         s["img_mask_flat"] = mask_flat
 
-        io.imsave(s["outdir"] + os.sep + s["filename"] + "_flat.png", (mask_flat & prev_mask)* 255)
+        io.imsave(s["outdir"] + os.sep + s["filename"] + "_flat.png", img_as_ubyte(mask_flat & prev_mask))
 
         s["img_mask_use"] = s["img_mask_use"] & ~s["img_mask_flat"]
 

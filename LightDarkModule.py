@@ -2,7 +2,7 @@ import logging
 import os
 import numpy as np
 from BaseImage import printMaskHelper
-from skimage import io, color
+from skimage import io, color, img_as_ubyte
 from distutils.util import strtobool
 from skimage.filters import threshold_otsu, rank
 from skimage.morphology import disk
@@ -32,7 +32,7 @@ def getIntensityThresholdOtsu(s, params):
     if strtobool(params.get("invert", "False")):
         s["img_mask_" + name] = ~s["img_mask_" + name]
 
-    io.imsave(s["outdir"] + os.sep + s["filename"] + "_" + name + ".png", s["img_mask_" + name] * 255)
+    io.imsave(s["outdir"] + os.sep + s["filename"] + "_" + name + ".png", img_as_ubyte(s["img_mask_" + name]))
 
     prev_mask = s["img_mask_use"]
     s["img_mask_use"] = s["img_mask_use"] & s["img_mask_" + name]
@@ -71,14 +71,15 @@ def getIntensityThresholdPercent(s, params):
 
     s["img_mask_" + name] = map > 0
 
-    io.imsave(s["outdir"] + os.sep + s["filename"] + "_" + name + ".png", s["img_mask_" + name] * 255)
+
 
     if strtobool(params.get("invert", "False")):
         s["img_mask_" + name] = ~s["img_mask_" + name]
 
-
     prev_mask = s["img_mask_use"]
     s["img_mask_use"] = s["img_mask_use"] & s["img_mask_" + name]
+
+    io.imsave(s["outdir"] + os.sep + s["filename"] + "_" + name + ".png", img_as_ubyte(prev_mask & ~s["img_mask_" + name]))
 
     s.addToPrintList(name,
                      printMaskHelper(params.get("mask_statistics", s["mask_statistics"]), prev_mask, s["img_mask_use"]))

@@ -2,7 +2,7 @@ import logging
 import os
 from BaseImage import printMaskHelper
 from skimage.morphology import remove_small_objects, binary_opening, disk
-from skimage import io, color
+from skimage import io, color, img_as_ubyte
 
 import matplotlib.pyplot as plt
 
@@ -33,7 +33,7 @@ def finalProcessingSpur(s, params):
     mask_opened = binary_opening(mask, selem)
     mask_spur = ~mask_opened & mask
 
-    io.imsave(s["outdir"] + os.sep + s["filename"] + "_spur.png", mask_spur * 255)
+    io.imsave(s["outdir"] + os.sep + s["filename"] + "_spur.png", img_as_ubyte(mask_spur))
 
     prev_mask = s["img_mask_use"]
     s["img_mask_use"] = mask_opened
@@ -56,7 +56,7 @@ def finalProcessingArea(s, params):
     mask_opened = remove_small_objects(mask, min_size=area_thresh)
     mask_removed_area = ~mask_opened & mask
 
-    io.imsave(s["outdir"] + os.sep + s["filename"] + "_areathresh.png", mask_removed_area * 255)
+    io.imsave(s["outdir"] + os.sep + s["filename"] + "_areathresh.png", img_as_ubyte(mask_removed_area))
 
     prev_mask = s["img_mask_use"]
     s["img_mask_use"] = mask_opened > 0

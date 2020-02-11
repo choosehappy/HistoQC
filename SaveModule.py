@@ -1,6 +1,6 @@
 import logging
 import os
-from skimage import io
+from skimage import io, img_as_ubyte
 from distutils.util import strtobool
 from skimage import color
 import numpy as np
@@ -26,12 +26,12 @@ def saveFinalMask(s, params):
     for mask_force in s["img_mask_force"]:
         mask[s[mask_force]] = 0
 
-    io.imsave(s["outdir"] + os.sep + s["filename"] + "_mask_use.png", mask * 255)
+    io.imsave(s["outdir"] + os.sep + s["filename"] + "_mask_use.png", img_as_ubyte(mask))
 
     if strtobool(params.get("use_mask", "True")):  # should we create and save the fusion mask?
         img = s.getImgThumb(s["image_work_size"])
         out = blend2Images(img, mask)
-        io.imsave(s["outdir"] + os.sep + s["filename"] + "_fuse.png", out)
+        io.imsave(s["outdir"] + os.sep + s["filename"] + "_fuse.png", img_as_ubyte(out))
 
     return
 

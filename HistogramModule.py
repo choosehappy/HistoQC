@@ -20,7 +20,7 @@ def getHistogram(s, params):
         img = img.reshape(-1, 3)
 
     ax = plt.axes()
-    ax.hist(img, bins=bins, normed=1, range=(0, 255), histtype='step', color=("r", "g", "b"))
+    ax.hist(img, bins=bins, density=True, range=(0, 255), histtype='step', color=("r", "g", "b"))
 
     ax.grid(True)
     ax.set_title('Color Distirubtion for ' + s["filename"])
@@ -37,7 +37,9 @@ def computeHistogram(img, bins, mask=-1):
         vals = img[:, :, chan].flatten()
         if (isinstance(mask, np.ndarray)):
             vals = vals[mask.flatten()]
-        result[:, chan] = np.histogram(vals, bins=bins, normed=True, range=[0, 255])[0]
+
+        result[:, chan] = np.histogram(vals, bins=bins, density=True, range=[0, 255])[0]
+
     return result
 
 
@@ -55,7 +57,18 @@ def compareToTemplates(s, params):
     img = s.getImgThumb(s["image_work_size"])
 
     if (limit_to_mask):
-        imghst = computeHistogram(img, bins, s["img_mask_use"])
+        mask = s["img_mask_use"]
+        if len(mask.nonzero()[0]) == 0:
+
+            logging.warning(f"{s['filename']} - HistogramModule.compareToTemplates NO tissue "
+                            f"remains detectable in mask!")
+            s["warnings"].append(f"HistogramModule.compareToTemplates NO tissue "
+                                        f"remains detectable in mask!")
+
+            imghst = np.zeros((bins,3))
+
+        else:
+            imghst = computeHistogram(img, bins, mask)
     else:
         imghst = computeHistogram(img, bins)
 
