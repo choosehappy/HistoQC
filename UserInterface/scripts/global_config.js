@@ -44,7 +44,7 @@ var DEFAULT_IMAGE_EXTENSIONS = [
     "_fatlike.png",    
     "_hist.png",
     "_mask_use.png",
-    "_nonwhite.png",
+    "_bright.png",
     "_pen_markings.png",
     "_small_fill.png",
     "_small_remove.png",
