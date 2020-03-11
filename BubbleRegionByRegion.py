@@ -76,8 +76,8 @@ def roiWise(s, params):
 
     mask = np.concatenate(mask, axis=1)
 
-    if params.get("area_thresh", "") != "":
-        mask = remove_small_objects(mask, min_size=int(params.get("area_thresh", "")), in_place=True)
+    if params.get("area_threshold", "") != "":
+        mask = remove_small_objects(mask, min_size=int(params.get("area_threshold", "")), in_place=True)
 
     s.addToPrintList(name, str(mask.mean()))
 

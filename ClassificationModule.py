@@ -196,7 +196,7 @@ def byExampleWithFeatures(s, params):
 
     mask = cal[:, :, 1] > thresh
 
-    area_thresh = int(params.get("area_thresh", "5"))
+    area_thresh = int(params.get("area_threshold", "5"))
     if area_thresh > 0:
         mask = remove_small_objects(mask, min_size=area_thresh, in_place=True)
 

@@ -50,7 +50,7 @@ def finalProcessingSpur(s, params):
 
 def finalProcessingArea(s, params):
     logging.info(f"{s['filename']} - \tfinalProcessingArea")
-    area_thresh = int(params.get("area_thresh", "1000"))
+    area_thresh = int(params.get("area_threshold", "1000"))
     mask = s["img_mask_use"]
 
     mask_opened = remove_small_objects(mask, min_size=area_thresh)
