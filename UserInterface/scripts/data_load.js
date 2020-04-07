@@ -63,7 +63,7 @@ function data_loading () {
 			for (var index in FEATURES_TO_MAP) {
 				ORIGINAL_CASE_DICT[cur_file_name][FEATURES_TO_MAP[index]] = ORIGINAL_DATASET[i][FEATURES_TO_MAP[index]];
 			}
-			ORIGINAL_CASE_DICT[cur_file_name]["dom_id"] = cur_file_name.replace(/\.|\#/g, "-");
+			ORIGINAL_CASE_DICT[cur_file_name]["dom_id"] = cur_file_name.replace(/\W/g, "-");
 		}
 
 		// build feature list
