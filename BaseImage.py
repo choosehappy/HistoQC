@@ -124,9 +124,17 @@ class BaseImage(dict):
                 win_size_down = int(win_size * 1 / relative_down)
                 dim_base = osh.level_dimensions[0]
                 output = []
-                for x in range(0, dim_base[0], round(win_size * osh.level_downsamples[level])):
+
+                if self["filename"][-4:] == '.scn':
+                    x_range = [int(self["os_handle"].properties["openslide.bounds-x"]), int(self["os_handle"].properties["openslide.bounds-width"])]
+                    y_range = [int(self["os_handle"].properties["openslide.bounds-y"]), int(self["os_handle"].properties["openslide.bounds-height"])]
+                else:
+                    x_range = [0, dim_base[0]]
+                    y_range = [0, dim_base[1]]
+
+                for x in range(x_range[0], x_range[1], round(win_size * osh.level_downsamples[level])):
                     row_piece = []
-                    for y in range(0, dim_base[1], round(win_size * osh.level_downsamples[level])):
+                    for y in range(y_range[0], y_range[1], round(win_size * osh.level_downsamples[level])):
                         aa = osh.read_region((x, y), level, (win_size, win_size))
                         bb = aa.resize((win_size_down, win_size_down))
                         row_piece.append(bb)
