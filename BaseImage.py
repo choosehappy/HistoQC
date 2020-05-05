@@ -58,8 +58,10 @@ class BaseImage(dict):
         self["dir"] = os.path.dirname(fname)
 
         self["os_handle"] = openslide.OpenSlide(fname)
+        self["image_base_size"] = self["os_handle"].dimensions
         self["image_work_size"] = params.get("image_work_size", "1.25x")
         self["mask_statistics"] = params.get("mask_statistics", "relative2mask")
+        self["base_mag"] = getMag(self, params)
         self.addToPrintList("base_mag", getMag(self, params))
 
         mask_statistics_types = ["relative2mask", "absolute", "relative2image"]
