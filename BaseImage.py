@@ -62,7 +62,7 @@ class BaseImage(dict):
         self["image_work_size"] = params.get("image_work_size", "1.25x")
         self["mask_statistics"] = params.get("mask_statistics", "relative2mask")
         self["base_mag"] = getMag(self, params)
-        self.addToPrintList("base_mag", getMag(self, params))
+        self.addToPrintList("base_mag", self["base_mag"])
 
         mask_statistics_types = ["relative2mask", "absolute", "relative2image"]
         if (self["mask_statistics"] not in mask_statistics_types):
