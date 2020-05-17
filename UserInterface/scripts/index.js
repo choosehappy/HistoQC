@@ -22,6 +22,21 @@ $(document).ready(function () {
 		update_chart_view("both", CURRENT_MULTI_SELECTED);
 	});
 
+	cols = 50;
+	rows = 100;
+	front = new Array(cols)// .fill(new Array(rows));
+	// Loop through Initial array to randomly place cells
+	for(var x = 0; x < cols; x++){
+		front[x] = [];  // ***** Added this line *****
+		for(var y = 0; y < rows; y++){
+			front[x][y] = Math.floor(Math.random()*5);
+		}
+	}
+	console.table(front) ;
+	var umap = new UMAP();
+	var embedding = umap.fit(front);
+	console.log(embedding);
+
 	// detail view zoomability setup
 	// TODO: change place
     $(".zoom").on("mousemove", function (e) {
