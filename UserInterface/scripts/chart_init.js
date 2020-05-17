@@ -1,8 +1,16 @@
+function update_chart_width () {
+	console.log($("#dimension-reduction-view").outerHeight());
+	$("#dimension-reduction-view").outerWidth($("#dimension-reduction-view").outerHeight());
+	console.log($("#chart-view").width());
+	console.log($("#dimension-reduction-view").outerWidth());
+	$("#original-feature-view").outerWidth($("#chart-view").width() - $("#dimension-reduction-view").outerWidth() - 10);
+}
 
 
 function initialize_chart_view (dataset, vis_type="bar_chart") {
 
 	show_view("chart");
+	update_chart_width();
 	$CHART.empty();
 	$PARAC.empty();
 
@@ -27,7 +35,6 @@ function initialize_chart_view (dataset, vis_type="bar_chart") {
 		.attr("transform", "translate(" + PARAC_MARGIN.left + "," + PARAC_MARGIN.top + ")");
 
 	CURRENT_CHART_ATTRIBUTE = DEFAULT_CHART_ATTRIBUTE;
-	CURRENT_PARAC_ATTRIBUTES = generate_current_parac_attributes();
 
 	init_bar_chart(dataset);
 	init_parallel_coordinate(dataset);
@@ -38,6 +45,8 @@ function initialize_chart_view (dataset, vis_type="bar_chart") {
 
 
 function update_chart_view (vis_type, dataset) {
+
+	update_chart_width();
 
 	// can be optimized by differentiate update type (just switch from chart to parallel coordiate?)
 	show_chosen_vis(vis_type);
@@ -218,10 +227,11 @@ function init_parallel_coordinate (dataset) {
 	var background,
 		foreground;
 
+	current_parac_attributes = generate_current_parac_attributes();
 	var data = dataset.map(function (d) {
 		attr_value_dict = {case_name: d["filename"]};
-		for (var i = 0; i < CURRENT_PARAC_ATTRIBUTES.length; i++) {
-			attr_value_dict[CURRENT_PARAC_ATTRIBUTES[i]] = d[CURRENT_PARAC_ATTRIBUTES[i]];
+		for (var i = 0; i < current_parac_attributes.length; i++) {
+			attr_value_dict[current_parac_attributes[i]] = d[current_parac_attributes[i]];
 		}
 		return attr_value_dict;
 	});
@@ -363,6 +373,10 @@ function init_parallel_coordinate (dataset) {
 	}
 }
 
+function init_scatter_plot (dataset) {
+
+}
+
 function update_bar_chart (dataset) {
 
 	$CHART.css("display", "block");
@@ -465,6 +479,7 @@ function update_bar_chart (dataset) {
 }
 
 function update_parallel_coordinate (dataset) {
+	// update svg size
 	$PARAC.css("display", "block");
 
 	d3.select("#parac-svg")
@@ -475,6 +490,7 @@ function update_parallel_coordinate (dataset) {
 		$PARAC.css("display", "none");
 	}
 
+	// update currently selected numeric attributes
 	init_parallel_coordinate (dataset);
 }
 
@@ -489,9 +505,7 @@ function init_chart_selector (vis_type) {
 	// TODO: clean up useless code
 
 	$chart_selector = $("#chart-select");
-	$parac_selector = $("#parac-select");
 	$chart_selector.empty();
-	$parac_selector.empty();
 
 	var sample_case = ORIGINAL_DATASET[0];
 
@@ -503,11 +517,6 @@ function init_chart_selector (vis_type) {
 			} else {
 				$chart_selector.append(generate_option_html(key, key));
 			}
-			if (CURRENT_PARAC_ATTRIBUTES.indexOf(key) != -1) {
-				$parac_selector.append(generate_option_html(key, key, true));
-			} else {
-				$parac_selector.append(generate_option_html(key, key));
-			}
 		}
 	}
 	$('.selectpicker').selectpicker('render');
@@ -516,10 +525,6 @@ function init_chart_selector (vis_type) {
 	$chart_selector.change(function () {
 		CURRENT_CHART_ATTRIBUTE = $(this).val();
 		update_chart_view("bar_chart", CURRENT_MULTI_SELECTED);
-	});
-
-	$parac_selector.change(function () {
-
 	});
 
 	$("#vis-switch-btn").click(function () {

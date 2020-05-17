@@ -81,7 +81,6 @@ var CURRENT_HIDDEN_COLUMNS = DEFAULT_HIDDEN_COLUMNS;;
 
 /****************** CHART VIEW ****************/
 var CURRENT_CHART_ATTRIBUTE = DEFAULT_CHART_ATTRIBUTE;
-var CURRENT_PARAC_ATTRIBUTES;
 var $CHART = $("#chart-svg-container");
 var $PARAC = $("#parac-svg-container");
 var CURRENT_VIS_TYPE = DEFAULT_VIS_TYPE;

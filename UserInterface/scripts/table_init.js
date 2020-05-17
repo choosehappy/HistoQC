@@ -73,8 +73,6 @@ function generate_config (dataset) {
 			
 			CURRENT_HIDDEN_COLUMNS.push(column_name);
 			
-			// update parallel coordinate -> delete from CURRENT_PARAC_ATTRIBUTES
-			CURRENT_PARAC_ATTRIBUTES = generate_current_parac_attributes();
 			update_chart_view("parallel_coordinate", CURRENT_MULTI_SELECTED);
 
 		} else {
@@ -89,8 +87,6 @@ function generate_config (dataset) {
 				console.log("[DEBUG] " + column_name + " is not in CURRENT_HIDDEN_COLUMNS.")
 			}
 
-			// update parallel coordinate
-			CURRENT_PARAC_ATTRIBUTES = generate_current_parac_attributes();
 			update_chart_view("parallel_coordinate", CURRENT_MULTI_SELECTED);
 
 		}
