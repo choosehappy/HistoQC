@@ -353,13 +353,17 @@ g.tick > text {
 	width: 100%;
 }
 
-#chart-svg-container {
-	width: 100%;
+#original-feature-view {
 	height: 100%;
-	/*display: none;*/
 }
 
-#parac-svg-container {
+#dimension-reduction-view {
+	height: 100%;
+}
+
+#chart-svg-container,
+#parac-svg-container,
+#drplt-svg-container {
 	width: 100%;
 	height: 100%;
 	/*display: none;*/

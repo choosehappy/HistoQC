@@ -30,8 +30,10 @@
 	<script type="text/javascript" src="libs/DataTables/datatables.min.js"></script>
 	<script type="text/javascript" src="libs/DataTables/dataTables.cellEdit.js"></script>
 	<script type="text/javascript" src="libs/DataTables/dataTables.bootstrap4.min.js"></script>
-
+	<!-- FontAwesome -->
 	<script type="text/javascript" src="libs/font-awesome/fontawesome-all.min.js"></script>
+	<!-- UMAP-js -->
+	<script type="text/javascript" src="libs/umap-js/umap-js.min.js"></script>
 </head>
 
 <body>
@@ -73,8 +75,13 @@
 			</div>
 			<button id="vis-switch-btn" class="btn btn-outline-secondary">switch</button>
 		</div>
-		<div id="chart-svg-container"></div>
-		<div id="parac-svg-container"></div>
+		<div id="original-feature-view">
+			<div id="chart-svg-container"></div>
+			<div id="parac-svg-container"></div>
+		</div>
+		<div id="dimension-reduction-view">
+			<div id="drplt-svg-container"></div>
+		</div>
 	</div>
 
 	<div id="image-view" class="p-3 bg-light">
