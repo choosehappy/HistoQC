@@ -28,6 +28,8 @@ function update_views () {
 
 
 function update_multi_selected (file_names) {
+	// in parallel coordinate, user could brush to filter to a subset of cases.  Other views
+	// should respond to only display the filtered cases.
 
 	CURRENT_MULTI_SELECTED = ORIGINAL_DATASET.filter(function (d) {
 		if (file_names.indexOf(d["filename"]) != -1) {

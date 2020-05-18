@@ -80,6 +80,14 @@ th {
 	display: none;
 }
 
+.base-view {
+	margin: 0.5rem;
+	padding: 0.5rem;
+	border: 1px solid #dfdfdf;
+	border-radius: 3px;
+	box-shadow: #ccc 1px 1px 4px;
+}
+
 #format-tester {
 	display: none;
 }
@@ -354,10 +362,12 @@ g.tick > text {
 }
 
 #original-feature-view {
+	float: left;
 	height: 100%;
 }
 
 #dimension-reduction-view {
+	float: right;
 	height: 100%;
 }
 
