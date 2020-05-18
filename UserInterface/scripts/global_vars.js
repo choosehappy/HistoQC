@@ -81,13 +81,12 @@ var CURRENT_HIDDEN_COLUMNS = DEFAULT_HIDDEN_COLUMNS;;
 
 /****************** CHART VIEW ****************/
 var CURRENT_CHART_ATTRIBUTE = DEFAULT_CHART_ATTRIBUTE;
-var $CHART = $("#chart-svg-container");
-var $PARAC = $("#parac-svg-container");
+var $CHART = $("#chart-svg-container"); // bar chart for single attribute
+var $PARAC = $("#parac-svg-container"); // parallel coordinate chart
+var $DRPLT = $("#drplt-svg-container"); // dimensional reduction scatter plot
 var CURRENT_VIS_TYPE = DEFAULT_VIS_TYPE;
-var CHART_SVG,
-	PARAC_SVG,
-	CHART_MARGIN,
-	PARAC_MARGIN,
+var CHART_SVG, PARAC_SVG, DRPLT_SVG,
+	CHART_MARGIN, PARAC_MARGIN, DRPLT_MARGIN,
 	TIP;
 
 /****************** IMAGE VIEW ****************/

@@ -11,8 +11,10 @@ function initialize_chart_view (dataset, vis_type="bar_chart") {
 
 	show_view("chart");
 	update_chart_width();
+
 	$CHART.empty();
 	$PARAC.empty();
+	$DRPLT.empty();
 
 	// init global SVG and MARGIN
 	CHART_MARGIN = {top: 10, right: 60, bottom: 40, left: 0};
@@ -20,6 +22,7 @@ function initialize_chart_view (dataset, vis_type="bar_chart") {
 		CHART_MARGIN.bottom = 10;
 	}
 	PARAC_MARGIN = {top: 60, right: 10, bottom: 10, left: 10};
+	DRPLT_MARGIN = {top: 10, right: 10, bottom: 30, left: 30};
 
 	CHART_SVG = d3.select("#chart-svg-container").append("svg")
 		.attr("id", "chart-svg")
@@ -33,11 +36,18 @@ function initialize_chart_view (dataset, vis_type="bar_chart") {
 		.attr("height", $PARAC.height())
 		.append("g")
 		.attr("transform", "translate(" + PARAC_MARGIN.left + "," + PARAC_MARGIN.top + ")");
+	DRPLT_SVG = d3.select("#drplt-svg-container").append("svg")
+		.attr("id", "drplt-svg")
+		.attr("width", $DRPLT.width())
+		.attr("height", $DRPLT.height())
+		.append("g")
+		.attr("transform", "translate(" + DRPLT_MARGIN.left + "," + DRPLT_MARGIN.top + ")");
 
 	CURRENT_CHART_ATTRIBUTE = DEFAULT_CHART_ATTRIBUTE;
 
 	init_bar_chart(dataset);
 	init_parallel_coordinate(dataset);
+	init_scatter_plot(dataset);
 	init_chart_selector(vis_type);
 
 	show_chosen_vis(vis_type);
@@ -55,6 +65,8 @@ function update_chart_view (vis_type, dataset) {
 		update_bar_chart(dataset);
 	} else if (vis_type == "parallel_coordinate") {
 		update_parallel_coordinate(dataset);
+	} else if (vis_type == "scatter_plot") {
+		update_scatter_plot(dataset);
 	} else if (vis_type == "both") {
 		update_bar_chart(dataset);
 		update_parallel_coordinate(dataset);
@@ -148,8 +160,8 @@ function init_bar_chart (dataset) {
 		.offset([-10, 0])
 		.html(function (d) {
 			return "<span style='color:#f94; font-size:10px'>" + d.case_name + "</span>" +
-				   "</br>" +
-				   "<span style='font-weight:100; font-size:10px'>" + d.attr_value.toFixed(5) + "</span>";
+					 "</br>" +
+					 "<span style='font-weight:100; font-size:10px'>" + d.attr_value.toFixed(5) + "</span>";
 		});
 
 	svg.call(TIP);
@@ -227,7 +239,7 @@ function init_parallel_coordinate (dataset) {
 	var background,
 		foreground;
 
-	current_parac_attributes = generate_current_parac_attributes();
+	current_parac_attributes = get_cur_display_numeric_attrs();
 	var data = dataset.map(function (d) {
 		attr_value_dict = {case_name: d["filename"]};
 		for (var i = 0; i < current_parac_attributes.length; i++) {
@@ -324,8 +336,8 @@ function init_parallel_coordinate (dataset) {
 
 	// functions for parallel coordinate, ref: https://bl.ocks.org/jasondavies/1341281
 	function position(d) {
-	  var v = dragging[d];
-	  return v == null ? xScale(d) : v;
+		var v = dragging[d];
+		return v == null ? xScale(d) : v;
 	}
 	
 	function transition(g) {
@@ -375,6 +387,126 @@ function init_parallel_coordinate (dataset) {
 
 function init_scatter_plot (dataset) {
 
+	$DRPLT.css("display", "block");
+
+	var svg = DRPLT_SVG;
+	var drplt_width = $DRPLT.width() - DRPLT_MARGIN.left - DRPLT_MARGIN.right;
+	var drplt_height = $DRPLT.height() - DRPLT_MARGIN.top - DRPLT_MARGIN.bottom;
+	svg.selectAll("*").remove();
+
+	cur_numeric_attributes = get_cur_display_numeric_attrs();
+	var pre_matrix = dataset.map(function (d) {
+		case_value = [];
+		for (var i = 0; i < cur_numeric_attributes.length; i++) {
+			case_value.push(d[cur_numeric_attributes[i]]);
+		}
+		return case_value;
+	});
+	console.table(pre_matrix) ;
+	var umap = new UMAP();
+	var embedding = umap.fit(pre_matrix);
+	console.log(embedding);
+	var data = dataset.map(function (d, i) {
+		return {
+			case_name: d["filename"],
+			x_pos: embedding[i][0],
+			y_pos: embedding[i][1]
+		};
+	});
+	console.log(data);
+
+	var x_scale = d3.scale.linear()
+		.range([0, drplt_width])
+		.domain(d3.extent(data, function(d) { return d.x_pos; })).nice();
+
+	var y_scale = d3.scale.linear()
+		.range([drplt_height, 0])
+		.domain(d3.extent(data, function(d) { return d.y_pos; })).nice();
+
+  	var color = d3.scale.category10();
+
+	var x_axis = d3.svg.axis()
+		.scale(x_scale)
+		.orient("bottom");
+
+	var y_axis = d3.svg.axis()
+		.scale(y_scale)
+		.orient("left");
+
+	// Lasso functions to execute while lassoing
+	var lasso_start = function() {
+		lasso.items()
+			.attr("r", 3.5) // reset size
+			.style("fill", null) // clear all of the fills
+			.classed({"not_possible": true, "selected": false}); // style as not possible
+	};
+
+	var lasso_draw = function() {
+		// Style the possible dots
+		lasso.items().filter(function(d) {return d.possible===true})
+			.classed({"not_possible": false, "possible": true});
+
+		// Style the not possible dot
+		lasso.items().filter(function(d) {return d.possible===false})
+			.classed({"not_possible": true, "possible": false});
+	};
+
+	var lasso_end = function() {
+		// Reset the color of all dots
+		lasso.items()
+			 .style("fill", function(d) { return color(d.species); });
+
+		// Style the selected dots
+		lasso.items().filter(function(d) {return d.selected===true})
+			.classed({"not_possible": false, "possible": false})
+			.attr("r", 7);
+
+		// Reset the style of the not selected dots
+		lasso.items().filter(function(d) {return d.selected===false})
+			.classed({"not_possible": false, "possible": false})
+			.attr("r", 3.5);
+	};
+
+	// Create the area where the lasso event can be triggered
+	var lasso_area = svg.append("rect")
+		.attr("width", drplt_width)
+		.attr("height", drplt_height)
+		.style("opacity", 0);
+
+	// Define the lasso
+	var lasso = d3.lasso()
+		.closePathDistance(75) // max distance for the lasso loop to be closed
+		.closePathSelect(true) // can items be selected by closing the path?
+		.hoverSelect(true) // can items by selected by hovering over them?
+		.area(lasso_area) // area where the lasso can be started
+		.on("start", lasso_start) // lasso start function
+		.on("draw", lasso_draw) // lasso draw function
+		.on("end", lasso_end); // lasso end function
+
+	// Init the lasso on the svg:g that contains the dots
+	svg.call(lasso);
+
+	svg.append("g")
+		.attr("class", "x axis")
+		.attr("transform", "translate(0," + drplt_height + ")")
+		.call(x_axis);
+
+	svg.append("g")
+		.attr("class", "y axis")
+		.call(y_axis);
+
+	svg.selectAll(".dot")
+		.data(data)
+		.enter().append("circle")
+		.attr("id",function(d, i) {return "dot_" + i;}) // added
+		.attr("class", "dot")
+		.attr("r", 3.5)
+		.attr("cx", function(d) { return x_scale(d.x_pos); })
+		.attr("cy", function(d) { return y_scale(d.y_pos); })
+		.style("fill", "darkblue")
+		.style("opacity", 0.3);
+
+	lasso.items(d3.selectAll(".dot"));
 }
 
 function update_bar_chart (dataset) {
@@ -494,6 +626,17 @@ function update_parallel_coordinate (dataset) {
 	init_parallel_coordinate (dataset);
 }
 
+function update_scatter_plot (dataset) {
+	// update svg size
+	$DRPLT.css("display", "block");
+
+	d3.select("#drplt-svg")
+		.attr("width", $DRPLT.width())
+		.attr("height", $DRPLT.height());
+
+	// update currently selected numeric attributes
+	init_scatter_plot (dataset);
+}
 
 function update_multi_selected_chart_view () {
 	update_bar_chart(CURRENT_MULTI_SELECTED);
@@ -532,7 +675,7 @@ function init_chart_selector (vis_type) {
 			show_chosen_vis("parallel_coordinate");
 		} else {
 			show_chosen_vis("bar_chart");
-		}
+		} 
 	})
 
 	$("#chart-sort-btn").click(function () {
@@ -569,7 +712,7 @@ function show_chosen_vis (vis_type) {
 }
 
 
-function generate_current_parac_attributes () {
+function get_cur_display_numeric_attrs () {
 	return ORIGINAL_FEATURE_LIST.filter(function (d) {
 		if (typeof(ORIGINAL_DATASET[0][d]) == "number" && CURRENT_HIDDEN_COLUMNS.indexOf(d) == -1) {
 			return true;

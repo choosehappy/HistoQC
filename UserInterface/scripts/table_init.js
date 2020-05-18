@@ -74,6 +74,7 @@ function generate_config (dataset) {
 			CURRENT_HIDDEN_COLUMNS.push(column_name);
 			
 			update_chart_view("parallel_coordinate", CURRENT_MULTI_SELECTED);
+			update_chart_view("scatter_plot", CURRENT_MULTI_SELECTED);
 
 		} else {
 			// update the table column
@@ -88,7 +89,7 @@ function generate_config (dataset) {
 			}
 
 			update_chart_view("parallel_coordinate", CURRENT_MULTI_SELECTED);
-
+			update_chart_view("scatter_plot", CURRENT_MULTI_SELECTED);
 		}
 	};
 

@@ -3,7 +3,7 @@
 }
 
 html, body {
-  line-height: 1; /* same as bootstrap.css */
+	line-height: 1; /* same as bootstrap.css */
 }
 
 th {
@@ -519,5 +519,38 @@ table.dataTable {
 	fill-opacity: .3;
 	stroke: #fff;
 	shape-rendering: crispEdges;
+}
+
+
+/* scatter plot */
+.dot {
+	stroke: #000;
+}
+
+.lasso path {
+	stroke: rgb(80,80,80);
+	stroke-width:2px;
+}
+
+.lasso .drawn {
+	fill-opacity:.05 ;
+}
+
+.lasso .loop_close {
+	fill:none;
+	stroke-dasharray: 4,4;
+}
+
+.lasso .origin {
+	fill:#3399FF;
+	fill-opacity:.5;
+}
+
+.not_possible {
+	fill:rgb(200,200,200);
+}
+
+.possible {
+	fill:#EC888C;
 }
 
