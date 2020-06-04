@@ -221,7 +221,8 @@ if __name__ == '__main__':
             for line in f:
                 if line[0] == "#":
                     continue
-                files.append(basepath + line.strip().split("\t")[0])
+                files.append([basepath + file for file in line.strip().split("\t")])
+        files = [file for sublist in files for file in sublist]
     else:  # user sent us a wildcard, need to use glob to find files
         files = glob.glob(args.basepath + args.input_pattern[0])
 
