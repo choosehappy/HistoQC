@@ -28,7 +28,7 @@ xmlMask will create a mask that is true inside the annotated region described in
 With more <Annotation> or <Region> blocks as needed for additional annotations. There is no functional difference between multiple <Annotation> blocks and one <Annotation> blocks with multiple <Region> blocks
 """
 
-def get_points(xml_fname):
+def get_points_from_xml(xml_fname):
     """Parses the xml file to get those annotations as lists of verticies"""
     # create element tree object
     tree = ET.parse(xml_fname)
@@ -36,6 +36,8 @@ def get_points(xml_fname):
     # get root element
     root = tree.getroot()
 
+    # list of list of vertex coordinates
+    # i.e. a list of sets of points
     points = []
 
     for annotation in root.findall('Annotation'):
@@ -53,18 +55,15 @@ def resize_points(points, resize_factor):
 
     return points.copy()
 
-def mask_out_annotation(s,xml_fname):
+def mask_out_annotation(s, point_sets):
     """Returns the mask of annotations"""
-
-    points = get_points(xml_fname)
-
     resize_factor = np.shape(s["img_mask_use"])[1] / s["image_base_size"][0]
 
-    points = resize_points(points, resize_factor)
+    point_sets = resize_points(point_sets, resize_factor)
 
     mask = np.zeros((np.shape(s["img_mask_use"])[0],np.shape(s["img_mask_use"])[1]),dtype=np.uint8)
 
-    for pointSet in points:
+    for pointSet in point_sets:
         poly = np.asarray(pointSet)
         rr, cc = polygon(poly[:,1],poly[:,0],mask.shape)
         mask[rr,cc] = 1
@@ -84,7 +83,8 @@ def xmlMask(s,params):
 
     logging.info(f"{s['filename']} - \tusing {xml_fname}")
 
-    annotationMask = mask_out_annotation(s,xml_fname) > 0
+    point_sets = get_points_from_xml(xml_fname)
+    annotationMask = mask_out_annotation(s, point_sets) > 0
     io.imsave(s["outdir"] + os.sep + s["filename"] + "_xmlMask.png", img_as_ubyte(annotationMask))
 
     prev_mask = s["img_mask_use"]
