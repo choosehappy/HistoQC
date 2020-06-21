@@ -67,8 +67,10 @@ def get_points_from_geojson(fname):
         elif geom_type == 'Polygon':
             for points in coordinates:
                 point_sets.append([(coord[0], coord[1]) for coord in points])
+        elif geom_type == 'LineString':            
+            point_sets.append([(coord[0], coord[1]) for coord in coordinates])
         else:
-            raise Exception("Only Polygon and MultiPolygon annotation types can be used")
+            raise Exception("Only Polygon, MultiPolygon, and LineString annotation types can be used")
     return point_sets
 
 def resize_points(points, resize_factor):
