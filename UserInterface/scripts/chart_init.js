@@ -1,8 +1,5 @@
 function update_chart_width () {
-	console.log($("#dimension-reduction-view").outerHeight());
 	$("#dimension-reduction-view").outerWidth($("#dimension-reduction-view").outerHeight());
-	console.log($("#chart-view").width());
-	console.log($("#dimension-reduction-view").outerWidth());
 	$("#original-feature-view").outerWidth($("#chart-view").width() - $("#dimension-reduction-view").outerWidth() - 10);
 }
 
@@ -17,11 +14,11 @@ function initialize_chart_view (dataset, vis_type="bar_chart") {
 	$DRPLT.empty();
 
 	// init global SVG and MARGIN
-	CHART_MARGIN = {top: 10, right: 60, bottom: 40, left: 0};
+	CHART_MARGIN = {top: 10, right: 60, bottom: 40, left: 10};
 	if (dataset.length > 50) {
 		CHART_MARGIN.bottom = 10;
 	}
-	PARAC_MARGIN = {top: 60, right: 10, bottom: 10, left: 10};
+	PARAC_MARGIN = {top: 80, right: 40, bottom: 10, left: 10};
 	DRPLT_MARGIN = {top: 10, right: 10, bottom: 30, left: 30};
 
 	CHART_SVG = d3.select("#chart-svg-container").append("svg")
@@ -70,6 +67,7 @@ function update_chart_view (vis_type, dataset) {
 	} else if (vis_type == "both") {
 		update_bar_chart(dataset);
 		update_parallel_coordinate(dataset);
+		update_scatter_plot(dataset);
 	}
 }
 
@@ -77,50 +75,36 @@ function update_chart_view (vis_type, dataset) {
 function enter_select_chart_view (case_name) {
 	exit_select_chart_view();
 
-	d3.selectAll(".bar")
-		.classed("selected-bar", function (d) {
-			if (d.case_name == case_name) {
-				return true;
-			} else {
-				return false;
-			}
-		})
-		.classed("bar", function (d) {
-			if (d.case_name == case_name) {
-				return false;
-			} else {
-				return true;
-			}
-		});
+	DRPLT_SVG.select("g.foreground-dot-group")
+		.selectAll("circle")
+		.filter(function (d) {return d.case_name==case_name;})
+		.classed({"selected-dot": true, "foreground-dot": false});
 
-	d3.selectAll(".foreground-path")
-		.classed("selected-foreground-path", function (d) {
-			if (d.case_name == case_name) {
-				return true;
-			} else {
-				return false;
-			}
-		})
-		.classed("foreground-path", function (d) {
-			if (d.case_name == case_name) {
-				return false;
-			} else {
-				return true;
-			}
-		});
+	CHART_SVG.select("g.foreground-bar-group")
+		.selectAll("rect")
+		.filter(function (d) {return d.case_name==case_name;})
+		.classed({"selected-bar": true, "bar": false});
+
+	PARAC_SVG.select("g.foreground")
+		.selectAll("path")
+		.filter(function (d) {return d.case_name==case_name;})
+		.classed({"selected-foreground-path": true, "foreground-path": false});
 }
 
 
 function exit_select_chart_view () {
-	d3.selectAll(".selected-bar")
-		.classed("bar", true)
-		.classed("selected-bar", false);
+	CHART_SVG.select("g.foreground-bar-group")
+		.selectAll(".selected-bar")
+		.classed({"selected-bar": false, "bar": true});
 
-	d3.selectAll(".selected-foreground-path")
-		.classed("foreground-path", true)
-		.classed("selected-foreground-path", false);
+	PARAC_SVG.select("g.foreground")
+		.selectAll(".selected-foreground-path")
+		.classed({"selected-foreground-path": false, "foreground-path": true});
+
+	DRPLT_SVG.select("g.foreground-dot-group")
+		.selectAll(".selected-dot")
+		.classed({"selected-dot": false, "foreground-dot": true});
 }
-
 
 
 function init_bar_chart (dataset) {
@@ -128,12 +112,13 @@ function init_bar_chart (dataset) {
 	var chart_width = $CHART.width() - CHART_MARGIN.left - CHART_MARGIN.right;
 	var chart_height = $CHART.height() - CHART_MARGIN.top - CHART_MARGIN.bottom;
 
-	var data = dataset.map(function (d) {
+	var data = ORIGINAL_DATASET.map(function (d) {
 		return {
 			case_name: d["filename"],
 			attr_value: d[CURRENT_CHART_ATTRIBUTE]
 		};
 	});
+	var selected_cases = dataset.map(function (d) {return d["filename"];});
 
 	var xScale = d3.scale.ordinal()
 		.rangeRoundBands([0, chart_width], .1)
@@ -160,8 +145,8 @@ function init_bar_chart (dataset) {
 		.offset([-10, 0])
 		.html(function (d) {
 			return "<span style='color:#f94; font-size:10px'>" + d.case_name + "</span>" +
-					 "</br>" +
-					 "<span style='font-weight:100; font-size:10px'>" + d.attr_value.toFixed(5) + "</span>";
+				   "</br>" +
+				   "<span style='font-weight:100; font-size:10px'>" + d.attr_value.toFixed(5) + "</span>";
 		});
 
 	svg.call(TIP);
@@ -191,14 +176,36 @@ function init_bar_chart (dataset) {
 		.attr("transform", "translate(" + chart_width + ", 0)")
 		.call(yAxis);
 
-	svg.selectAll(".bar")
+	// Add grey background bar for context.
+	background = svg.append("g")
+		.attr("class", "background-bar-group")
+		.selectAll("rect")
+		.data(data)
+		.enter().append("rect")
+		.attr("class", "background-bar")
+		.attr("x", function (d) { return xScale(d.case_name); })
+		.attr("width", Math.max(xScale.rangeBand() - 1, 1))
+		.attr("y", function (d) { return yScale(d.attr_value); })
+		.attr("height", function (d) { return chart_height - yScale(d.attr_value); });
+
+	// Add blue foreground bar for focus.
+	foreground = svg.append("g")
+		.attr("class", "foreground-bar-group")
+		.selectAll("rect")
 		.data(data)
 		.enter().append("rect")
 		.attr("class", function (d) {
-			if (CURRENT_SELECTED == d.case_name) {
+			if (d.case_name === CURRENT_SELECTED) {
 				return "selected-bar";
 			} else {
 				return "bar";
+			}
+		})
+		.style("display", function (d) {
+			if (selected_cases.length == 0 || selected_cases.indexOf(d.case_name) != -1) {
+				return null;
+			} else {
+				return "none";
 			}
 		})
 		.attr("x", function (d) { return xScale(d.case_name); })
@@ -234,19 +241,20 @@ function init_parallel_coordinate (dataset) {
 		dragging = {};
 
 	var line = d3.svg.line().interpolate('linear'),
-		axis = d3.svg.axis().ticks(5).orient("left");
+		axis = d3.svg.axis().ticks(5).orient("right");
 
 	var background,
 		foreground;
 
 	current_parac_attributes = get_cur_display_numeric_attrs();
-	var data = dataset.map(function (d) {
+	var data = ORIGINAL_DATASET.map(function (d) {
 		attr_value_dict = {case_name: d["filename"]};
 		for (var i = 0; i < current_parac_attributes.length; i++) {
 			attr_value_dict[current_parac_attributes[i]] = d[current_parac_attributes[i]];
 		}
 		return attr_value_dict;
 	});
+	var selected_cases = dataset.map(function (d) {return d["filename"];});
 
 	xScale.domain(dimensions = d3.keys(data[0]).filter(function (d) {
 		return d != "case_name" && (yScale[d] = d3.scale.linear()
@@ -276,6 +284,13 @@ function init_parallel_coordinate (dataset) {
 				return "foreground-path";
 			}
 		})
+		.style("display", function (d) {
+			if (selected_cases.length == 0 || selected_cases.indexOf(d.case_name) != -1) {
+				return null;
+			} else {
+				return "none";
+			}
+		})
 		.attr("d", path);
 
 	// Add a group element for each dimension.
@@ -289,6 +304,7 @@ function init_parallel_coordinate (dataset) {
 			.on("dragstart", function (d) {
 				dragging[d] = xScale(d);
 				background.attr("visibility", "hidden");
+				// foreground.attr("visibility", "hidden");
 			})
 			.on("drag", function (d) {
 				dragging[d] = Math.min(parac_width, Math.max(0, d3.event.x));
@@ -307,6 +323,12 @@ function init_parallel_coordinate (dataset) {
 					.delay(500)
 					.duration(0)
 					.attr("visibility", null);
+				// foreground
+				// 	.attr("d", path)
+				// 	.transition()
+				// 	.delay(500)
+				// 	.duration(0)
+				// 	.attr("visibility", null);
 			}));
 
 	// Add an axis and title.
@@ -317,8 +339,9 @@ function init_parallel_coordinate (dataset) {
 		.attr("y", -10)
 		.attr("x", -5)
 		.attr("dy", ".35em")
-		.attr("transform", "rotate(-10)")
+		.attr("transform", "rotate(-20)")
 		.style("text-anchor", "start")
+		.style("font-size", "12px")
 		.text(function (d) { return d; });
 
 	// Add and store a brush for each axis.
@@ -368,20 +391,20 @@ function init_parallel_coordinate (dataset) {
 		var actives = dimensions.filter(function (p) { return !yScale[p].brush.empty(); }),
 			extents = actives.map(function (p) { return yScale[p].brush.extent(); });
 
-		selected_files = [];
+		PARA_COOR_SELECTED = [];
 		ORIGINAL_DATASET.forEach(function (d) {
 			if (actives.every(function (p, i) {
 				return extents[i][0] <= d[p] && d[p] <= extents[i][1];
 			})) {
-				selected_files.push(d["filename"]);
+				PARA_COOR_SELECTED.push(d["filename"]);
 			}
 		});
 
-		if (selected_files.length == 0 && actives.length == 1) {
-			selected_files = ORIGINAL_CASE_LIST;
+		if (PARA_COOR_SELECTED.length == 0 && actives.length == 1) {
+			PARA_COOR_SELECTED = ORIGINAL_CASE_LIST;
 		}
 
-		update_multi_selected(selected_files);
+		update_multi_selected();
 	}
 }
 
@@ -393,27 +416,28 @@ function init_scatter_plot (dataset) {
 	var drplt_width = $DRPLT.width() - DRPLT_MARGIN.left - DRPLT_MARGIN.right;
 	var drplt_height = $DRPLT.height() - DRPLT_MARGIN.top - DRPLT_MARGIN.bottom;
 	svg.selectAll("*").remove();
+	var dot_background = svg.append("g").attr("class", "background-dot-group");
+	var dot_foreground = svg.append("g").attr("class", "foreground-dot-group");
 
-	cur_numeric_attributes = get_cur_display_numeric_attrs();
-	var pre_matrix = dataset.map(function (d) {
+	cur_numeric_attributes = get_cur_display_numeric_attrs(min_val=0, max_val=1);
+	console.log(cur_numeric_attributes);
+	var pre_matrix = ORIGINAL_DATASET.map(function (d) {
 		case_value = [];
 		for (var i = 0; i < cur_numeric_attributes.length; i++) {
 			case_value.push(d[cur_numeric_attributes[i]]);
 		}
 		return case_value;
 	});
-	console.table(pre_matrix) ;
 	var umap = new UMAP();
 	var embedding = umap.fit(pre_matrix);
-	console.log(embedding);
-	var data = dataset.map(function (d, i) {
+	var data = ORIGINAL_DATASET.map(function (d, i) {
 		return {
 			case_name: d["filename"],
 			x_pos: embedding[i][0],
 			y_pos: embedding[i][1]
 		};
 	});
-	console.log(data);
+	var selected_cases = dataset.map(function (d) {return d["filename"];});
 
 	var x_scale = d3.scale.linear()
 		.range([0, drplt_width])
@@ -422,8 +446,6 @@ function init_scatter_plot (dataset) {
 	var y_scale = d3.scale.linear()
 		.range([drplt_height, 0])
 		.domain(d3.extent(data, function(d) { return d.y_pos; })).nice();
-
-  	var color = d3.scale.category10();
 
 	var x_axis = d3.svg.axis()
 		.scale(x_scale)
@@ -436,39 +458,49 @@ function init_scatter_plot (dataset) {
 	// Lasso functions to execute while lassoing
 	var lasso_start = function() {
 		lasso.items()
-			.attr("r", 3.5) // reset size
-			.style("fill", null) // clear all of the fills
-			.classed({"not_possible": true, "selected": false}); // style as not possible
+			.style("display", "none"); // clear all of the foreground dots
 	};
 
 	var lasso_draw = function() {
 		// Style the possible dots
 		lasso.items().filter(function(d) {return d.possible===true})
-			.classed({"not_possible": false, "possible": true});
+			.style("display", null);
 
 		// Style the not possible dot
 		lasso.items().filter(function(d) {return d.possible===false})
-			.classed({"not_possible": true, "possible": false});
+			.style("display", "none");
 	};
 
 	var lasso_end = function() {
-		// Reset the color of all dots
-		lasso.items()
-			 .style("fill", function(d) { return color(d.species); });
+		UMAP_PROJ_SELECTED = lasso.items()
+			.filter(function(d) {return d.selected===true})
+			.data()
+			.map(function (d) {return d.case_name;});
 
-		// Style the selected dots
-		lasso.items().filter(function(d) {return d.selected===true})
-			.classed({"not_possible": false, "possible": false})
-			.attr("r", 7);
+		if (UMAP_PROJ_SELECTED.length == 0) {
+			UMAP_PROJ_SELECTED = ORIGINAL_CASE_LIST;
+		}
 
-		// Reset the style of the not selected dots
-		lasso.items().filter(function(d) {return d.selected===false})
-			.classed({"not_possible": false, "possible": false})
-			.attr("r", 3.5);
+		// console.log(UMAP_PROJ_SELECTED);
+
+		update_multi_selected();
+		// // Reset the color of all dots
+		// lasso.items()
+		// 	 .style("fill", function(d) { return color(d.species); });
+
+		// // Style the selected dots
+		// lasso.items().filter(function(d) {return d.selected===true})
+		// 	.classed({"not_possible": false, "possible": false})
+		// 	.attr("r", 7);
+
+		// // Reset the style of the not selected dots
+		// lasso.items().filter(function(d) {return d.selected===false})
+		// 	.classed({"not_possible": false, "possible": false})
+		// 	.attr("r", 3.5);
 	};
 
 	// Create the area where the lasso event can be triggered
-	var lasso_area = svg.append("rect")
+	var lasso_area = dot_foreground.append("rect")
 		.attr("width", drplt_width)
 		.attr("height", drplt_height)
 		.style("opacity", 0);
@@ -484,7 +516,7 @@ function init_scatter_plot (dataset) {
 		.on("end", lasso_end); // lasso end function
 
 	// Init the lasso on the svg:g that contains the dots
-	svg.call(lasso);
+	dot_foreground.call(lasso);
 
 	svg.append("g")
 		.attr("class", "x axis")
@@ -495,18 +527,39 @@ function init_scatter_plot (dataset) {
 		.attr("class", "y axis")
 		.call(y_axis);
 
-	svg.selectAll(".dot")
+	dot_background.selectAll("circle")
 		.data(data)
 		.enter().append("circle")
-		.attr("id",function(d, i) {return "dot_" + i;}) // added
-		.attr("class", "dot")
+		.attr("class", "background-dot")
 		.attr("r", 3.5)
 		.attr("cx", function(d) { return x_scale(d.x_pos); })
-		.attr("cy", function(d) { return y_scale(d.y_pos); })
-		.style("fill", "darkblue")
-		.style("opacity", 0.3);
+		.attr("cy", function(d) { return y_scale(d.y_pos); });
 
-	lasso.items(d3.selectAll(".dot"));
+	console.log(data);
+	console.log(selected_cases);
+	dot_foreground.selectAll("circle")
+		.data(data)
+		.enter().append("circle")
+		.attr("id", function(d, i) {return "dot_" + i;}) // added
+		.attr("class", function (d) {
+			if (d.case_name === CURRENT_SELECTED) {
+				return "selected-dot";
+			} else {
+				return "foreground-dot";
+			}
+		})
+		.style("display", function (d) {
+			if (selected_cases.length == 0 || selected_cases.indexOf(d.case_name) != -1) {
+				return null;
+			} else {
+				return "none";
+			}
+		})
+		.attr("r", 3.5)
+		.attr("cx", function(d) { return x_scale(d.x_pos); })
+		.attr("cy", function(d) { return y_scale(d.y_pos); });
+
+	lasso.items(dot_foreground.selectAll("circle"));
 }
 
 function update_bar_chart (dataset) {
@@ -525,12 +578,13 @@ function update_bar_chart (dataset) {
 		$CHART.css("display", "none");
 	}
 
-	var data = dataset.map(function (d) {
+	var data = ORIGINAL_DATASET.map(function (d) {
 		return {
 			case_name: d["filename"],
 			attr_value: d[CURRENT_CHART_ATTRIBUTE]
 		};
 	});
+	var selected_cases = dataset.map(function (d) {return d["filename"];});
 
 	var xScale = d3.scale.ordinal()
 		.rangeRoundBands([0, chart_width], .1)
@@ -582,10 +636,20 @@ function update_bar_chart (dataset) {
 		.call(yAxis);
 
 	// update bars
-	var bars = CHART_SVG.selectAll("rect").data(data);
+	var background_bars = CHART_SVG.select("g.background-bar-group").selectAll("rect").data(data);
+	background_bars.exit().remove();
+	background_bars.enter().append("rect");
+	background_bars.transition()
+		.duration(500)
+		.attr("class", "background-bar")
+		.attr("x", function (d) { return xScale(d.case_name); })
+		.attr("width", Math.max(xScale.rangeBand() - 1, 1))
+		.attr("y", function (d) { return yScale(d.attr_value); })
+		.attr("height", function (d) { return chart_height - yScale(d.attr_value); });
 
-	bars.exit().remove();
-	bars.enter().append("rect")
+	var foreground_bars = CHART_SVG.select("g.foreground-bar-group").selectAll("rect").data(data);
+	foreground_bars.exit().remove();
+	foreground_bars.enter().append("rect")
 		.on('mouseover', TIP.show)
 		.on('mouseout', TIP.hide)
 		.on('click', function (d) {
@@ -595,13 +659,20 @@ function update_bar_chart (dataset) {
 				enter_select_mode(d.case_name);
 			}
 		});     
-	bars.transition()
+	foreground_bars.transition()
 		.duration(500)
 		.attr("class", function (d) {
 			if (CURRENT_SELECTED == d.case_name) {
 				return "selected-bar";
 			} else {
 				return "bar";
+			}
+		})
+		.style("display", function (d) {
+			if (selected_cases.length == 0 || selected_cases.indexOf(d.case_name) != -1) {
+				return null;
+			} else {
+				return "none";
 			}
 		})
 		.attr("x", function (d) { return xScale(d.case_name); })
@@ -638,15 +709,45 @@ function update_scatter_plot (dataset) {
 	init_scatter_plot (dataset);
 }
 
-function update_multi_selected_chart_view () {
-	update_bar_chart(CURRENT_MULTI_SELECTED);
+function update_multi_selected_chart_view (selected_cases) {
+	CHART_SVG.select("g.foreground-bar-group")
+		.selectAll("rect")
+		.transition()
+		.duration(500)
+		.style("display", function (d) {
+			if (selected_cases.length == 0 || selected_cases.indexOf(d.case_name) != -1) {
+				return null;
+			} else {
+				return "none";
+			}
+		});
+
+	DRPLT_SVG.select("g.foreground-dot-group")
+		.selectAll("circle")
+		.style("display", function (d) {
+			if (selected_cases.length == 0 || selected_cases.indexOf(d.case_name) != -1) {
+				return null;
+			} else {
+				return "none";
+			}
+		});
+
+	PARAC_SVG.select("g.foreground")
+		.selectAll("path")
+		.style("display", function (d) {
+			if (selected_cases.length == 0 || selected_cases.indexOf(d.case_name) != -1) {
+				return null;
+			} else {
+				return "none";
+			}
+		});
+
 }
 
 
 function init_chart_selector (vis_type) {
 
 	// TODO: clean up useless code
-
 	$chart_selector = $("#chart-select");
 	$chart_selector.empty();
 
@@ -712,9 +813,14 @@ function show_chosen_vis (vis_type) {
 }
 
 
-function get_cur_display_numeric_attrs () {
+function get_cur_display_numeric_attrs (min_val = Number.MIN_SAFE_INTEGER, max_val = Number.MAX_SAFE_INTEGER) {
 	return ORIGINAL_FEATURE_LIST.filter(function (d) {
-		if (typeof(ORIGINAL_DATASET[0][d]) == "number" && CURRENT_HIDDEN_COLUMNS.indexOf(d) == -1) {
+		if (
+			typeof(ORIGINAL_DATASET[0][d]) == "number" && 
+			CURRENT_HIDDEN_COLUMNS.indexOf(d) == -1 &&
+			Math.min(...ORIGINAL_DATASET.map(function (cur_case) {return cur_case[d]})) >= min_val &&
+			Math.max(...ORIGINAL_DATASET.map(function (cur_case) {return cur_case[d]})) <= max_val
+		) {
 			return true;
 		}
 		return false;
