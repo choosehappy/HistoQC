@@ -47,7 +47,7 @@ def get_points_from_xml(xml_fname):
 
     return points
 
-def get_points_from_geojson(fname):
+def get_points_from_geojson(s, fname):
     """
     Parses a typical GeoJSON file containing one or more Polygon or MultiPolygon features.
     These JSON files are the preferred way to serialize QuPath annotations, for example.
@@ -70,7 +70,9 @@ def get_points_from_geojson(fname):
         elif geom_type == 'LineString':            
             point_sets.append([(coord[0], coord[1]) for coord in coordinates])
         else:
-            raise Exception("Only Polygon, MultiPolygon, and LineString annotation types can be used")
+            msg = f"Skipping {geom_type} geometry in {fname}. Only Polygon, MultiPolygon, and LineString annotation types can be used."
+            logging.warning(s['filename'] + ' - ' + msg)
+            s["warnings"].append(msg)
     return point_sets
 
 def resize_points(points, resize_factor):
@@ -137,7 +139,7 @@ def geoJSONMask(s, params):
 
     logging.info(f"{s['filename']} - \tusing {fname}")
 
-    point_sets = get_points_from_geojson(fname)
+    point_sets = get_points_from_geojson(s, fname)
     annotationMask = mask_out_annotation(s, point_sets) > 0
     io.imsave(s["outdir"] + os.sep + s["filename"] + "_geoJSONMask.png", img_as_ubyte(annotationMask))
 
