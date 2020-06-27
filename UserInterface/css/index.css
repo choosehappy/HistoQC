@@ -1,5 +1,7 @@
 :root {
 	--selected-color: orangered;
+	--foreground-color: #007bff;
+	--background-color: #ddd;
 }
 
 html, body {
@@ -276,12 +278,17 @@ th {
 	stroke-opacity: 0.1;
 }
 
+.background-bar {
+	fill: var(--background-color);
+	opacity: 0.5;
+}
+
 .selected-bar {
 	fill: orangered;
 }
 
 .bar {
-	fill: #007bff;
+	fill: var(--foreground-color);
 }
 
 .bar:hover {
@@ -295,11 +302,12 @@ th {
 
 .x.axis > g > text,
 .y.axis > g > text {
-	font-size: 12px;
+	font-size: 10px;
+	opacity: 0.6;
 }
 
 g.tick > text {
-	font-size: 12px;
+	font-size: 10px;
 	opacity: 0.6;
 }
 
@@ -497,14 +505,14 @@ table.dataTable {
 
 .background-path {
 	fill: none;
-	stroke: #ddd;
+	stroke: var(--background-color);
 	shape-rendering: crispEdges;
 	opacity: 0.5;
 }
 
 .foreground-path {
 	fill: none;
-	stroke: #007bff;
+	stroke: var(--foreground-color);
 	opacity: 0.5;
 }
 
@@ -523,10 +531,6 @@ table.dataTable {
 
 
 /* scatter plot */
-.dot {
-	stroke: #000;
-}
-
 .lasso path {
 	stroke: rgb(80,80,80);
 	stroke-width:2px;
@@ -538,7 +542,7 @@ table.dataTable {
 
 .lasso .loop_close {
 	fill:none;
-	stroke-dasharray: 4,4;
+	stroke-dasharray: 4, 4;
 }
 
 .lasso .origin {
@@ -554,3 +558,20 @@ table.dataTable {
 	fill:#EC888C;
 }
 
+.background-dot {
+	fill: var(--background-color);
+	stroke: none;
+	fill-opacity: .5;
+}
+
+.foreground-dot {
+	fill: var(--foreground-color);
+	stroke: #aaa;
+	fill-opacity: .5;
+}
+
+.selected-dot {
+	fill: var(--selected-color);
+	stroke: #aaa;
+	fill-opacity: 1;
+}
