@@ -3,7 +3,7 @@ from BaseImage import printMaskHelper
 from skimage import io, img_as_ubyte
 from skimage.draw import polygon
 import os
-from pathlib import PurePosixPath
+from pathlib import PurePosixPath, Path
 import json
 import xml.etree.ElementTree as ET
 import numpy as np
@@ -105,6 +105,11 @@ def xmlMask(s, params):
         xml_basepath = s["dir"]
 
     xml_fname = xml_basepath + os.sep + PurePosixPath(s['filename']).stem + xml_suffix + '.xml'
+    if not Path(xml_fname).is_file():
+        msg = f"Annotation file {xml_fname} does not exist. Skipping."
+        logging.warning(f"{s['filename']} - {msg}")
+        s["warnings"].append(msg)
+        return
 
     logging.info(f"{s['filename']} - \tusing {xml_fname}")
 
@@ -136,6 +141,11 @@ def geoJSONMask(s, params):
         geojson_basepath = s["dir"]
 
     fname = geojson_basepath + os.sep + PurePosixPath(s['filename']).stem + geojson_suffix + '.json'
+    if not Path(fname).is_file():
+        msg = f"Annotation file {fname} does not exist. Skipping."
+        logging.warning(f"{s['filename']} - {msg}")
+        s["warnings"].append(msg)
+        return
 
     logging.info(f"{s['filename']} - \tusing {fname}")
 
