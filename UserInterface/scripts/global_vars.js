@@ -28,7 +28,7 @@ var FILE_HEADER = "";
 var TABLE;
 var DATA_TABLE_CONFIG = {
 	paging: true,
-	scrollY: "150px",
+	scrollY: "168px",
 	scrollX: true,
 	scroller: true,
 	scrollCollapse: true,
@@ -89,6 +89,7 @@ var CHART_SVG, PARAC_SVG, DRPLT_SVG,
 	CHART_MARGIN, PARAC_MARGIN, DRPLT_MARGIN,
 	TIP;
 var PARA_COOR_SELECTED, UMAP_PROJ_SELECTED;
+var CURRENT_PARALLEL_ATTRIBUTES, CURRENT_UMAP_ATTRIBUTES;
 
 /****************** IMAGE VIEW ****************/
 var SKIP_IMAGE_EXTENSIONS = [];
