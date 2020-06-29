@@ -23,8 +23,7 @@
 	<!-- jQuery -->
 	<script type="text/javascript" src="libs/jquery-1.12.4/jquery.min.js"></script>
 	<!-- Bootstrap Core JavaScript -->
-	<script type="text/javascript" src="libs/bootstrap/js/popper.min.js"></script>
-	<script type="text/javascript" src="libs/bootstrap/js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="libs/bootstrap/js/bootstrap.bundle.min.js"></script>
 	<script type="text/javascript" src="libs/bootstrap/js/bootstrap-select.min.js"></script>
 	<!-- DataTables JavaScript -->
 	<script type="text/javascript" src="libs/DataTables/datatables.min.js"></script>
@@ -62,42 +61,65 @@
 		</label>
 	</div>
 
-	<div id="table-view" class="base-view bg-light">
-		<table id="result-table" class="table table-striped table-bordered" cellspacing="0" width="100%">
+	<div id="table-view" class="base-view-outer base-view-inner bg-light">
+		<table id="result-table" class="table table-striped table-bordered compact" cellspacing="0" width="100%">
 			<thead></thead>
 			<tbody></tbody>
 		</table>
 	</div>
 
-	<div id="chart-view" class="base-view">
-		<div id="chart-select-button">
-			<div id="chart-select-group">
-				<select id="chart-select" class="btn btn-outline-secondary"></select>
-				<button id="chart-sort-btn" class="btn btn-outline-secondary"><i class="fas fa-sort-amount-down"></i></button>
-			</div>
-			<button id="vis-switch-btn" class="btn btn-outline-secondary">switch</button>
-		</div>
+	<div id="chart-view" class="base-view-outer">
 		<div id="original-feature-view">
-			<div id="chart-svg-container"></div>
-			<div id="parac-svg-container"></div>
+			<div id="chart-control-group" class="control-group btn-group btn-group-sm" role="group">
+				<button id="vis-switch-btn" class="btn btn-dark btn-sm">switch</button>
+				<div id="bar-select-group" class="btn-group btn-group-sm" role="group">
+					<select id="bar-select" class="selectpicker" data-size="10" data-style="btn-dark btn-sm" data-width="150px"></select>
+				</div>
+				<div id="parallel-select-group" class="btn-group btn-group-sm" role="group">
+					<select id="parallel-select" class="selectpicker" 
+					data-size="10" data-style="btn-dark btn-sm" 
+					data-width="150px" multiple data-actions-box="true" data-live-search="true" data-selected-text-format="count > 3"></select>
+				</div>
+				<button id="chart-sort-btn" class="btn btn-dark btn-sm"><i class="fas fa-sort-amount-down"></i></button>
+			</div>
+			<div id="original-feature-container" class="base-view-inner">
+				<div id="chart-svg-container"></div>
+				<div id="parac-svg-container"></div>
+			</div>
 		</div>
 		<div id="dimension-reduction-view">
-			<div id="drplt-svg-container"></div>
+			<div id="drplt-control-group" class="control-group btn-group btn-group-sm">
+				<div id="drplt-feats-select-group" class="btn-group btn-group-sm" role="group">
+					<select id="scatter-select" class="selectpicker" 
+					data-size="10" data-style="btn-dark btn-sm" 
+					data-width="100px" multiple data-actions-box="true" data-live-search="true" data-selected-text-format="count"></select>
+					<select id="dist-select" class="selectpicker" data-size="10" data-style="btn-dark btn-sm" data-width="100px">
+						<option selected>euclidean</option>
+						<option>cosine</option>
+					</select>
+				</div>
+				<button id="umap-rerun-btn" class="btn btn-dark btn-sm"><i class="fas fa-angle-double-down"></i></button>
+			</div>
+			<div id="dimension-reduction-container" class="base-view-inner">
+				<div id="drplt-svg-container"></div>
+			</div>
 		</div>
 	</div>
 
-	<div id="image-view" class="base-view bg-light">
-		<div id="img-select-button" class="btn-group">
-			<select id="img-select" class="btn btn-outline-secondary"></select>
-			<select id="comparison-select" class="btn btn-outline-secondary"></select>
+	<div id="image-view" class="base-view-outer bg-light">
+		<div id="image-control-group" class="control-group btn-group btn-group-sm">
+			<div id="img-select-button" class="btn-group btn-group-sm">
+				<select id="img-select" class="selectpicker show-tick" data-size="10" data-style="btn-dark btn-sm" data-width="150px"></select>
+				<select id="comparison-select" class="selectpicker" data-size="10" data-style="btn-dark btn-sm" data-width="150px"></select>
+			</div>
+			<button id="exit-image-select-view-btn" class="btn btn-dark btn-sm">back</button>
 		</div>
-		<div id="exit-image-select-view-btn">
-			<button class="btn btn-outline-secondary">back</button>
-		</div>
-		<div id="overview-gallery"></div>
-		<div id="select-image-view">
-			<div id="select-image-container"></div>
-			<div id="select-candidate-container"></div>
+		<div id="image-container" class="base-view-inner">
+			<div id="overview-gallery"></div>
+			<div id="select-image-view">
+				<div id="select-image-container"></div>
+				<div id="select-candidate-container"></div>
+			</div>
 		</div>
 	</div>
 
