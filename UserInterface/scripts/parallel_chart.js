@@ -1,3 +1,15 @@
+function init_parallel_canvas () {
+	$PARAC.empty();
+	PARAC_MARGIN = {top: 80, right: 40, bottom: 10, left: 10};
+	PARAC_SVG = d3.select("#parac-svg-container").append("svg")
+		.attr("id", "parac-svg")
+		.attr("width", $PARAC.width())
+		.attr("height", $PARAC.height())
+		.append("g")
+		.attr("transform", "translate(" + PARAC_MARGIN.left + "," + PARAC_MARGIN.top + ")");
+}
+
+
 function init_parallel_coordinate (dataset) {
 
 	$PARAC.css("display", "block");
@@ -21,11 +33,10 @@ function init_parallel_coordinate (dataset) {
 	var background,
 		foreground;
 
-	current_parac_attributes = get_cur_display_numeric_attrs();
 	var data = ORIGINAL_DATASET.map(function (d) {
 		attr_value_dict = {case_name: d["filename"]};
-		for (var i = 0; i < current_parac_attributes.length; i++) {
-			attr_value_dict[current_parac_attributes[i]] = d[current_parac_attributes[i]];
+		for (var i = 0; i < CURRENT_PARALLEL_ATTRIBUTES.length; i++) {
+			attr_value_dict[CURRENT_PARALLEL_ATTRIBUTES[i]] = d[CURRENT_PARALLEL_ATTRIBUTES[i]];
 		}
 		return attr_value_dict;
 	});
@@ -201,17 +212,36 @@ function update_parallel_coordinate (dataset) {
 }
 
 
-function get_cur_display_numeric_attrs (min_val = Number.MIN_SAFE_INTEGER, max_val = Number.MAX_SAFE_INTEGER) {
-	return ORIGINAL_FEATURE_LIST.filter(function (d) {
-		if (
-			typeof(ORIGINAL_DATASET[0][d]) == "number" && 
-			CURRENT_HIDDEN_COLUMNS.indexOf(d) == -1 &&
-			Math.min(...ORIGINAL_DATASET.map(function (cur_case) {return cur_case[d]})) >= min_val &&
-			Math.max(...ORIGINAL_DATASET.map(function (cur_case) {return cur_case[d]})) <= max_val
-		) {
-			return true;
+function init_parallel_vars_selector() {
+	var $parallel_selector = $("#parallel-select");
+	$parallel_selector.empty();
+
+	var sample_case = ORIGINAL_DATASET[0];
+
+	for (var index in Object.keys(sample_case)) {
+		var key = Object.keys(sample_case)[index];
+		if (typeof(sample_case[key]) == "number") {
+			if (CURRENT_PARALLEL_ATTRIBUTES.indexOf(key) != -1) {
+				$parallel_selector.append(generate_option_html(key, key, true));
+			} else {
+				$parallel_selector.append(generate_option_html(key, key));
+			}
 		}
-		return false;
+	}
+	$parallel_selector.selectpicker('refresh');
+	$parallel_selector.selectpicker('render');
+
+	$parallel_selector.change(function () {
+		CURRENT_PARALLEL_ATTRIBUTES = $(this).val();
+		update_chart_view("parallel_coordinate", CURRENT_MULTI_SELECTED);
 	});
+
+	function generate_option_html (key, value, selected = false) {
+		if (selected) {
+			return "<option value='" + value + "' selected>" + key + "</option>";
+		} else {
+			return "<option value='" + value + "'>" + key + "</option>";
+		}
+	}
 }
 
