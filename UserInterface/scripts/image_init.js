@@ -14,6 +14,7 @@ function initialize_image_view (case_list) {
 	$div.empty();
 
 	CURRENT_CASE_LIST = ORIGINAL_CASE_LIST;
+	CURRENT_IMAGE_TYPE = DEFAULT_IMAGE_EXTENSIONS.indexOf(DEFAULT_IMAGE_EXTENSION);
 
 	for (var i = 0; i < case_list.length; i++) {
 		$div.append(generate_img_block("overview-image-block", case_list[i], CURRENT_IMAGE_TYPE, CURRENT_COMPARE_TYPE, case_list[i]));
@@ -102,7 +103,7 @@ function exit_select_image_view () {
 	$("#exit-image-select-view-btn").css("display", "none");
 
 	$("#overview-gallery").css("display", "flex");
-	$("#img-select-button").css("display", "block");
+	$("#img-select-button").css("display", "");
 }
 
 
@@ -171,8 +172,6 @@ function init_image_selector () {
 	$cmp_selector = $("#comparison-select");
 
 	for (var index = 0; index < DEFAULT_IMAGE_EXTENSIONS.length; index ++) {
-
-
 		if (SKIP_IMAGE_EXTENSIONS.indexOf(index) >= 0) {
 			continue;
 		}
@@ -186,6 +185,12 @@ function init_image_selector () {
 		$cmp_selector.append(generate_option_html(index, key));
 	}
 	$cmp_selector.append(generate_option_html("-1", "compare ...", true));
+
+	$img_selector.selectpicker('refresh');
+	$img_selector.selectpicker('render');
+
+	$cmp_selector.selectpicker('refresh');
+	$cmp_selector.selectpicker('render');
 
 	$img_selector.change(function () {
 		CURRENT_IMAGE_TYPE = $(this).val();
@@ -202,7 +207,7 @@ function init_image_selector () {
 		update_image_view(CURRENT_CASE_LIST);
 	});
 
-	$("#exit-image-select-view-btn > button").click(function () {
+	$("#exit-image-select-view-btn").click(function () {
 		exit_select_mode();
 	});
 
