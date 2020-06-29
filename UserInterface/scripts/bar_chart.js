@@ -1,3 +1,15 @@
+function init_bar_canvas () {
+	$CHART.empty();
+	CHART_MARGIN = {top: 10, right: 60, bottom: 10, left: 10};
+	CHART_SVG = d3.select("#chart-svg-container").append("svg")
+		.attr("id", "chart-svg")
+		.attr("width", $CHART.width())
+		.attr("height", $CHART.height())
+		.append("g")
+		.attr("transform", "translate(" + CHART_MARGIN.left + "," + CHART_MARGIN.top + ")");
+}
+
+
 function init_bar_chart (dataset) {
 	var svg = CHART_SVG;
 	var chart_width = $CHART.width() - CHART_MARGIN.left - CHART_MARGIN.right;
@@ -234,3 +246,36 @@ function update_bar_chart (dataset) {
 		.attr("height", function (d) { return chart_height - yScale(d.attr_value); });
 }
 
+
+function init_bar_vars_selector () {
+	var $bar_selector = $("#bar-select");
+	$bar_selector.empty();
+
+	var sample_case = ORIGINAL_DATASET[0];
+
+	for (var index in Object.keys(sample_case)) {
+		var key = Object.keys(sample_case)[index];
+		if (typeof(sample_case[key]) == "number") {
+			if (key == CURRENT_CHART_ATTRIBUTE) {
+				$bar_selector.append(generate_option_html(key, key, true));
+			} else {
+				$bar_selector.append(generate_option_html(key, key));
+			}
+		}
+	}
+	$bar_selector.selectpicker('refresh');
+	$bar_selector.selectpicker('render');
+
+	$bar_selector.change(function () {
+		CURRENT_CHART_ATTRIBUTE = $(this).val();
+		update_chart_view("bar_chart", CURRENT_MULTI_SELECTED);
+	});
+
+	function generate_option_html (key, value, selected = false) {
+		if (selected) {
+			return "<option value='" + value + "' selected>" + key + "</option>";
+		} else {
+			return "<option value='" + value + "'>" + key + "</option>";
+		}
+	}
+}
