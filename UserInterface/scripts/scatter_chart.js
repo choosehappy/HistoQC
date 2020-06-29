@@ -1,3 +1,15 @@
+function init_scatter_canvas () {
+	$DRPLT.empty();
+	DRPLT_MARGIN = {top: 10, right: 10, bottom: 10, left: 10};
+	DRPLT_SVG = d3.select("#drplt-svg-container").append("svg")
+		.attr("id", "drplt-svg")
+		.attr("width", $DRPLT.width())
+		.attr("height", $DRPLT.height())
+		.append("g")
+		.attr("transform", "translate(" + DRPLT_MARGIN.left + "," + DRPLT_MARGIN.top + ")");
+}
+
+
 function init_scatter_plot (dataset) {
 
 	$DRPLT.css("display", "block");
@@ -9,16 +21,18 @@ function init_scatter_plot (dataset) {
 	var dot_background = svg.append("g").attr("class", "background-dot-group");
 	var dot_foreground = svg.append("g").attr("class", "foreground-dot-group");
 
-	cur_numeric_attributes = get_cur_display_numeric_attrs(min_val=0, max_val=1);
-	console.log(cur_numeric_attributes);
 	var pre_matrix = ORIGINAL_DATASET.map(function (d) {
 		case_value = [];
-		for (var i = 0; i < cur_numeric_attributes.length; i++) {
-			case_value.push(d[cur_numeric_attributes[i]]);
+		for (var i = 0; i < CURRENT_UMAP_ATTRIBUTES.length; i++) {
+			case_value.push(d[CURRENT_UMAP_ATTRIBUTES[i]]);
 		}
 		return case_value;
 	});
-	var umap = new UMAP();
+	if ($("#dist-select").val() === "euclidean") {
+		var umap = new UMAP(distanceFn=UMAP.euclidean);
+	} else {
+		var umap = new UMAP(distanceFn=UMAP.cosine);
+	}
 	var embedding = umap.fit(pre_matrix);
 	var data = ORIGINAL_DATASET.map(function (d, i) {
 		return {
@@ -37,13 +51,13 @@ function init_scatter_plot (dataset) {
 		.range([drplt_height, 0])
 		.domain(d3.extent(data, function(d) { return d.y_pos; })).nice();
 
-	var x_axis = d3.svg.axis()
-		.scale(x_scale)
-		.orient("bottom");
+	// var x_axis = d3.svg.axis()
+	// 	.scale(x_scale)
+	// 	.orient("bottom");
 
-	var y_axis = d3.svg.axis()
-		.scale(y_scale)
-		.orient("left");
+	// var y_axis = d3.svg.axis()
+	// 	.scale(y_scale)
+	// 	.orient("left");
 
 	// Lasso functions to execute while lassoing
 	var lasso_start = function() {
@@ -62,6 +76,8 @@ function init_scatter_plot (dataset) {
 	};
 
 	var lasso_end = function() {
+		var pre_update_umap_selected = UMAP_PROJ_SELECTED.length;
+
 		UMAP_PROJ_SELECTED = lasso.items()
 			.filter(function(d) {return d.selected===true})
 			.data()
@@ -69,11 +85,17 @@ function init_scatter_plot (dataset) {
 
 		if (UMAP_PROJ_SELECTED.length == 0) {
 			UMAP_PROJ_SELECTED = ORIGINAL_CASE_LIST;
+			if (pre_update_umap_selected != ORIGINAL_CASE_LIST.length) {
+				update_multi_selected();
+			} else {
+				lasso.items()
+					.style("display", null); // restore all of the foreground dots
+
+			}
+		} else {
+			update_multi_selected();
 		}
 
-		// console.log(UMAP_PROJ_SELECTED);
-
-		update_multi_selected();
 		// // Reset the color of all dots
 		// lasso.items()
 		// 	 .style("fill", function(d) { return color(d.species); });
@@ -108,14 +130,14 @@ function init_scatter_plot (dataset) {
 	// Init the lasso on the svg:g that contains the dots
 	dot_foreground.call(lasso);
 
-	svg.append("g")
-		.attr("class", "x axis")
-		.attr("transform", "translate(0," + drplt_height + ")")
-		.call(x_axis);
+	// svg.append("g")
+	// 	.attr("class", "x axis")
+	// 	.attr("transform", "translate(0," + drplt_height + ")")
+	// 	.call(x_axis);
 
-	svg.append("g")
-		.attr("class", "y axis")
-		.call(y_axis);
+	// svg.append("g")
+	// 	.attr("class", "y axis")
+	// 	.call(y_axis);
 
 	dot_background.selectAll("circle")
 		.data(data)
@@ -125,8 +147,6 @@ function init_scatter_plot (dataset) {
 		.attr("cx", function(d) { return x_scale(d.x_pos); })
 		.attr("cy", function(d) { return y_scale(d.y_pos); });
 
-	console.log(data);
-	console.log(selected_cases);
 	dot_foreground.selectAll("circle")
 		.data(data)
 		.enter().append("circle")
@@ -166,17 +186,46 @@ function update_scatter_plot (dataset) {
 }
 
 
-function get_cur_display_numeric_attrs (min_val = Number.MIN_SAFE_INTEGER, max_val = Number.MAX_SAFE_INTEGER) {
-	return ORIGINAL_FEATURE_LIST.filter(function (d) {
-		if (
-			typeof(ORIGINAL_DATASET[0][d]) == "number" && 
-			CURRENT_HIDDEN_COLUMNS.indexOf(d) == -1 &&
-			Math.min(...ORIGINAL_DATASET.map(function (cur_case) {return cur_case[d]})) >= min_val &&
-			Math.max(...ORIGINAL_DATASET.map(function (cur_case) {return cur_case[d]})) <= max_val
-		) {
-			return true;
+function init_scatter_vars_selector() {
+	var $scatter_selector = $("#scatter-select");
+	$scatter_selector.empty();
+
+	var sample_case = ORIGINAL_DATASET[0];
+
+	for (var index in Object.keys(sample_case)) {
+		var key = Object.keys(sample_case)[index];
+		if (typeof(sample_case[key]) == "number") {
+			if (CURRENT_UMAP_ATTRIBUTES.indexOf(key) != -1) {
+				$scatter_selector.append(generate_option_html(key, key, true));
+			} else {
+				$scatter_selector.append(generate_option_html(key, key));
+			}
 		}
-		return false;
+	}
+	$scatter_selector.selectpicker('refresh');
+	$scatter_selector.selectpicker('render');
+
+	$scatter_selector.change(function () {
+		CURRENT_UMAP_ATTRIBUTES = $(this).val();
+		update_chart_view("scatter_plot", CURRENT_MULTI_SELECTED);
 	});
+
+	$("#dist-select").change(function () {
+		update_chart_view("scatter_plot", CURRENT_MULTI_SELECTED);
+	});
+
+	$("#umap-rerun-btn").on("click", function () {
+		update_chart_view("scatter_plot", CURRENT_MULTI_SELECTED);
+	});
+
+	function generate_option_html (key, value, selected = false) {
+		if (selected) {
+			return "<option value='" + value + "' selected>" + key + "</option>";
+		} else {
+			return "<option value='" + value + "'>" + key + "</option>";
+		}
+	}
 }
+
+
 
