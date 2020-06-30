@@ -17,7 +17,7 @@ var DEFAULT_HIDDEN_COLUMNS = [
 
 /****************** CHART VIEW ****************/
 // Initialize the bar chart on this attribute.
-var DEFAULT_CHART_ATTRIBUTE = "height";
+var DEFAULT_CHART_ATTRIBUTE = "template1_MSE_hist";
 
 // "bar_chart" | "parallel_coordinate"
 var DEFAULT_VIS_TYPE = "parallel_coordinate";
@@ -55,8 +55,6 @@ var DEFAULT_PARAC_ATTRIBUTES = [
 ];
 
 var DEFAULT_UMAP_ATTRIBUTES = [
-    "percent_small_tissue_removed", 
-    "percent_small_tissue_filled", 
     "template1_MSE_hist", 
     "template2_MSE_hist", 
     "template3_MSE_hist", 
@@ -68,7 +66,10 @@ var DEFAULT_UMAP_ATTRIBUTES = [
     "chan3_brightness", 
     "deconv_c0_mean", 
     "deconv_c1_mean", 
-    "deconv_c2_mean"
+    "deconv_c2_mean",
+    "chuv1_brightness_YUV",
+    "chuv2_brightness_YUV",
+    "chuv3_brightness_YUV"
 ];
 
 /****************** IMAGE VIEW ****************/
@@ -100,4 +101,4 @@ var SMALL_IMAGE_EXTENSIONS = [
 	// "_thumb.png"
 ];
 // Default image type
-var DEFAULT_IMAGE_EXTENSION = "_mask_use.png";
+var DEFAULT_IMAGE_EXTENSION = "_thumb.png";
