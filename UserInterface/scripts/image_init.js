@@ -22,7 +22,7 @@ function initialize_image_view (case_list) {
  
 	$div.children("div").children("img").click(function(){
 		src_list = this.src.split('/');
-		enter_select_mode(src_list[src_list.length-2]);
+		enter_select_mode(src_list[src_list.length-2].replace("%20", " "));
 	});
 
 	init_image_selector();
@@ -43,7 +43,7 @@ function update_image_view (case_list) {
  
 	$div.children("div").children("img").click(function(){
 		src_list = this.src.split('/');
-		enter_select_mode(src_list[src_list.length-2]);
+		enter_select_mode(src_list[src_list.length-2].replace("%20", " "));
 	});
 
 	update_multi_selected_image_view(case_list);
