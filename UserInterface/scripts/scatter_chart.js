@@ -160,10 +160,11 @@ function init_scatter_plot (dataset) {
 		.attr("cx", function(d) { return x_scale(d.x_pos); })
 		.attr("cy", function(d) { return y_scale(d.y_pos); });
 
-	dot_foreground.selectAll("circle")
+	dot_foreground.selectAll(".foreground-dot-general")
 		.data(data)
 		.enter().append("circle")
 		.attr("id", function(d, i) {return "dot_" + i;}) // added
+		.attr("class", "foreground-dot-general")
 		.attr("class", function (d) {
 			if (d.case_name === CURRENT_SELECTED) {
 				return "selected-dot";
