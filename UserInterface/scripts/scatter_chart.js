@@ -28,10 +28,23 @@ function init_scatter_plot (dataset) {
 		}
 		return case_value;
 	});
+
 	if ($("#dist-select").val() === "euclidean") {
-		var umap = new UMAP(distanceFn=UMAP.euclidean);
+		var umap = new UMAP({
+			nComponents: 2,
+			distanceFn: UMAP.euclidean, 
+			nNeighbors: Math.min(ORIGINAL_DATASET.length - 1, UMAP_MAX_N_NEIGHBORS), 
+			minDist: UMAP_MIN_DIST, 
+			spread: UMAP_SPREAD
+		});
 	} else {
-		var umap = new UMAP(distanceFn=UMAP.cosine);
+		var umap = new UMAP({
+			nComponents: 2,
+			distanceFn: UMAP.cosine, 
+			nNeighbors: Math.min(ORIGINAL_DATASET.length - 1, UMAP_MAX_N_NEIGHBORS), 
+			minDist: UMAP_MIN_DIST, 
+			spread: UMAP_SPREAD
+		});
 	}
 	var embedding = umap.fit(pre_matrix);
 	var data = ORIGINAL_DATASET.map(function (d, i) {
