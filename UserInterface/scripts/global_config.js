@@ -42,6 +42,7 @@ var DEFAULT_PARAC_ATTRIBUTES = [
     "template1_MSE_hist", 
     "template2_MSE_hist", 
     "template3_MSE_hist", 
+    "template4_MSE_hist", 
     "michelson_contrast", 
     "rms_contrast", 
     "grayscale_brightness", 
@@ -51,6 +52,12 @@ var DEFAULT_PARAC_ATTRIBUTES = [
     "deconv_c0_mean", 
     "deconv_c1_mean", 
     "deconv_c2_mean", 
+    "chuv1_brightness_YUV",
+    "chuv2_brightness_YUV",
+    "chuv3_brightness_YUV",
+    "chan1_brightness_YUV",
+    "chan2_brightness_YUV",
+    "chan3_brightness_YUV",
     "pixels_to_use"
 ];
 
@@ -58,6 +65,7 @@ var DEFAULT_UMAP_ATTRIBUTES = [
     "template1_MSE_hist", 
     "template2_MSE_hist", 
     "template3_MSE_hist", 
+    "template4_MSE_hist", 
     "michelson_contrast", 
     "rms_contrast", 
     "grayscale_brightness", 
@@ -69,8 +77,15 @@ var DEFAULT_UMAP_ATTRIBUTES = [
     "deconv_c2_mean",
     "chuv1_brightness_YUV",
     "chuv2_brightness_YUV",
-    "chuv3_brightness_YUV"
+    "chuv3_brightness_YUV",
+    "chan1_brightness_YUV",
+    "chan2_brightness_YUV",
+    "chan3_brightness_YUV"
 ];
+
+var UMAP_MAX_N_NEIGHBORS = 15;
+var UMAP_MIN_DIST = 0.1;
+var UMAP_SPREAD = 1;
 
 /****************** IMAGE VIEW ****************/
 // full set of possible image format identifiers. 
@@ -98,7 +113,7 @@ var DEFAULT_IMAGE_EXTENSIONS = [
 ];
 // list of image types that have a corresponding _xxx_small.png version
 var SMALL_IMAGE_EXTENSIONS = [
-	// "_thumb.png"
+	"_thumb.png"
 ];
 // Default image type
 var DEFAULT_IMAGE_EXTENSION = "_thumb.png";
