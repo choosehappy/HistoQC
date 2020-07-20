@@ -83,13 +83,12 @@ var CURRENT_HIDDEN_COLUMNS = DEFAULT_HIDDEN_COLUMNS;;
 var CURRENT_CHART_ATTRIBUTE = DEFAULT_CHART_ATTRIBUTE;
 var $CHART = $("#chart-svg-container"); // bar chart for single attribute
 var $PARAC = $("#parac-svg-container"); // parallel coordinate chart
-var $DRPLT = $("#drplt-svg-container"); // dimensional reduction scatter plot
 var CURRENT_VIS_TYPE = DEFAULT_VIS_TYPE;
-var CHART_SVG, PARAC_SVG, DRPLT_SVG,
-	CHART_MARGIN, PARAC_MARGIN, DRPLT_MARGIN,
+var CHART_SVG, PARAC_SVG, 
+	CHART_MARGIN, PARAC_MARGIN, 
 	TIP;
-var PARA_COOR_SELECTED, UMAP_PROJ_SELECTED;
-var CURRENT_PARALLEL_ATTRIBUTES, CURRENT_UMAP_ATTRIBUTES;
+var PARA_COOR_SELECTED;
+var CURRENT_PARALLEL_ATTRIBUTES;
 
 /****************** IMAGE VIEW ****************/
 var SKIP_IMAGE_EXTENSIONS = [];

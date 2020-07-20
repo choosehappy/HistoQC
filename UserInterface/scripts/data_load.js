@@ -71,16 +71,10 @@ function data_loading () {
 
 		CURRENT_MULTI_SELECTED = ORIGINAL_DATASET;
 		PARA_COOR_SELECTED = ORIGINAL_CASE_LIST;
-		UMAP_PROJ_SELECTED = ORIGINAL_CASE_LIST;
+		// UMAP_PROJ_SELECTED = ORIGINAL_CASE_LIST;
 
 		CURRENT_PARALLEL_ATTRIBUTES = ORIGINAL_FEATURE_LIST.filter(function (d) {
 			if (typeof(ORIGINAL_DATASET[0][d]) == "number" && DEFAULT_PARAC_ATTRIBUTES.indexOf(d) != -1) {
-				return true;
-			}
-			return false;
-		});
-		CURRENT_UMAP_ATTRIBUTES = ORIGINAL_FEATURE_LIST.filter(function (d) {
-			if (typeof(ORIGINAL_DATASET[0][d]) == "number" && DEFAULT_UMAP_ATTRIBUTES.indexOf(d) != -1) {
 				return true;
 			}
 			return false;

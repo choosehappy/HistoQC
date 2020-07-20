@@ -2,7 +2,7 @@ function update_multi_selected () {
 	CURRENT_MULTI_SELECTED = ORIGINAL_DATASET.filter(function (d) {
 		if (
 			(PARA_COOR_SELECTED.length == 0 || PARA_COOR_SELECTED.indexOf(d["filename"]) != -1) && 
-			(UMAP_PROJ_SELECTED.length == 0 || UMAP_PROJ_SELECTED.indexOf(d["filename"]) != -1)
+			(umap_selected.length == 0 || umap_selected.indexOf(d["filename"]) != -1)
 		) {
 			return true;
 		}
