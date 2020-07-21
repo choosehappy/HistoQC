@@ -28,7 +28,7 @@ var FILE_HEADER = "";
 var TABLE;
 var DATA_TABLE_CONFIG = {
 	paging: true,
-	scrollY: "150px",
+	scrollY: "168px",
 	scrollX: true,
 	scroller: true,
 	scrollCollapse: true,
@@ -81,15 +81,14 @@ var CURRENT_HIDDEN_COLUMNS = DEFAULT_HIDDEN_COLUMNS;;
 
 /****************** CHART VIEW ****************/
 var CURRENT_CHART_ATTRIBUTE = DEFAULT_CHART_ATTRIBUTE;
-var CURRENT_PARAC_ATTRIBUTES;
-var $CHART = $("#chart-svg-container");
-var $PARAC = $("#parac-svg-container");
+var $CHART = $("#chart-svg-container"); // bar chart for single attribute
+var $PARAC = $("#parac-svg-container"); // parallel coordinate chart
 var CURRENT_VIS_TYPE = DEFAULT_VIS_TYPE;
-var CHART_SVG,
-	PARAC_SVG,
-	CHART_MARGIN,
-	PARAC_MARGIN,
+var CHART_SVG, PARAC_SVG, 
+	CHART_MARGIN, PARAC_MARGIN, 
 	TIP;
+var PARA_COOR_SELECTED;
+var CURRENT_PARALLEL_ATTRIBUTES;
 
 /****************** IMAGE VIEW ****************/
 var SKIP_IMAGE_EXTENSIONS = [];

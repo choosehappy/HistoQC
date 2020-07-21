@@ -1,9 +1,11 @@
 :root {
 	--selected-color: orangered;
+	--foreground-color: #007bff;
+	--background-color: #ddd;
 }
 
 html, body {
-  line-height: 1; /* same as bootstrap.css */
+	line-height: 1; /* same as bootstrap.css */
 }
 
 th {
@@ -80,6 +82,17 @@ th {
 	display: none;
 }
 
+.base-view-outer {
+	margin: 0.5rem;
+}
+
+.base-view-inner {
+	padding: 0.5rem;
+	border: 1px solid #dfdfdf;
+	border-radius: 3px;
+	box-shadow: #ccc 1px 1px 4px;
+}
+
 #format-tester {
 	display: none;
 }
@@ -101,20 +114,31 @@ th {
 	height: 100%;
 }
 
+.control-group {
+	position: fixed;
+	padding-left: 0px;
+	padding-top: 0px;
+/*	padding-left: 0.5rem;
+	padding-top: 0.5rem;
+*/	/*width: 100%;*/
+	z-index: 1;
+	opacity: 0.9;
+}
+
 /* img view */
-#exit-image-select-view-btn,
+/*#exit-image-select-view-btn,
 #img-select-button {
 	position: fixed;
 	padding-left: 15px;
 	padding-top: 15px;
 	z-index: 1;
 }
-
+*/
 #exit-image-select-view-btn {
 	display: none;
 }
 
-#img-select,
+/*#img-select,
 #comparison-select,
 #chart-select,
 #chart-sort-btn,
@@ -125,10 +149,9 @@ th {
 	border-color: #898f94;
 	text-shadow: 0.5px 0.5px 1px #000;
 	font-size: 18px;
-/*    box-shadow: 0px 0px 2px #555;*/
 }
-
-#img-select:hover,
+*/
+/*#img-select:hover,
 #comparison-select:hover,
 #chart-select:hover,
 #chart-sort-btn:hover,
@@ -136,17 +159,17 @@ th {
 	background-color: #898f94;
 	color: #fff;
 }
-
+*/
 
 #overview-gallery {
 	height: 100%;
 	display: flex;
 	flex-wrap: wrap;
-	padding-left: 15px;
+/*	padding-left: 15px;
 	padding-top: 15px;
 	padding-bottom: 15px;
 	padding-right: 15px;
-	overflow-y: scroll;
+*/	overflow-y: scroll;
 }
 
 .overview-image-block {
@@ -185,7 +208,7 @@ th {
 	height: 100%;
 	width: 100%;
 	align-items: center;
-	padding: 15px;
+	/*padding: 15px;*/
 	display: none;
 }
 
@@ -268,12 +291,17 @@ th {
 	stroke-opacity: 0.1;
 }
 
+.background-bar {
+	fill: var(--background-color);
+	opacity: 0.5;
+}
+
 .selected-bar {
 	fill: orangered;
 }
 
 .bar {
-	fill: #007bff;
+	fill: var(--foreground-color);
 }
 
 .bar:hover {
@@ -287,11 +315,12 @@ th {
 
 .x.axis > g > text,
 .y.axis > g > text {
-	font-size: 12px;
+	font-size: 10px;
+	opacity: 0.6;
 }
 
 g.tick > text {
-	font-size: 12px;
+	font-size: 10px;
 	opacity: 0.6;
 }
 
@@ -327,13 +356,6 @@ g.tick > text {
 
 /* chart selector */
 
-#chart-select-button {
-	position: fixed;
-	padding-left: 15px;
-	padding-top: 15px;
-	width: 250px;
-}
-
 #chart-select-group {
 	display: flex;
 	width: 100%;
@@ -350,16 +372,28 @@ g.tick > text {
 }
 
 #vis-switch-btn {
-	width: 100%;
+	width: 150px;
 }
 
-#chart-svg-container {
-	width: 100%;
+#original-feature-view {
+	float: left;
+}
+
+#dimension-reduction-view {
+	float: right;
+}
+
+#original-feature-view, 
+#original-feature-container,
+#dimension-reduction-view, 
+#dimension-reduction-container,
+#image-container {
 	height: 100%;
-	/*display: none;*/
 }
 
-#parac-svg-container {
+#chart-svg-container,
+#parac-svg-container,
+#drplt-svg-container {
 	width: 100%;
 	height: 100%;
 	/*display: none;*/
@@ -476,6 +510,8 @@ table.dataTable {
 
 .table-content {
 	padding-right: 0px;
+    padding-left: 0px;
+    box-shadow: #ccc 1px 1px 3px;
 }
 
 
@@ -483,14 +519,14 @@ table.dataTable {
 
 .background-path {
 	fill: none;
-	stroke: #ddd;
+	stroke: var(--background-color);
 	shape-rendering: crispEdges;
 	opacity: 0.5;
 }
 
 .foreground-path {
 	fill: none;
-	stroke: #007bff;
+	stroke: var(--foreground-color);
 	opacity: 0.5;
 }
 
@@ -507,3 +543,49 @@ table.dataTable {
 	shape-rendering: crispEdges;
 }
 
+
+/* scatter plot */
+.lasso path {
+	stroke: rgb(80,80,80);
+	stroke-width:2px;
+}
+
+.lasso .drawn {
+	fill-opacity:.05 ;
+}
+
+.lasso .loop_close {
+	fill:none;
+	stroke-dasharray: 4, 4;
+}
+
+.lasso .origin {
+	fill:#3399FF;
+	fill-opacity:.5;
+}
+
+.not_possible {
+	fill:rgb(200,200,200);
+}
+
+.possible {
+	fill:#EC888C;
+}
+
+.background-dot {
+	fill: var(--background-color);
+	stroke: none;
+	fill-opacity: .5;
+}
+
+.foreground-dot {
+	fill: var(--foreground-color);
+	stroke: #aaa;
+	fill-opacity: .5;
+}
+
+.selected-dot {
+	fill: var(--selected-color);
+	stroke: #aaa;
+	fill-opacity: 1;
+}

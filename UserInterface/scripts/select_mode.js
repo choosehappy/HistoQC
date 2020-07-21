@@ -27,17 +27,4 @@ function update_views () {
 }
 
 
-function update_multi_selected (file_names) {
-
-	CURRENT_MULTI_SELECTED = ORIGINAL_DATASET.filter(function (d) {
-		if (file_names.indexOf(d["filename"]) != -1) {
-			return true;
-		}
-		return false;
-	})
-	CURRENT_CASE_LIST = CURRENT_MULTI_SELECTED.map(function(d){return d["filename"];});
-	update_multi_selected_chart_view();
-	update_multi_selected_image_view(file_names);
-	update_multi_selected_table_view();
-}
 

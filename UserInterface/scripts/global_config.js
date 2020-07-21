@@ -17,14 +17,75 @@ var DEFAULT_HIDDEN_COLUMNS = [
 
 /****************** CHART VIEW ****************/
 // Initialize the bar chart on this attribute.
-var DEFAULT_CHART_ATTRIBUTE = "height";
-
-// Initialize the parallel coordinate on these attributes.
-// Temporarily DEPRECATED. 
-// var DEFAULT_PARAC_ATTRIBUTES = [];
+var DEFAULT_CHART_ATTRIBUTE = "template1_MSE_hist";
 
 // "bar_chart" | "parallel_coordinate"
 var DEFAULT_VIS_TYPE = "parallel_coordinate";
+
+// Initialize the parallel coordinate on these attributes.
+var DEFAULT_PARAC_ATTRIBUTES = [
+    "levels", 
+    "height", 
+    "width", 
+    "mpp_x", 
+    "mpp_y", 
+    "Magnification", 
+    "pen_markings", 
+    "coverslip_edge", 
+    "bubble", 
+    "nonwhite", 
+    "dark", 
+    "percent_small_tissue_removed", 
+    "percent_small_tissue_filled", 
+    "percent_blurry", 
+    "spur_pixels", 
+    "template1_MSE_hist", 
+    "template2_MSE_hist", 
+    "template3_MSE_hist", 
+    "template4_MSE_hist", 
+    "michelson_contrast", 
+    "rms_contrast", 
+    "grayscale_brightness", 
+    "chan1_brightness", 
+    "chan2_brightness", 
+    "chan3_brightness", 
+    "deconv_c0_mean", 
+    "deconv_c1_mean", 
+    "deconv_c2_mean", 
+    "chuv1_brightness_YUV",
+    "chuv2_brightness_YUV",
+    "chuv3_brightness_YUV",
+    "chan1_brightness_YUV",
+    "chan2_brightness_YUV",
+    "chan3_brightness_YUV",
+    "pixels_to_use"
+];
+
+var DEFAULT_UMAP_ATTRIBUTES = [
+    "template1_MSE_hist", 
+    "template2_MSE_hist", 
+    "template3_MSE_hist", 
+    "template4_MSE_hist", 
+    "michelson_contrast", 
+    "rms_contrast", 
+    "grayscale_brightness", 
+    "chan1_brightness", 
+    "chan2_brightness", 
+    "chan3_brightness", 
+    "deconv_c0_mean", 
+    "deconv_c1_mean", 
+    "deconv_c2_mean",
+    "chuv1_brightness_YUV",
+    "chuv2_brightness_YUV",
+    "chuv3_brightness_YUV",
+    "chan1_brightness_YUV",
+    "chan2_brightness_YUV",
+    "chan3_brightness_YUV"
+];
+
+var UMAP_MAX_N_NEIGHBORS = 15;
+var UMAP_MIN_DIST = 0.1;
+var UMAP_SPREAD = 1;
 
 /****************** IMAGE VIEW ****************/
 // full set of possible image format identifiers. 

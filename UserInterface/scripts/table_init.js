@@ -66,6 +66,7 @@ function generate_config (dataset) {
 
 	var colvis_action = function (e, dt, node, config) {
 		var column_name = node[0].text;
+
 		if (this.active()) {
 			// update the table column
 			this.active(false);
@@ -73,9 +74,8 @@ function generate_config (dataset) {
 			
 			CURRENT_HIDDEN_COLUMNS.push(column_name);
 			
-			// update parallel coordinate -> delete from CURRENT_PARAC_ATTRIBUTES
-			CURRENT_PARAC_ATTRIBUTES = generate_current_parac_attributes();
-			update_chart_view("parallel_coordinate", CURRENT_MULTI_SELECTED);
+			// update_chart_view("parallel_coordinate", CURRENT_MULTI_SELECTED);
+			// update_chart_view("scatter_plot", CURRENT_MULTI_SELECTED);
 
 		} else {
 			// update the table column
@@ -89,10 +89,8 @@ function generate_config (dataset) {
 				console.log("[DEBUG] " + column_name + " is not in CURRENT_HIDDEN_COLUMNS.")
 			}
 
-			// update parallel coordinate
-			CURRENT_PARAC_ATTRIBUTES = generate_current_parac_attributes();
-			update_chart_view("parallel_coordinate", CURRENT_MULTI_SELECTED);
-
+			// update_chart_view("parallel_coordinate", CURRENT_MULTI_SELECTED);
+			// update_chart_view("scatter_plot", CURRENT_MULTI_SELECTED);
 		}
 	};
 
@@ -154,7 +152,10 @@ function init_editability () {
 
 function init_button_style () {
 	$(".table-control > div.dt-buttons").removeClass("btn-group").addClass("btn-group-vertical");
-	$(".table-control > div.dt-buttons > button").removeClass("btn-secondary").addClass("btn-outline-secondary");
+	$(".table-control > div.dt-buttons").addClass("btn-group-sm");
+	// $(".table-control > div.dt-buttons").css("opacity", "0.8");
+	$(".table-control > div.dt-buttons").css("justify-content", "start");
+	$(".table-control > div.dt-buttons > button").removeClass("btn-secondary").addClass("btn-dark");
 }
 
 
