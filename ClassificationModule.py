@@ -178,7 +178,7 @@ def byExampleWithFeatures(s, params):
                 eximg = eximg.reshape(-1, eximg.shape[2])
                 model_vals.append(eximg)
 
-                mask = io.imread(ex[1]).reshape(-1, 1)
+                mask = io.imread(ex[1], as_gray=True).reshape(-1, 1)
                 model_labels = np.vstack((model_labels, mask))
 
             # do stuff here with model_vals
