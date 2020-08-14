@@ -77,4 +77,4 @@ It would be _much appreciated_ if you discuss any proposed changes first [the is
 
 In accordance with [GitHub's Terms of Service](https://help.github.com/en/articles/github-terms-of-service#6-contributions-under-repository-license), any contributions you _do_ make are under the [same license as HistoQC](LICENSE.md). Please make sure you have the rights for any code that you contribute, and you attribute any dependencies appropriately.
 
-These guidelines were adapted from the [QuPath][https://github.com/qupath/qupath/blob/master/CONTRIBUTING.md).
+These guidelines were adapted from the [QuPath](https://github.com/qupath/qupath/blob/master/CONTRIBUTING.md).
