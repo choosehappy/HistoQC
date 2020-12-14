@@ -41,21 +41,26 @@
 	<header class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 bg-white border-bottom">
 		<h5 id="page-title" class="my-0 mr-md-auto font-weight-normal"><strong>HistoQc</strong></h5>
 		<nav id="view-mngmt-btn-group" class="my-2 ml-md-3 my-md-0 mr-md-auto">
-			<button id="table-btn" class="view-mngmt-btn btn btn-light view-mngmt-btn-hidden" value="table">Table</button>
-			<button id="chart-btn" class="view-mngmt-btn btn btn-light view-mngmt-btn-hidden" value="chart">Chart</button>
-			<button id="image-btn" class="view-mngmt-btn btn btn-light view-mngmt-btn-hidden" value="image">Image</button>
+			<button id="table-btn" class="view-mngmt-btn btn btn-light view-mngmt-btn-hidden view-disabled" value="table">Table</button>
+			<button id="chart-btn" class="view-mngmt-btn btn btn-light view-mngmt-btn-hidden view-disabled" value="chart">Chart</button>
+			<button id="image-btn" class="view-mngmt-btn btn btn-light view-mngmt-btn-hidden view-disabled" value="image">Image</button>
 		</nav>
 		<nav class="my-2 my-md-0 mr-md-3">
 			<span id="dataset-tag" class="p-4 font-weight-light">Current Dataset: reslut.tsv</span>
 			<a class="p-2 text-dark" href="#">About</a>
 			<a class="p-2 text-dark" href="#">Instruction</a>
 		</nav>
-		<button id="reset-button" class="btn btn-outline-primary">Reset</button>
+		<label style="margin-bottom: 0; margin-right: 0.5rem">
+			<span id="cf-upload-button" class="btn btn-primary disabled">
+				CohortFinder <input id="cf-input" type="file" accept=".tsv" multiple disabled>
+			</span>
+		</label>
+		<button id="reset-button" class="btn btn-outline-danger">Reset</button>
 	</header>
 
 	<div id="upload-button" class="container pt-md-5 text-center">
 		<label>
-			<span class="btn btn-outline-secondary btn-lg">
+			<span class="btn btn-primary btn-lg">
 				View Results <input id="upload-input" type="file" accept=".tsv" multiple>
 			</span>
 		</label>
