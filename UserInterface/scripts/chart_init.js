@@ -1,12 +1,16 @@
 function update_chart_width () {
-	$("#dimension-reduction-view").outerWidth($("#dimension-reduction-view").outerHeight());
-	$("#original-feature-view").outerWidth($("#chart-view").width() - $("#dimension-reduction-view").outerWidth() - 10);
+	$("#dimension-reduction-view").outerWidth(
+		$("#dimension-reduction-view").outerHeight()
+	);
+	$("#original-feature-view").outerWidth(
+		$("#chart-view").width() - 
+		$("#dimension-reduction-view").outerWidth() - 10
+	);
 }
 
 
 function initialize_chart_view (dataset, vis_type="bar_chart") {
 
-	show_view("chart");
 	update_chart_width();
 
 	init_bar_canvas();
@@ -29,16 +33,17 @@ function update_chart_view (vis_type, dataset) {
 
 	update_chart_width();
 
-	// can be optimized by differentiate update type (just switch from chart to parallel coordiate?)
+	// can be optimized by differentiate update type 
+	// (just switch from chart to parallel coordiate?)
 	show_chosen_vis(vis_type);
 
-	if (vis_type == "bar_chart") {
+	if (vis_type === "bar_chart") {
 		update_bar_chart(dataset);
-	} else if (vis_type == "parallel_coordinate") {
+	} else if (vis_type === "parallel_coordinate") {
 		update_parallel_coordinate(dataset);
-	} else if (vis_type == "scatter_plot") {
+	} else if (vis_type === "scatter_plot") {
 		update_scatter_plot(ORIGINAL_DATASET, dataset);
-	} else if (vis_type == "both") {
+	} else {
 		update_bar_chart(dataset);
 		update_parallel_coordinate(dataset);
 		update_scatter_plot(ORIGINAL_DATASET, dataset);
@@ -48,11 +53,6 @@ function update_chart_view (vis_type, dataset) {
 
 function enter_select_chart_view (case_name) {
 	exit_select_chart_view();
-
-	// DRPLT_SVG.select("g.foreground-dot-group")
-	// 	.selectAll("circle")
-	// 	.filter(function (d) {return d.case_name==case_name;})
-	// 	.classed({"selected-dot": true, "foreground-dot": false});
 
 	CHART_SVG.select("g.foreground-bar-group")
 		.selectAll("rect")
@@ -77,9 +77,6 @@ function exit_select_chart_view () {
 		.selectAll(".selected-foreground-path")
 		.classed({"selected-foreground-path": false, "foreground-path": true});
 
-	// DRPLT_SVG.select("g.foreground-dot-group")
-	// 	.selectAll(".selected-dot")
-	// 	.classed({"selected-dot": false, "foreground-dot": true});
 	exit_select_scatter_plot();
 }
 
@@ -90,28 +87,19 @@ function update_multi_selected_chart_view (selected_cases) {
 		.transition()
 		.duration(500)
 		.style("display", function (d) {
-			if (selected_cases.length == 0 || selected_cases.indexOf(d.case_name) != -1) {
+			if (selected_cases.indexOf(d.case_name) != -1) {
 				return null;
 			} else {
 				return "none";
 			}
 		});
 
-	// DRPLT_SVG.select("g.foreground-dot-group")
-	// 	.selectAll("circle")
-	// 	.style("display", function (d) {
-	// 		if (selected_cases.length == 0 || selected_cases.indexOf(d.case_name) != -1) {
-	// 			return null;
-	// 		} else {
-	// 			return "none";
-	// 		}
-	// 	});
 	enter_multi_select_scatter_plot(selected_cases);
 
 	PARAC_SVG.select("g.foreground")
 		.selectAll("path")
 		.style("display", function (d) {
-			if (selected_cases.length == 0 || selected_cases.indexOf(d.case_name) != -1) {
+			if (selected_cases.indexOf(d.case_name) != -1) {
 				return null;
 			} else {
 				return "none";
@@ -138,7 +126,7 @@ function init_chart_selector () {
 		var sort_attribute = CURRENT_CHART_ATTRIBUTE;
 		var sort_attribute_index = ORIGINAL_FEATURE_LIST.indexOf(sort_attribute);
 		TABLE.order([sort_attribute_index, 'desc']).draw();
-		data_sorting(sort_attribute, true);
+		sort_data(sort_attribute, true);
 		update_views();
 	})
 }
