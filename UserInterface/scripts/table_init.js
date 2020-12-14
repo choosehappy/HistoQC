@@ -1,6 +1,5 @@
 function initialize_data_table (dataset) {
 
-	show_view("table");
 	var $table = $("#result-table");
 
 	generate_table(dataset, $table);
@@ -30,7 +29,7 @@ function initialize_data_table (dataset) {
 	});
 
 	$(".dataTables_scrollHeadInner > table > thead > tr > th").on("click", function () {
-		data_sorting($(this).text(), (TABLE.order()[0][1] == 'desc'));
+		sort_data($(this).text(), (TABLE.order()[0][1] == 'desc'));
 		update_views();
 	});
 }
@@ -73,9 +72,6 @@ function generate_config (dataset) {
 			TABLE.column(column_name + ":name").visible(false);
 			
 			CURRENT_HIDDEN_COLUMNS.push(column_name);
-			
-			// update_chart_view("parallel_coordinate", CURRENT_MULTI_SELECTED);
-			// update_chart_view("scatter_plot", CURRENT_MULTI_SELECTED);
 
 		} else {
 			// update the table column
@@ -88,9 +84,6 @@ function generate_config (dataset) {
 			} else {
 				console.log("[DEBUG] " + column_name + " is not in CURRENT_HIDDEN_COLUMNS.")
 			}
-
-			// update_chart_view("parallel_coordinate", CURRENT_MULTI_SELECTED);
-			// update_chart_view("scatter_plot", CURRENT_MULTI_SELECTED);
 		}
 	};
 
@@ -177,7 +170,9 @@ function select_row_in_table (case_name, from_table) {
 }
 
 
-function update_multi_selected_table_view (case_names) {
+function update_multi_selected_table_view () {
 	TABLE.clear();
-	TABLE.rows.add(CURRENT_MULTI_SELECTED.map(function(d) {return Object.values(d);})).draw();
+	TABLE.rows.add(
+		CURRENT_MULTI_SELECTED.map(function (d) {return Object.values(d);})
+	).draw();
 }
