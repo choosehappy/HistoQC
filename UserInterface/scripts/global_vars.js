@@ -15,14 +15,17 @@ var CURRENT_SELECTED = "";
 var FEATURES_TO_MAP = ["outdir"];
 // current sorting attribute
 var CURRENT_SORT_ATTRIBUTE;
-// all possible views
-var ORIGINAL_VIEWS = ["table", "chart", "image"];
 // current showing views
 var CURRENT_DISPLAY_VIEWS = [];
-var APP_INITIALIZED = false;
+if (OPEN_WITH_TABLE) {CURRENT_DISPLAY_VIEWS.push("table");};
+if (OPEN_WITH_CHART) {CURRENT_DISPLAY_VIEWS.push("chart");};
+if (OPEN_WITH_IMAGE) {CURRENT_DISPLAY_VIEWS.push("image");};
+var INITIALIZED_VIEWS = [];
+
 var FILE_NAME = "";
 var FILE_HEADER = "";
 
+var COHORT_LOADED = false;
 
 /****************** TABLE VIEW ****************/
 var TABLE;
@@ -80,6 +83,8 @@ var DATA_TABLE_CONFIG = {
 var CURRENT_HIDDEN_COLUMNS = DEFAULT_HIDDEN_COLUMNS;;
 
 /****************** CHART VIEW ****************/
+var FOREGROUND_COLOR = "#007bff";
+
 var CURRENT_CHART_ATTRIBUTE = DEFAULT_CHART_ATTRIBUTE;
 var $CHART = $("#chart-svg-container"); // bar chart for single attribute
 var $PARAC = $("#parac-svg-container"); // parallel coordinate chart
@@ -89,6 +94,7 @@ var CHART_SVG, PARAC_SVG,
 	TIP;
 var PARA_COOR_SELECTED;
 var CURRENT_PARALLEL_ATTRIBUTES;
+var COLOR_PLATE = [];
 
 /****************** IMAGE VIEW ****************/
 var SKIP_IMAGE_EXTENSIONS = [];
