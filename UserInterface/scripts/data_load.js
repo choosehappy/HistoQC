@@ -1,16 +1,9 @@
-/* Initiation model.
- * read in dataset, initialize data dict, initialize selectors, initialize each views.
- * last modified: 03/11/2018 23:22:00
- * update log: init header and comments.
- */ 
-
-
-function data_loading () {
+function load_raw_data () {
 
 	var $this = $(this);
 	var cur_file = null;
 
-	// escape the cancelation case
+	// escape the case when the user cancel the file selection pop-up
 	if ($this.val() == "") {
 		return;
 	} else {
@@ -20,9 +13,9 @@ function data_loading () {
 	// hide the "Upload Dataset" button
 	$("#upload-button").css("display", "none");
 
-	// read dataset from the file
-	FILE_NAME = cur_file.name.split(".")[0];
-	console.log("[LOG] Read in file: " + FILE_NAME);
+	// read dataset from the file ----------------------------------------------
+	console.log("[LOG] Read in file: " + cur_file.name.split(".")[0]);
+
 	var fileReader = new FileReader();
 	fileReader.readAsText(cur_file);
 	fileReader.onload = function () {
@@ -30,15 +23,18 @@ function data_loading () {
 		console.log("[LOG] App initializing...");
 		var file_text = fileReader.result;
 
+		// parse the file into header and dataset ------------------------------
+		// parse necessary information from the header 
 		var absdirRe = /#outdir:?\s*([^\n]*)\n/;
 		var abs_outdir = absdirRe.exec(file_text)[1];
 		var reldirRe = /([^\\\/]*)$/;
 		var rel_outdir = reldirRe.exec(abs_outdir)[1];
 		DATA_PATH = DATA_PATH + rel_outdir + "/";
+		// the header will be needed when saving result using the table view
 		FILE_HEADER = file_text.split(/#dataset:\s?/)[0] + "#dataset: ";
-		dataset_text = file_text.split(/#dataset:\s?/)[1];
 
-		// load dataset as list.
+		// load dataset as list
+		dataset_text = file_text.split(/#dataset:\s?/)[1];
 		ORIGINAL_DATASET = d3.tsv.parse(dataset_text, function (d) {
 			if (d.hasOwnProperty("")) delete d[""];
 			for (var key in d) {
@@ -46,95 +42,58 @@ function data_loading () {
 					d[key] = +d[key];
 				}
 			}
+			// add placeholder for cohortfinder results
+			if (!d.hasOwnProperty("embed_x")) d["embed_x"] = null;
+			if (!d.hasOwnProperty("embed_y")) d["embed_y"] = null;
+			// non-negative integers in cohortfinder results
+			if (!d.hasOwnProperty("groupid")) d["groupid"] = -1;
+			// 0 or 1 in cohortfinder results
+			if (!d.hasOwnProperty("testind")) d["testind"] = 2;
+			if (!d.hasOwnProperty("sitecol")) d["sitecol"] = "None";
+			if (!d.hasOwnProperty("labelcol")) d["labelcol"] = "None";
 			return d;
 		});
 
 		// show the current loaded dataset name
-		$("#dataset-tag").css("display", "inline")
-						 .text("Current dataset: " + cur_file.name + " | Size: " + ORIGINAL_DATASET.length + " slides");
+		$("#dataset-tag")
+			.css("display", "inline")
+			.text("Current dataset: " + cur_file.name + " | Size: " + 
+				ORIGINAL_DATASET.length + " slides");
 
-		// build case list.		
-		ORIGINAL_CASE_LIST = ORIGINAL_DATASET.map(function(d){return d["filename"];});
-
-		// build case dict with casename as key. 
+		// update all necessary global variables -------------------------------
+		// build case list
+		ORIGINAL_CASE_LIST = ORIGINAL_DATASET.map(function (d) {
+			return d["filename"];
+		});
+		// build the lookup table (filename -> dom_id)
 		for (var i = 0; i < ORIGINAL_DATASET.length; i ++) {
 			var cur_file_name = ORIGINAL_DATASET[i]["filename"];
-			ORIGINAL_CASE_DICT[cur_file_name] = {};
-			for (var index in FEATURES_TO_MAP) {
-				ORIGINAL_CASE_DICT[cur_file_name][FEATURES_TO_MAP[index]] = ORIGINAL_DATASET[i][FEATURES_TO_MAP[index]];
-			}
-			ORIGINAL_CASE_DICT[cur_file_name]["dom_id"] = cur_file_name.replace(/\W/g, "-");
+			ORIGINAL_CASE_DICT[cur_file_name] = {
+				"dom_id": cur_file_name.replace(/\W/g, "-")
+			};
 		}
-
 		// build feature list
 		ORIGINAL_FEATURE_LIST = Object.keys(ORIGINAL_DATASET[0]);
-
-		CURRENT_MULTI_SELECTED = ORIGINAL_DATASET;
+		// update current selection
 		PARA_COOR_SELECTED = ORIGINAL_CASE_LIST;
-		// UMAP_PROJ_SELECTED = ORIGINAL_CASE_LIST;
-
-		CURRENT_PARALLEL_ATTRIBUTES = ORIGINAL_FEATURE_LIST.filter(function (d) {
-			if (typeof(ORIGINAL_DATASET[0][d]) == "number" && DEFAULT_PARAC_ATTRIBUTES.indexOf(d) != -1) {
+		CURRENT_PARALLEL_ATTRIBUTES = ORIGINAL_FEATURE_LIST.filter(function(d) {
+			// in DEFAULT_PARAC_ATTRIBUTES and is numeric
+			if (typeof(ORIGINAL_DATASET[0][d]) == "number" && 
+				DEFAULT_PARAC_ATTRIBUTES.indexOf(d) != -1) {
 				return true;
 			}
 			return false;
 		});
 
-		init_image_format_list();
-
-		var image_check_interval = setInterval (function () {
-			var check_sum = 0;
-			for (var ck_index = 0; ck_index < CHECK_IMAGE_EXTENSIONS.length; ck_index ++) {
-				check_sum += CHECK_IMAGE_EXTENSIONS[ck_index];
-			}
-			if (check_sum == CHECK_IMAGE_EXTENSIONS.length) {
-				clearInterval (image_check_interval);
-
-				// initialize table view
-				initialize_data_table(ORIGINAL_DATASET);
-				if (!OPEN_WITH_TABLE) {
-					hide_view("table");
-				}
-				d3.select("#table-btn")
-					.classed("view-mngmt-btn-hidden", false)
-					.classed("view-enabled", OPEN_WITH_TABLE)
-					.classed("view-disabled", !OPEN_WITH_TABLE);
-
-				// initialize chart view
-				initialize_chart_view(ORIGINAL_DATASET, CURRENT_VIS_TYPE);
-				if (!OPEN_WITH_CHART) {
-					hide_view("chart");
-				}
-				d3.select("#chart-btn")
-					.classed("view-mngmt-btn-hidden", false)
-					.classed("view-enabled", OPEN_WITH_CHART)
-					.classed("view-disabled", !OPEN_WITH_CHART);
-
-				// initialize image view
-				initialize_image_view(ORIGINAL_CASE_LIST);
-				if (!OPEN_WITH_IMAGE) {
-					hide_view("image");
-				}
-				d3.select("#image-btn")
-					.classed("view-mngmt-btn-hidden", false)
-					.classed("view-enabled", OPEN_WITH_IMAGE)
-					.classed("view-disabled", !OPEN_WITH_IMAGE);
-
-				$("#view-mngmt-btn-group").css("display", "block");
-				d3.select("#page-title")
-					.classed("mr-md-auto", false)
-					.classed("mr-md-3", true);
-
-				console.log("[LOG] App initialized.");
-				APP_INITIALIZED = true;
-			} else {
-				console.log("waiting for image type checking ...");
-			}
-		}, 500);
+		// initiate the UI -----------------------------------------------------
+		CURRENT_MULTI_SELECTED = ORIGINAL_DATASET;
+		CURRENT_CASE_LIST = ORIGINAL_CASE_LIST;
+		init_views();
 	}
 }
 
-function data_sorting (keyword, desc=false) {
+
+function sort_data (keyword, desc=false) {
 	var compare = function (a, b) {
 		if (a[keyword] < b[keyword]) {
 			if (desc) {
@@ -155,28 +114,106 @@ function data_sorting (keyword, desc=false) {
 
 	CURRENT_SORT_ATTRIBUTE = keyword;
 	ORIGINAL_DATASET.sort(compare);
-	ORIGINAL_CASE_LIST = ORIGINAL_DATASET.map(function (d) {return d["filename"];});
+	ORIGINAL_CASE_LIST = ORIGINAL_DATASET.map(function (d) {
+		return d["filename"];
+	});
 	CURRENT_MULTI_SELECTED.sort(compare);
-	CURRENT_CASE_LIST = CURRENT_MULTI_SELECTED.map(function (d) {return d["filename"];});
+	CURRENT_CASE_LIST = CURRENT_MULTI_SELECTED.map(function (d) {
+		return d["filename"];
+	});
 }
 
 
-function init_image_format_list () {
+function load_cohort_finder () {
 
-	var test_file = ORIGINAL_DATASET[0]["filename"];
-	var test_out_dir = ORIGINAL_DATASET[0]["outdir"];
+	var $this = $(this);
+	var cur_file = null;
 
-	for (var img_type_index = 0; img_type_index < DEFAULT_IMAGE_EXTENSIONS.length; img_type_index ++) {
-		var src = DATA_PATH + test_file + "/" + test_file + DEFAULT_IMAGE_EXTENSIONS[img_type_index];
-		var img = new Image();
-		img.typeidx = img_type_index;
-		img.onload = (function () {
-			CHECK_IMAGE_EXTENSIONS[this.typeidx] = true;
+	// escape the case when the user cancel the file selection pop-up
+	if ($this.val() == "") {
+		return;
+	} else {
+		cur_file = $this.get(0).files[0];
+	}
+
+	// read dataset from the file ----------------------------------------------
+	var file_reader = new FileReader();
+	file_reader.readAsText(cur_file);
+	file_reader.onload = function () {
+
+		var file_text = file_reader.result;
+
+		// parse the file into header and dataset ------------------------------
+		// parse necessary information from the header 
+		var site_col_re = /#sitecol:?\s*([^\n]*)\n/;
+		var site_col = site_col_re.exec(file_text)[1];
+		var label_col_re = /#labelcol:?\s*([^\n]*)\n/;
+		var label_col = label_col_re.exec(file_text)[1];
+		var color_list_re = /#colorlist:?\s*([^\n]*)\n/;
+		COLOR_PLATE = color_list_re.exec(file_text)[1].split(",");
+
+		// load dataset as list
+		dataset_text = file_text.split(/#dataset:\s?/)[1];
+		var cf_dataset = d3.tsv.parse(dataset_text, function (d) {
+			var subset = {
+				"filename": d["filename"],
+				"embed_x": +d["embed_x"],
+				"embed_y": +d["embed_y"],
+				"groupid": +d["groupid"],
+				"testind": +d["testind"]
+			};
+
+			if (site_col.trim().toLowerCase() === "none") {
+				subset["sitecol"] = "None";
+			} else {
+				subset["sitecol"] = d[site_col.trim()];
+			}
+
+			if (label_col.trim().toLowerCase() === "none") {
+				subset["labelcol"] = "None";
+			} else {
+				subset["labelcol"] = d[label_col.trim()];
+			}
+
+			return subset;
 		});
-		img.onerror = (function () {
-			SKIP_IMAGE_EXTENSIONS.push(this.typeidx);
-			CHECK_IMAGE_EXTENSIONS[this.typeidx] = true;
-		});
-		img.src = src;
+
+		// update all necessary global variables -------------------------------
+		for (var i = 0; i < cf_dataset.length; i++) {
+			var cohort = cf_dataset[i];
+			ORIGINAL_CASE_DICT[cohort["filename"]]["cohort"] = cohort;
+		}
+
+		for (var i = 0; i < ORIGINAL_DATASET.length; i ++) {
+			var cur_fname = ORIGINAL_DATASET[i]["filename"];
+			var cohort = ORIGINAL_CASE_DICT[cur_fname]["cohort"];
+			ORIGINAL_DATASET[i]["embed_x"] = cohort["embed_x"];
+			ORIGINAL_DATASET[i]["embed_y"] = cohort["embed_y"];
+			ORIGINAL_DATASET[i]["groupid"] = cohort["groupid"];
+			ORIGINAL_DATASET[i]["testind"] = cohort["testind"];
+			ORIGINAL_DATASET[i]["sitecol"] = cohort["sitecol"];
+			ORIGINAL_DATASET[i]["labelcol"] = cohort["labelcol"];
+		}
+
+		for (var i = 0; i < CURRENT_MULTI_SELECTED.length; i ++) {
+			var cur_fname = CURRENT_MULTI_SELECTED[i]["filename"];
+			var cohort = ORIGINAL_CASE_DICT[cur_fname]["cohort"];
+			CURRENT_MULTI_SELECTED[i]["embed_x"] = cohort["embed_x"];
+			CURRENT_MULTI_SELECTED[i]["embed_y"] = cohort["embed_y"];
+			CURRENT_MULTI_SELECTED[i]["groupid"] = cohort["groupid"];
+			CURRENT_MULTI_SELECTED[i]["testind"] = cohort["testind"];
+			CURRENT_MULTI_SELECTED[i]["sitecol"] = cohort["sitecol"];
+			CURRENT_MULTI_SELECTED[i]["labelcol"] = cohort["labelcol"];
+		}
+
+		COHORT_LOADED = true;
+		
+		// update the UI -------------------------------------------------------
+		update_chart_view("all", CURRENT_MULTI_SELECTED);
+		update_multi_selected_table_view();
+
+		// disable all dropdowns for scatter plot (the x and y is now given)
+		d3.select("#drplt-control-group")
+			.selectAll("button").classed("disabled", true);
 	}
 }
