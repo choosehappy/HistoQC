@@ -6,7 +6,10 @@ function init_bar_canvas () {
 		.attr("width", $CHART.width())
 		.attr("height", $CHART.height())
 		.append("g")
-		.attr("transform", "translate(" + CHART_MARGIN.left + "," + CHART_MARGIN.top + ")");
+		.attr(
+			"transform", 
+			"translate(" + CHART_MARGIN.left + "," + CHART_MARGIN.top + ")"
+		);
 }
 
 
@@ -18,6 +21,7 @@ function init_bar_chart (dataset) {
 	var data = ORIGINAL_DATASET.map(function (d) {
 		return {
 			case_name: d["filename"],
+			groupid: d["groupid"],
 			attr_value: d[CURRENT_CHART_ATTRIBUTE]
 		};
 	});
@@ -47,9 +51,11 @@ function init_bar_chart (dataset) {
 		.attr('class', 'd3-tip')
 		.offset([-10, 0])
 		.html(function (d) {
-			return "<span style='color:#f94; font-size:10px'>" + d.case_name + "</span>" +
-				   "</br>" +
-				   "<span style='font-weight:100; font-size:10px'>" + d.attr_value.toFixed(5) + "</span>";
+			return "<span style='color:#f94; font-size:10px'>" + 
+				d.case_name + "</span>" +
+				"</br>" +
+				"<span style='font-weight:100; font-size:10px'>" + 
+				d.attr_value.toFixed(5) + "</span>";
 		});
 
 	svg.call(TIP);
@@ -86,10 +92,16 @@ function init_bar_chart (dataset) {
 		.data(data)
 		.enter().append("rect")
 		.attr("class", "background-bar")
-		.attr("x", function (d) { return xScale(d.case_name); })
+		.attr("x", function (d) {
+			return xScale(d.case_name);
+		})
 		.attr("width", Math.max(xScale.rangeBand() - 1, 1))
-		.attr("y", function (d) { return yScale(d.attr_value); })
-		.attr("height", function (d) { return chart_height - yScale(d.attr_value); });
+		.attr("y", function (d) {
+			return yScale(d.attr_value);
+		})
+		.attr("height", function (d) {
+			return chart_height - yScale(d.attr_value);
+		});
 
 	// Add blue foreground bar for focus.
 	foreground = svg.append("g")
@@ -105,16 +117,22 @@ function init_bar_chart (dataset) {
 			}
 		})
 		.style("display", function (d) {
-			if (selected_cases.length == 0 || selected_cases.indexOf(d.case_name) != -1) {
+			if (selected_cases.indexOf(d.case_name) != -1) {
 				return null;
 			} else {
 				return "none";
 			}
 		})
-		.attr("x", function (d) { return xScale(d.case_name); })
+		.attr("x", function (d) {
+			return xScale(d.case_name);
+		})
 		.attr("width", Math.max(xScale.rangeBand() - 1, 1))
-		.attr("y", function (d) { return yScale(d.attr_value); })
-		.attr("height", function (d) { return chart_height - yScale(d.attr_value); })
+		.attr("y", function (d) {
+			return yScale(d.attr_value);
+		})
+		.attr("height", function (d) {
+			return chart_height - yScale(d.attr_value);
+		})
 		.on('mouseover', TIP.show)
 		.on('mouseout', TIP.hide)
 		.on('click', function (d) {
@@ -146,6 +164,7 @@ function update_bar_chart (dataset) {
 	var data = ORIGINAL_DATASET.map(function (d) {
 		return {
 			case_name: d["filename"],
+			groupid: d["groupid"],
 			attr_value: d[CURRENT_CHART_ATTRIBUTE]
 		};
 	});
@@ -201,18 +220,26 @@ function update_bar_chart (dataset) {
 		.call(yAxis);
 
 	// update bars
-	var background_bars = CHART_SVG.select("g.background-bar-group").selectAll("rect").data(data);
+	var background_bars = CHART_SVG.select("g.background-bar-group")
+		.selectAll("rect").data(data);
 	background_bars.exit().remove();
 	background_bars.enter().append("rect");
 	background_bars.transition()
 		.duration(500)
 		.attr("class", "background-bar")
-		.attr("x", function (d) { return xScale(d.case_name); })
+		.attr("x", function (d) {
+			return xScale(d.case_name);
+		})
 		.attr("width", Math.max(xScale.rangeBand() - 1, 1))
-		.attr("y", function (d) { return yScale(d.attr_value); })
-		.attr("height", function (d) { return chart_height - yScale(d.attr_value); });
+		.attr("y", function (d) {
+			return yScale(d.attr_value);
+		})
+		.attr("height", function (d) {
+			return chart_height - yScale(d.attr_value);
+		});
 
-	var foreground_bars = CHART_SVG.select("g.foreground-bar-group").selectAll("rect").data(data);
+	var foreground_bars = CHART_SVG.select("g.foreground-bar-group").
+		selectAll("rect").data(data);
 	foreground_bars.exit().remove();
 	foreground_bars.enter().append("rect")
 		.on('mouseover', TIP.show)
@@ -234,16 +261,33 @@ function update_bar_chart (dataset) {
 			}
 		})
 		.style("display", function (d) {
-			if (selected_cases.length == 0 || selected_cases.indexOf(d.case_name) != -1) {
+			if (selected_cases.indexOf(d.case_name) != -1) {
 				return null;
 			} else {
 				return "none";
 			}
 		})
-		.attr("x", function (d) { return xScale(d.case_name); })
+		.style("fill", function (d) {
+			if (CURRENT_SELECTED === d.case_name) {
+				return "orangered";
+			} else {
+				if (d["groupid"] === -1) {
+					return FOREGROUND_COLOR;
+				} else {
+					return COLOR_PLATE[d["groupid"]];
+				}
+			}
+		})
+		.attr("x", function (d) {
+			return xScale(d.case_name);
+		})
 		.attr("width", Math.max(xScale.rangeBand() - 1, 1))
-		.attr("y", function (d) { return yScale(d.attr_value); })
-		.attr("height", function (d) { return chart_height - yScale(d.attr_value); });
+		.attr("y", function (d) {
+			return yScale(d.attr_value);
+		})
+		.attr("height", function (d) {
+			return chart_height - yScale(d.attr_value);
+		});
 }
 
 
