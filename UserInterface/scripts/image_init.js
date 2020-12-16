@@ -7,17 +7,18 @@
 
 function initialize_image_view (case_list) {
 
-	show_view("image");
-	update_image_view_height();
-
 	var $div = $("#overview-gallery");
 	$div.empty();
 
-	CURRENT_CASE_LIST = ORIGINAL_CASE_LIST;
 	CURRENT_IMAGE_TYPE = DEFAULT_IMAGE_EXTENSIONS.indexOf(DEFAULT_IMAGE_EXTENSION);
 
 	for (var i = 0; i < case_list.length; i++) {
-		$div.append(generate_img_block("overview-image-block", case_list[i], CURRENT_IMAGE_TYPE, CURRENT_COMPARE_TYPE, case_list[i]));
+		$div.append(
+			generate_img_block(
+				"overview-image-block", case_list[i], 
+				CURRENT_IMAGE_TYPE, CURRENT_COMPARE_TYPE, case_list[i]
+			)
+		);
 	}
  
 	$div.children("div").children("img").click(function(){
@@ -38,7 +39,12 @@ function update_image_view (case_list) {
 	$div.empty();
 
 	for (var i = 0; i < ORIGINAL_CASE_LIST.length; i++) {
-		$div.append(generate_img_block("overview-image-block", ORIGINAL_CASE_LIST[i], CURRENT_IMAGE_TYPE, CURRENT_COMPARE_TYPE, ORIGINAL_CASE_LIST[i]));
+		$div.append(
+			generate_img_block(
+				"overview-image-block", ORIGINAL_CASE_LIST[i], 
+				CURRENT_IMAGE_TYPE, CURRENT_COMPARE_TYPE, ORIGINAL_CASE_LIST[i]
+			)
+		);
 	}
  
 	$div.children("div").children("img").click(function(){
@@ -70,7 +76,12 @@ function enter_select_image_view (dir) {
 	$("#select-image-view").css("display", "flex");
 
 	var $div = $("#select-image-container");
-	$div.append("<img id='exibit-img' src='" + generate_img_src(dir, CURRENT_IMAGE_TYPE, false) + "' file_name='" + dir + "' img_type='" + CURRENT_IMAGE_TYPE + "'/>");
+	$div.append(
+		"<img id='exibit-img' src='" + 
+		generate_img_src(dir, CURRENT_IMAGE_TYPE, false) + 
+		"' file_name='" + dir + 
+		"' img_type='" + CURRENT_IMAGE_TYPE + "'/>"
+	);
 	$div.append("<div><span>" + dir + "</span></div>");
 
 	$div = $("#select-candidate-container");
@@ -78,7 +89,12 @@ function enter_select_image_view (dir) {
 		if (SKIP_IMAGE_EXTENSIONS.indexOf(i) >= 0) {
 			continue;
 		}
-		$div.append(generate_img_block("candidate-image-block", dir, i, -1, DEFAULT_IMAGE_EXTENSIONS[i]));
+		$div.append(
+			generate_img_block(
+				"candidate-image-block", dir, 
+				i, -1, DEFAULT_IMAGE_EXTENSIONS[i]
+			)
+		);
 	}
 
 	$("#select-candidate-container > div > img").dblclick(function(){
@@ -129,10 +145,19 @@ function calculate_height ($div) {
 
 
 function generate_img_block (blk_class, file_name, img_type, compare_type, img_label) {
-	var img_block = "<div id='" + ORIGINAL_CASE_DICT[file_name]["dom_id"] + "' class='" + blk_class + "'>" +
-					"<img src='" + generate_img_src(file_name, img_type, blk_class == "overview-image-block") + "' file_name='" + file_name + "' img_type='" + img_type + "' onerror=\"this.style.display='none'\"/>";
+	var img_block = "<div id='" + ORIGINAL_CASE_DICT[file_name]["dom_id"] + 
+		"' class='" + blk_class + "'>" +
+		"<img src='" + generate_img_src(
+			file_name, img_type, blk_class == "overview-image-block"
+		) + "' file_name='" + file_name + 
+		"' img_type='" + img_type + 
+		"' onerror=\"this.style.display='none'\"/>";
 	if (compare_type != -1) {
-		img_block += "<img src='" + generate_img_src(file_name, compare_type, blk_class == "overview-image-block") + "' file_name='" + file_name + "' img_type='" + compare_type + "' onerror=\"this.style.display='none'\"/>";
+		img_block += "<img src='" + generate_img_src(
+				file_name, compare_type, blk_class == "overview-image-block"
+			) + "' file_name='" + file_name + 
+			"' img_type='" + compare_type + 
+			"' onerror=\"this.style.display='none'\"/>";
 	}
 	img_block += "<div><span>" + img_label + "</span></div></div>";
 	return img_block;

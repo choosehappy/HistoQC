@@ -64,7 +64,8 @@ th {
 	margin-top: 15%;
 }
 
-#upload-input {
+#upload-input,
+#cf-input {
 	display: none;
 }
 
@@ -297,7 +298,7 @@ th {
 }
 
 .selected-bar {
-	fill: orangered;
+	fill: var(--selected-color)!important;
 }
 
 .bar {
@@ -305,7 +306,7 @@ th {
 }
 
 .bar:hover {
-	fill: orangered;
+	fill: orangered!important;
 }
 
 .y.axis path,
@@ -532,7 +533,7 @@ table.dataTable {
 
 .selected-foreground-path {
 	fill: none;
-	stroke: var(--selected-color);
+	stroke: var(--selected-color)!important;
 	stroke-width: 2;
 	opacity: 1;
 }
@@ -585,7 +586,8 @@ table.dataTable {
 }
 
 .selected-dot {
-	fill: var(--selected-color);
-	stroke: #aaa;
+	fill: var(--selected-color)!important;
+	stroke: #ddd;
+	stroke-width: 0.4;
 	fill-opacity: 1;
 }

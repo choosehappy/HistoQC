@@ -6,7 +6,9 @@ function init_parallel_canvas () {
 		.attr("width", $PARAC.width())
 		.attr("height", $PARAC.height())
 		.append("g")
-		.attr("transform", "translate(" + PARAC_MARGIN.left + "," + PARAC_MARGIN.top + ")");
+		.attr("transform", 
+			  "translate(" + PARAC_MARGIN.left + "," + PARAC_MARGIN.top + ")"
+		);
 }
 
 
@@ -34,18 +36,24 @@ function init_parallel_coordinate (dataset) {
 		foreground;
 
 	var data = ORIGINAL_DATASET.map(function (d) {
-		attr_value_dict = {case_name: d["filename"]};
+		attr_value_dict = {
+			case_name: d["filename"],
+			gid: d["groupid"]
+		};
 		for (var i = 0; i < CURRENT_PARALLEL_ATTRIBUTES.length; i++) {
-			attr_value_dict[CURRENT_PARALLEL_ATTRIBUTES[i]] = d[CURRENT_PARALLEL_ATTRIBUTES[i]];
+			attr_value_dict[CURRENT_PARALLEL_ATTRIBUTES[i]] = 
+				d[CURRENT_PARALLEL_ATTRIBUTES[i]];
 		}
 		return attr_value_dict;
 	});
 	var selected_cases = dataset.map(function (d) {return d["filename"];});
 
 	xScale.domain(dimensions = d3.keys(data[0]).filter(function (d) {
-		return d != "case_name" && (yScale[d] = d3.scale.linear()
-			.domain(d3.extent(data, function (p) { return p[d]; }))
-			.range([parac_height, 0]));
+		return d != "case_name" && d != "gid" && (
+			yScale[d] = d3.scale.linear()
+				.domain(d3.extent(data, function (p) { return p[d]; }))
+				.range([parac_height, 0])
+		);
 	}));
 
 	// Add grey background lines for context.
@@ -64,17 +72,28 @@ function init_parallel_coordinate (dataset) {
 		.data(data)
 		.enter().append("path")
 		.attr("class", function (d) {
-			if (CURRENT_SELECTED == d.case_name) {
+			if (CURRENT_SELECTED === d.case_name) {
 				return "selected-foreground-path";
 			} else {
 				return "foreground-path";
 			}
 		})
 		.style("display", function (d) {
-			if (selected_cases.length == 0 || selected_cases.indexOf(d.case_name) != -1) {
+			if (selected_cases.indexOf(d.case_name) != -1) {
 				return null;
 			} else {
 				return "none";
+			}
+		})
+		.style("stroke", function (d) {
+			if (CURRENT_SELECTED === d.case_name) {
+				return "orangered";
+			} else {
+				if (d["gid"] === -1) {
+					return FOREGROUND_COLOR;
+				} else {
+					return COLOR_PLATE[d["gid"]];
+				}
 			}
 		})
 		.attr("d", path);
@@ -84,38 +103,42 @@ function init_parallel_coordinate (dataset) {
 		.data(dimensions)
 		.enter().append("g")
 		.attr("class", "dimension")
-		.attr("transform", function (d) { return "translate(" + xScale(d) + ")"; })
-		.call(d3.behavior.drag()
-			.origin(function (d) { return {x: xScale(d)}; })
-			.on("dragstart", function (d) {
-				dragging[d] = xScale(d);
-				background.attr("visibility", "hidden");
-				// foreground.attr("visibility", "hidden");
-			})
-			.on("drag", function (d) {
-				dragging[d] = Math.min(parac_width, Math.max(0, d3.event.x));
-				foreground.attr("d", path);
-				dimensions.sort(function (a, b) { return position(a) - position(b); });
-				xScale.domain(dimensions);
-				g.attr("transform", function (d) { return "translate(" + position(d) + ")"; })
-			})
-			.on("dragend", function (d) {
-				delete dragging[d];
-				transition(d3.select(this)).attr("transform", "translate(" + xScale(d) + ")");
-				transition(foreground).attr("d", path);
-				background
-					.attr("d", path)
-					.transition()
-					.delay(500)
-					.duration(0)
-					.attr("visibility", null);
-				// foreground
-				// 	.attr("d", path)
-				// 	.transition()
-				// 	.delay(500)
-				// 	.duration(0)
-				// 	.attr("visibility", null);
-			}));
+		.attr("transform", function (d) {
+			return "translate(" + xScale(d) + ")";
+		})
+		.call(
+			d3.behavior.drag()
+				.origin(function (d) { return {x: xScale(d)}; })
+				.on("dragstart", function (d) {
+					dragging[d] = xScale(d);
+					background.attr("visibility", "hidden");
+					// foreground.attr("visibility", "hidden");
+				})
+				.on("drag", function (d) {
+					dragging[d] = Math.min(parac_width, Math.max(0,d3.event.x));
+					foreground.attr("d", path);
+					dimensions.sort(function (a, b) {
+						return position(a) - position(b);
+					});
+					xScale.domain(dimensions);
+					g.attr("transform", function (d) {
+						return "translate(" + position(d) + ")";
+					});
+				})
+				.on("dragend", function (d) {
+					delete dragging[d];
+					transition(d3.select(this))
+						.attr("transform", "translate(" + xScale(d) + ")");
+					transition(foreground)
+						.attr("d", path);
+					background
+						.attr("d", path)
+						.transition()
+						.delay(500)
+						.duration(0)
+						.attr("visibility", null);
+				})
+		);
 
 	// Add an axis and title.
 	g.append("g")
@@ -134,16 +157,18 @@ function init_parallel_coordinate (dataset) {
 	g.append("g")
 		.attr("class", "brush")
 		.each(function (d) {
-			d3.select(this).call(yScale[d].brush = d3.svg.brush().y(yScale[d])
-													 .on("brushstart", brushstart)
-													 .on("brush", brush)
-													 .on("brushend", brushend));
+			d3.select(this).call(
+				yScale[d].brush = d3.svg.brush().y(yScale[d])
+					.on("brushstart", brushstart)
+					.on("brush", brush)
+					.on("brushend", brushend));
 		})
 		.selectAll("rect")
 		.attr("x", -8)
 		.attr("width", 16);
 
-	// functions for parallel coordinate, ref: https://bl.ocks.org/jasondavies/1341281
+	// functions for parallel coordinate, 
+	// ref: https://bl.ocks.org/jasondavies/1341281
 	function position(d) {
 		var v = dragging[d];
 		return v == null ? xScale(d) : v;
@@ -155,7 +180,9 @@ function init_parallel_coordinate (dataset) {
 	
 	// Returns the path for a given data point.
 	function path(d) {
-		return line(dimensions.map(function (p) { return [position(p), yScale[p](d[p])]; }));
+		return line(dimensions.map(function (p) {
+			return [position(p), yScale[p](d[p])];
+		}));
 	}
 
 	function brushstart() {
@@ -164,8 +191,12 @@ function init_parallel_coordinate (dataset) {
 
 	// Handles a brush event, toggling the display of foreground lines.
 	function brush() {
-		var actives = dimensions.filter(function (p) { return !yScale[p].brush.empty(); }),
-			extents = actives.map(function (p) { return yScale[p].brush.extent(); });
+		var actives = dimensions.filter(function (p) {
+			return !yScale[p].brush.empty();
+		});
+		var extents = actives.map(function (p) {
+			return yScale[p].brush.extent();
+		});
 		foreground.style("display", function (d) {
 			return actives.every(function (p, i) {
 				return extents[i][0] <= d[p] && d[p] <= extents[i][1];
@@ -174,8 +205,12 @@ function init_parallel_coordinate (dataset) {
 	}
 
 	function brushend() {
-		var actives = dimensions.filter(function (p) { return !yScale[p].brush.empty(); }),
-			extents = actives.map(function (p) { return yScale[p].brush.extent(); });
+		var actives = dimensions.filter(function (p) {
+			return !yScale[p].brush.empty();
+		});
+		var extents = actives.map(function (p) {
+			return yScale[p].brush.extent();
+		});
 
 		PARA_COOR_SELECTED = [];
 		ORIGINAL_DATASET.forEach(function (d) {
@@ -208,7 +243,7 @@ function update_parallel_coordinate (dataset) {
 	}
 
 	// update currently selected numeric attributes
-	init_parallel_coordinate (dataset);
+	init_parallel_coordinate(dataset);
 }
 
 
@@ -238,7 +273,7 @@ function init_parallel_vars_selector() {
 
 	function generate_option_html (key, value, selected = false) {
 		if (selected) {
-			return "<option value='" + value + "' selected>" + key + "</option>";
+			return "<option value='" + value + "' selected>" + key +"</option>";
 		} else {
 			return "<option value='" + value + "'>" + key + "</option>";
 		}
