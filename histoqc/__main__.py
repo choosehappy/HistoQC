@@ -16,6 +16,8 @@ import datetime
 # --- setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+# FIXME: this filehandler should be setup before main
+#   and ideally write to the target output dir or a tempdir
 file = logging.FileHandler(filename="error.log")
 file.setLevel(logging.WARNING)
 file.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
@@ -177,7 +179,8 @@ def main(argv=None):
     config = configparser.ConfigParser()
 
     if args.config is None:
-        args.config=os.path.dirname(os.path.realpath(__file__))+"/config.ini"
+        # FIXME: loads config.ini as default... need to ship in module
+        args.config = os.path.dirname(os.path.realpath(__file__)) + "/config.ini"
         logging.warning(f"Configuration file not set (--config), using default: {args.config}")
 
     config.read(args.config)
@@ -258,6 +261,7 @@ def main(argv=None):
         logging.info(f"{fname}\t{error}")
 
     if not args.symlinkoff:
+        # FIXME: this needs to be refactored to work...
         origin = os.path.realpath(args.outdir)
         target = os.path.normpath(os.path.dirname(os.path.realpath(__file__)) + "/UserInterface/Data/" +
                                   os.path.basename(os.path.normpath(args.outdir)))
