@@ -145,8 +145,7 @@ def makeDir(path):
             raise
 
 
-if __name__ == '__main__':
-
+def main(argv=None):
     manager = multiprocessing.Manager()
     lock = manager.Lock()
     shared_dict = manager.dict()
@@ -166,11 +165,14 @@ if __name__ == '__main__':
     parser.add_argument('-n', '--nthreads', help="number of threads to launch", type=int, default=1)
     parser.add_argument('-s', '--symlinkoff', help="turn OFF symlink creation", action="store_true")
 
-    if len(sys.argv) == 1:
+    if argv is None:
+        argv = sys.argv[1:]
+
+    if len(argv) == 1:
         parser.print_help(sys.stderr)
         sys.exit(1)
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     config = configparser.ConfigParser()
 
@@ -191,7 +193,7 @@ if __name__ == '__main__':
     makeDir(args.outdir)
     headers.append(f"outdir:\t{os.path.realpath(args.outdir)}")
     headers.append(f"config_file:\t{os.path.realpath(args.config)}")
-    headers.append(f"command_line_args:\t{' '.join(sys.argv)}")
+    headers.append(f"command_line_args:\t{' '.join(argv)}")
 
     if len(glob.glob(args.outdir + os.sep + "results*.tsv")) > 0:
         if (args.force):
@@ -223,7 +225,7 @@ if __name__ == '__main__':
                     continue
                 files.append(basepath + line.strip().split("\t")[0])
     else:  # user sent us a wildcard, need to use glob to find files
-        files = glob.glob(args.basepath + args.input_pattern[0])
+        files = glob.glob(os.path.join(args.basepath, args.input_pattern[0]), recursive=True)
 
     logging.info(f"Number of files detected by pattern:\t{len(files)}")
 
@@ -272,3 +274,6 @@ if __name__ == '__main__':
     shutil.copy("error.log",
                 args.outdir + os.sep + "error.log")  # copy error log to output directory. tried move but the filehandle is never released by logger no matter how hard i try
 
+
+if __name__ == "__main__":
+    main()
