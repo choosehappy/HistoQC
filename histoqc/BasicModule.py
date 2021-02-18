@@ -1,6 +1,6 @@
 import logging
 import os
-from BaseImage import printMaskHelper
+from histoqc.BaseImage import printMaskHelper
 from skimage.morphology import remove_small_objects, binary_opening, disk
 from skimage import io, color, img_as_ubyte
 

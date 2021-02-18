@@ -2,7 +2,7 @@ import logging
 import os
 
 import skimage
-from BaseImage import printMaskHelper
+from histoqc.BaseImage import printMaskHelper
 from skimage import io, img_as_ubyte
 from skimage.color import rgb2gray
 from skimage.filters import rank
