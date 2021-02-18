@@ -1,0 +1,41 @@
+#
+# Conda devenv environment for histoqc
+#
+# To create the environment and don't install `histoqc` in development mode:
+#   ```
+#   > conda devenv
+#   # equivalent to:
+#   > HISTOQC_DEVEL="" conda devenv
+#   ```
+#
+# To create the environment and install `histoqc` in development mode:
+#   ```
+#   > HISTOQC_DEVEL=TRUE conda devenv
+#   ```
+#
+
+{% set HISTOQC_DEVEL = os.environ.get('HISTOQC_DEVEL', False) %}
+
+name: histoqc
+
+channels:
+  - sdvillal  # newer/better versions of everything that matters
+  - conda-forge
+  - defaults
+
+dependencies:
+  - python >=3.8
+  - pip
+  - numpy
+  - scipy
+  - matplotlib
+  - scikit-image
+  - scikit-learn
+  - openslide-python
+  - matplotlib
+
+  - setuptools-scm
+  - wheel
+
+  - pip:      # [ HISTOQC_DEVEL ]
+    - "-e ."  # [ HISTOQC_DEVEL ]
