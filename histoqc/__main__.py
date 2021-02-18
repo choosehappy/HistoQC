@@ -117,8 +117,8 @@ def load_pipeline(lconfig):
         if (in_main):
             logging.info(f"\t\t{mod_name}\t{func_name}")
         try:
-            mod = import_module(mod_name)
-        except:
+            mod = import_module(f"histoqc.{mod_name}")
+        except ImportError:
             raise NameError("Unknown module in pipeline from config file:\t %s" % mod_name)
 
         try:
