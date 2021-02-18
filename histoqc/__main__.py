@@ -9,7 +9,7 @@ import matplotlib as mpl  # need to do this before anything else tries to access
 import multiprocessing, logging
 from importlib import import_module
 import warnings
-import histoqc.BaseImage
+from histoqc.BaseImage import BaseImage
 import sys
 import datetime
 
@@ -56,7 +56,7 @@ def worker(filei, nfiles, fname, args, lconfig, processQueue, lock, shared_dict)
 
     logging.info(f"-----Working on:\t{fname}\t\t{filei+1} of {nfiles}")
     try:
-        s = BaseImage.BaseImage(fname, fname_outdir, dict(lconfig.items("BaseImage.BaseImage")))
+        s = BaseImage(fname, fname_outdir, dict(lconfig.items("BaseImage.BaseImage")))
 
         for process, process_params in processQueue:
             process_params["lock"] = lock
