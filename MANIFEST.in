@@ -1,0 +1,8 @@
+# default excludes
+prune .github
+exclude .git*
+exclude .*.yml
+recursive-exclude . *secrets*
+
+# ini config files
+include histoqc/config/*.ini
