@@ -5,6 +5,7 @@ helper utilities for running the HistoQC pipelines
 """
 import logging
 import os
+import platform
 import shutil
 import warnings
 from logging.config import dictConfig
@@ -88,3 +89,22 @@ def move_logging_file_handler(logger, destination):
         new_handler.setLevel(handler.level)
         new_handler.setFormatter(handler.formatter)
         logger.addHandler(new_handler)
+
+
+# --- worker process helpers ------------------------------------------
+
+def setup_plotting_backend(logger=None):
+    """loads the correct matplotlib backend
+
+    Parameters
+    ----------
+    logger :
+        the logging.Logger instance
+    """
+    import matplotlib
+    if platform.system() != "Windows" and not os.environ.get('DISPLAY'):
+        if logger is not None:
+            logger.info('no display found. Using non-interactive Agg backend')
+        matplotlib.use('Agg')
+    else:
+        matplotlib.use('TkAgg')
