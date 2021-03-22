@@ -54,9 +54,9 @@ def removeFatlikeTissue(s, params):
     kernel_size = int(params.get("kernel_size", 3))
     max_keep_size = int(params.get("max_keep_size", 1000))
 
-    img_reduced = morphology.remove_small_holes(s["img_mask_use"], min_size=fat_cell_size)
+    img_reduced = morphology.remove_small_holes(s["img_mask_use"], area_threshold=fat_cell_size)
     img_small = img_reduced & np.invert(s["img_mask_use"])
-    img_small = ~morphology.remove_small_holes(~img_small, min_size=9)
+    img_small = ~morphology.remove_small_holes(~img_small, area_threshold=9)
 
     mask_dilate = morphology.dilation(img_small, selem=np.ones((kernel_size, kernel_size)))
     mask_dilate_removed = remove_large_objects(mask_dilate, max_keep_size)
@@ -82,7 +82,7 @@ def removeFatlikeTissue(s, params):
 def fillSmallHoles(s, params):
     logging.info(f"{s['filename']} - \tfillSmallHoles")
     min_size = int(params.get("min_size", 64))
-    img_reduced = morphology.remove_small_holes(s["img_mask_use"], min_size=min_size)
+    img_reduced = morphology.remove_small_holes(s["img_mask_use"], area_threshold=min_size)
     img_small = img_reduced & np.invert(s["img_mask_use"])
 
     io.imsave(s["outdir"] + os.sep + s["filename"] + "_small_fill.png", img_as_ubyte(img_small))
