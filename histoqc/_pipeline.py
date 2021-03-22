@@ -4,13 +4,17 @@ helper utilities for running the HistoQC pipelines
 
 """
 import logging
+import multiprocessing
 import os
 import platform
 import shutil
+import threading
 import warnings
 from contextlib import ExitStack
+from contextlib import contextmanager
 from contextlib import nullcontext
 from logging.config import dictConfig
+from logging.handlers import QueueHandler
 
 
 # --- logging helpers -------------------------------------------------
@@ -91,6 +95,69 @@ def move_logging_file_handler(logger, destination):
         new_handler.setLevel(handler.level)
         new_handler.setFormatter(handler.formatter)
         logger.addHandler(new_handler)
+
+
+class MultiProcessingLogManager:
+
+    def __init__(self, logger_name, *, manager):
+        """create a MultiProcessingLogManager
+
+        Note: this uses a multiprocessing Queue to correctly transfer
+          logging information from worker processes to the main
+          process logging instance
+
+        Parameters
+        ----------
+        logger_name : str
+            the name of the logger instance
+        manager : multiprocessing.Manager
+            the mp Manager instance used for creating sharable context
+        """
+        self._logger_name = logger_name
+        self._log_queue = manager.Queue()
+        self._log_thread_active = False
+
+    @property
+    def is_main_process(self):
+        return multiprocessing.current_process().name == "MainProcess"
+
+    @property
+    def logger(self):
+        """returns the logger instance"""
+        if self.is_main_process:
+            return logging.getLogger(self._logger_name)
+        else:
+            qh = QueueHandler(self._log_queue)
+            root = logging.getLogger()
+            root.setLevel(logging.INFO)
+            root.addHandler(qh)
+            return root
+
+    @contextmanager
+    def logger_thread(self):
+        """context manager for multiprocess logging
+
+        Note: this starts the thread responsible for handing the log records
+          emitted by child processes to the main logger instance
+        """
+        assert self.is_main_process
+        assert not self._log_thread_active  # not reentrant...
+        self._log_thread_active = True
+
+        def process_queue(q, ln):
+            while True:
+                log_record = q.get()
+                if log_record is None:
+                    break
+                main_logger = logging.getLogger(ln)
+                main_logger.handle(log_record)
+
+        lt = threading.Thread(target=process_queue, args=(self._log_queue, self._logger_name))
+        lt.start()
+        yield
+        self._log_queue.put(None)
+        lt.join()
+        self._log_thread_active = False
 
 
 # --- worker process helpers ------------------------------------------
