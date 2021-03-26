@@ -3,6 +3,7 @@
 helper utilities for running the HistoQC pipelines
 
 """
+import glob
 import logging
 import multiprocessing
 import os
@@ -13,6 +14,7 @@ import warnings
 from contextlib import ExitStack
 from contextlib import contextmanager
 from contextlib import nullcontext
+from importlib import import_module
 from logging.config import dictConfig
 from logging.handlers import QueueHandler
 
@@ -160,6 +162,24 @@ class MultiProcessingLogManager:
         self._log_thread_active = False
 
 
+def log_pipeline(config, log_manager):
+    """log the pipeline information
+
+    Parameters
+    ----------
+    config : configparser.ConfigParser
+    log_manager : MultiProcessingLogManager
+    """
+    assert log_manager.is_main_process
+    steps = config.get(section='pipeline', option='steps').splitlines()
+
+    log_manager.logger.info("the pipeline will use these steps:")
+    for process in steps:
+        mod_name, func_name = process.split('.')
+        log_manager.logger.info(f"\t\t{mod_name}\t{func_name}")
+    return steps
+
+
 # --- worker process helpers ------------------------------------------
 
 def setup_plotting_backend(logger=None):
@@ -251,7 +271,6 @@ class BatchedResultFile:
 
         mode = "a"
         if self._first and os.path.isfile(pth):
-            # todo: expose logging a message here
             if self.force_overwrite:
                 mode = "w"
             else:
@@ -325,3 +344,46 @@ class BatchedResultFile:
             if self._completed and self.batch_size and self._completed % self.batch_size == 0:
                 self._batch += 1
                 self._first = True
+
+    @classmethod
+    def results_in_path(cls, dst):
+        """return if a dst path contains results files
+
+        Parameters
+        ----------
+        dst : os.PathLike
+        """
+        return bool(glob.glob(os.path.join(dst, cls.FILENAME_GLOB)))
+
+
+def load_pipeline(config):
+    """load functions and parameters from config
+
+    Parameters
+    ----------
+    config : configparser.ConfigParser
+    """
+    steps = config.get(section='pipeline', option='steps').splitlines()
+
+    process_queue = []
+    for process in steps:
+        mod_name, func_name = process.split('.')
+
+        try:
+            mod = import_module(f"histoqc.{mod_name}")
+        except ImportError:
+            raise NameError(f"Unknown module in pipeline from config file:\t {mod_name}")
+
+        func_name = func_name.split(":")[0]  # take base of function name
+        try:
+            func = getattr(mod, func_name)
+        except AttributeError:
+            raise NameError(f"Unknown function from module in pipeline from config file:\t {mod_name}.{func_name}")
+
+        if config.has_section(process):
+            params = dict(config.items(section=process))
+        else:
+            params = {}
+
+        process_queue.append((func, params))
+    return process_queue, steps
