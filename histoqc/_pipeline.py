@@ -389,4 +389,4 @@ def load_pipeline(config):
             params = {}
 
         process_queue.append((func, params))
-    return process_queue, steps
+    return process_queue
