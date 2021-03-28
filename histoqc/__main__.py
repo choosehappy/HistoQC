@@ -17,87 +17,11 @@ from histoqc._pipeline import log_pipeline
 from histoqc._pipeline import move_logging_file_handler
 from histoqc._pipeline import setup_logging
 from histoqc._pipeline import setup_plotting_backend
+from histoqc._worker import worker
+from histoqc._worker import worker_setup
+from histoqc._worker import worker_success
+from histoqc._worker import worker_error
 from histoqc.config import read_config_template
-
-
-# --- setup worker functions --------------------------------------------------
-
-def worker(idx, file_name, *,
-           process_queue, config, outdir, log_manager, lock, shared_dict, num_files, force):
-    """pipeline worker function"""
-
-    # --- output directory preparation --------------------------------
-    fname_outdir = os.path.join(outdir, os.path.basename(file_name))
-    if os.path.isdir(fname_outdir):  # directory exists
-        if not force:
-            log_manager.logger.warning(
-                f"{file_name} already seems to be processed (output directory exists),"
-                " skipping. To avoid this behavior use --force"
-            )
-            return
-        else:
-            # remove entire directory to ensure no old files are present
-            shutil.rmtree(fname_outdir)
-            os.makedirs(fname_outdir)
-
-    log_manager.logger.info(f"-----Working on:\t{file_name}\t\t{idx+1} of {num_files}")
-
-    try:
-        s = BaseImage(file_name, fname_outdir, dict(config.items("BaseImage.BaseImage")))
-
-        for process, process_params in process_queue:
-            process_params["lock"] = lock
-            process_params["shared_dict"] = shared_dict
-            process(s, process_params)
-            s["completed"].append(process.__name__)
-
-    except Exception as exc:
-        # reproduce histoqc error string
-        _oneline_doc_str = exc.__doc__.replace('\n', '')
-        err_str = f"{exc.__class__} {_oneline_doc_str} {exc}"
-
-        log_manager.logger.error(
-            f"{file_name} - Error analyzing file (skipping): \t {err_str}"
-        )
-        func_tb_obj = (file_name, str(exc.__traceback__.tb_next.tb_frame.f_code))
-        exc.__histoqc_err__ = (file_name, err_str, func_tb_obj)
-        raise exc
-
-    else:
-        # TODO:
-        #   the histoqc workaround below is due an implementation detail in BaseImage:
-        #   BaseImage keeps an OpenSlide instance stored under os_handle and leaks a
-        #   file handle. This will need fixing in BaseImage.
-        #   -> best solution would be to make BaseImage a contextmanager and close
-        #      and cleanup the OpenSlide handle on __exit__
-        s["os_handle"] = None  # need to get rid of handle because it can't be pickled
-        return s
-
-
-def worker_success(s, result_file):
-    """success callback"""
-    if s is None:
-        return
-
-    with result_file:
-        if result_file.is_empty_file():
-            result_file.write_headers(s)
-
-        _fields = '\t'.join(str(s[field]) for field in s['output'])
-        _warnings = '|'.join(s['warnings'])
-        result_file.write_line("\t".join([*_fields, _warnings]))
-
-
-def worker_error(e, failed):
-    """error callback"""
-    if hasattr(e, '__histoqc_err__'):
-        file_name, err_str, _ = e.__histoqc_err__
-    else:
-        # error outside of pipeline
-        # todo: it would be better to handle all of this as a decorator
-        #   around the worker function
-        file_name, err_str = "N/A", "error outside of pipeline"
-    failed.append((file_name, err_str))
 
 
 def main(argv=None):
@@ -220,7 +144,7 @@ def main(argv=None):
     _shared_state = {
         'process_queue': process_queue,
         'config': config,
-        'results_file': results,
+        'outdir': args.outdir,
         'log_manager': lm,
         'lock': mpm.Lock(),
         'shared_dict': mpm.dict(),
@@ -230,44 +154,50 @@ def main(argv=None):
     failed = mpm.list()
     setup_plotting_backend(lm.logger)
 
-    if args.nprocesses > 1:
-        def _worker_setup(c):
-            setup_plotting_backend()
-            load_pipeline(config=c)
+    try:
+        if args.nprocesses > 1:
 
-        with multiprocessing.Pool(processes=args.nprocesses,
-                                  initializer=_worker_setup,
-                                  initargs=(config,)) as pool:
+            with lm.logger_thread():
+                print(args.nprocesses)
+                with multiprocessing.Pool(processes=args.nprocesses,
+                                          initializer=worker_setup,
+                                          initargs=(config,)) as pool:
+                    try:
+                        for idx, file_name in enumerate(files):
+                            _ = pool.apply_async(
+                                func=worker,
+                                args=(idx, file_name),
+                                kwds=_shared_state,
+                                callback=partial(worker_success, result_file=results),
+                                error_callback=partial(worker_error, failed=failed),
+                            )
+
+                    finally:
+                        pool.close()
+                        pool.join()
+
+        else:
             for idx, file_name in enumerate(files):
-                _ = pool.apply_async(
-                    func=worker,
-                    args=(idx, file_name),
-                    kwds=_shared_state,
-                    callback=worker_success,
-                    error_callback=partial(worker_error, failed),
-                )
+                try:
+                    _success = worker(idx, file_name, **_shared_state)
+                except Exception as exc:
+                    worker_error(exc, failed)
+                    continue
+                else:
+                    worker_success(_success, results)
 
-            pool.close()
-            pool.join()
+    except KeyboardInterrupt:
+        lm.logger.info("-----REQUESTED-ABORT-----\n")
 
     else:
-        for idx, file_name in enumerate(files):
-            try:
-                _success = worker(idx, file_name, **_shared_state)
-            except Exception as exc:
-                worker_error(exc, failed)
-                continue
-            else:
-                worker_success(_success, results)
+        lm.logger.info("----------Done-----------\n")
 
-    # --- processing finished -------------------------------------------------
+    finally:
+        lm.logger.info(f"There are {len(failed)} explicitly failed images (available also in error.log),"
+                       " warnings are listed in warnings column in output")
 
-    lm.logger.info("------------Done---------\n")
-    lm.logger.info("These images failed (available also in error.log),"
-                   " warnings are listed in warnings column in output:")
-
-    for file_name, error in failed:
-        lm.logger.info(f"{file_name}\t{error}")
+        for file_name, error in failed:
+            lm.logger.info(f"{file_name}\t{error}")
 
     if args.symlink is not None:
         origin = os.path.realpath(args.outdir)
