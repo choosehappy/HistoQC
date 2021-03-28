@@ -6,3 +6,5 @@ recursive-exclude . *secrets*
 
 # ini config files
 include histoqc/config/*.ini
+# include user interface
+graft histoqc/ui/UserInterface
