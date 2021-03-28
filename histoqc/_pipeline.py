@@ -129,10 +129,11 @@ class MultiProcessingLogManager:
         if self.is_main_process:
             return logging.getLogger(self._logger_name)
         else:
-            qh = QueueHandler(self._log_queue)
             root = logging.getLogger()
-            root.setLevel(logging.INFO)
-            root.addHandler(qh)
+            if not root.hasHandlers():
+                qh = QueueHandler(self._log_queue)
+                root.setLevel(logging.INFO)
+                root.addHandler(qh)
             return root
 
     @contextmanager
@@ -147,19 +148,21 @@ class MultiProcessingLogManager:
         self._log_thread_active = True
 
         def process_queue(q, ln):
+            main_logger = logging.getLogger(ln)
             while True:
                 log_record = q.get()
                 if log_record is None:
                     break
-                main_logger = logging.getLogger(ln)
                 main_logger.handle(log_record)
 
         lt = threading.Thread(target=process_queue, args=(self._log_queue, self._logger_name))
         lt.start()
-        yield
-        self._log_queue.put(None)
-        lt.join()
-        self._log_thread_active = False
+        try:
+            yield
+        finally:
+            self._log_queue.put(None)
+            lt.join()
+            self._log_thread_active = False
 
 
 def log_pipeline(config, log_manager):
