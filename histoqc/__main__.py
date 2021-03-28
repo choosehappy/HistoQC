@@ -2,14 +2,13 @@ import argparse
 import configparser
 import datetime
 import glob
+import logging
 import multiprocessing
 import os
-import shutil
 import sys
 import time
 from functools import partial
 
-from histoqc.BaseImage import BaseImage
 from histoqc._pipeline import BatchedResultFile
 from histoqc._pipeline import MultiProcessingLogManager
 from histoqc._pipeline import load_pipeline
@@ -92,7 +91,7 @@ def main(argv=None):
     # --- create output directory and move log --------------------------------
 
     os.makedirs(args.outdir, exist_ok=True)
-    move_logging_file_handler(lm.logger, args.outdir)
+    move_logging_file_handler(logging.getLogger(), args.outdir)
 
     if BatchedResultFile.results_in_path(args.outdir):
         if args.force:
@@ -102,7 +101,7 @@ def main(argv=None):
 
     results = BatchedResultFile(args.outdir,
                                 manager=mpm,
-                                batch_size=args.batch_size,
+                                batch_size=args.batch,
                                 force_overwrite=args.force)
 
     # --- document configuration in results -----------------------------------
@@ -110,7 +109,7 @@ def main(argv=None):
     results.add_header(f"start_time:\t{datetime.datetime.now()}")
     results.add_header(f"pipeline: {' '.join(_steps)}")
     results.add_header(f"outdir:\t{os.path.realpath(args.outdir)}")
-    results.add_header(f"config_file:\t{os.path.realpath(args.config)}")
+    results.add_header(f"config_file:\t{os.path.realpath(args.config) if args.config is not None else 'default'}")
     results.add_header(f"command_line_args:\t{' '.join(argv)}")
 
     # --- receive input file list (there are 3 options) -----------------------
