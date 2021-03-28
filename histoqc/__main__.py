@@ -130,8 +130,8 @@ def main(argv=None):
                         help="break results file into subsets of this size",
                         type=int,
                         default=None)
-    parser.add_argument('-n', '--nthreads',
-                        help="number of threads to launch",
+    parser.add_argument('-n', '--nprocesses',
+                        help="number of processes to launch",
                         type=int,
                         default=1)
     parser.add_argument('-s', '--symlinkoff',
@@ -224,12 +224,12 @@ def main(argv=None):
     failed = mpm.list()
     setup_plotting_backend(lm.logger)
 
-    if args.nthreads > 1:
+    if args.nprocesses > 1:
         def _worker_setup(c):
             setup_plotting_backend()
             load_pipeline(config=c)
 
-        with multiprocessing.Pool(processes=args.nthreads,
+        with multiprocessing.Pool(processes=args.nprocesses,
                                   initializer=_worker_setup,
                                   initargs=(config,)) as pool:
             for idx, file_name in enumerate(files):
