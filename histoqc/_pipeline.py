@@ -254,7 +254,7 @@ class BatchedResultFile:
         self._stack = ExitStack()
         self._stack.callback(self.increment_counter)
         self._stack.enter_context(self._rlock)
-        self._f = nullcontext(self._stack.enter_context(self._file))
+        self._f = nullcontext(self._stack.enter_context(self._file()))
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -279,7 +279,7 @@ class BatchedResultFile:
             else:
                 mode = "a"
         self._first = False
-        return open(fn, mode=mode)
+        return open(pth, mode=mode)
 
     def add_header(self, header):
         """add a new header to the results file
@@ -299,7 +299,7 @@ class BatchedResultFile:
           ... technically the name is incorrect, but in this use case
               pos 0 is equivalent to an empty file
         """
-        with self._rlock, self._file as f:
+        with self._rlock, self._file() as f:
             return f.tell() == 0
 
     def write_headers(self, *args):
@@ -331,7 +331,7 @@ class BatchedResultFile:
         end : str
             defaults to newline
         """
-        with self._rlock, self._file as f:
+        with self._rlock, self._file() as f:
             f.write(text)
             if end:
                 f.write(end)
