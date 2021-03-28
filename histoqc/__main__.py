@@ -2,7 +2,6 @@ import argparse
 import configparser
 import datetime
 import glob
-import logging
 import multiprocessing
 import os
 import shutil
@@ -134,9 +133,9 @@ def main(argv=None):
                         help="number of processes to launch",
                         type=int,
                         default=1)
-    parser.add_argument('-s', '--symlinkoff',
-                        help="turn OFF symlink creation",
-                        action="store_true")
+    parser.add_argument('--symlink', metavar="TARGET_DIR",
+                        help="create symlink to outdir in TARGET_DIR",
+                        default=None)
     args = parser.parse_args(argv)
 
     # --- multiprocessing and logging setup -----------------------------------
@@ -158,6 +157,13 @@ def main(argv=None):
 
     _steps = log_pipeline(config, log_manager=lm)
     process_queue = load_pipeline(config)
+
+    # --- check symlink target ------------------------------------------------
+
+    if args.symlink is not None:
+        if not os.path.isdir(args.symlink):
+            lm.logger.error("error: --symlink {args.symlink} is not a directory")
+            return -1
 
     # --- create output directory and move log --------------------------------
 
@@ -263,18 +269,20 @@ def main(argv=None):
     for file_name, error in failed:
         lm.logger.info(f"{file_name}\t{error}")
 
-    if not args.symlinkoff:
-        # FIXME: this needs to be refactored to work...
+    if args.symlink is not None:
         origin = os.path.realpath(args.outdir)
-        target = os.path.normpath(os.path.dirname(os.path.realpath(__file__)) + "/UserInterface/Data/" +
-                                  os.path.basename(os.path.normpath(args.outdir)))
+        target = os.path.join(
+            os.path.realpath(args.symlink),
+            os.path.basename(origin)
+        )
         try:
             os.symlink(origin, target, target_is_directory=True)
-            logging.info("Symlink to output directory created")
-
+            lm.logger.info("Symlink to output directory created")
         except (FileExistsError, FileNotFoundError):
-            logging.error(f"Error creating symlink to output in UserInterface/Data,"
-                          " need to perform this manually for output to work! ln -s {origin} {target}")
+            lm.logger.error(
+                f"Error creating symlink to output in '{args.symlink}', "
+                f"Please create manually: ln -s {origin} {target}"
+            )
 
 
 if __name__ == "__main__":
