@@ -1,6 +1,9 @@
 __pycache__/
 *.py[cod]
 
+.idea
+.DS_Store
+
 build/
 develop-eggs/
 dist/
