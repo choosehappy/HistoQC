@@ -9,13 +9,13 @@ import tempfile
 from functools import partial
 from http.server import SimpleHTTPRequestHandler
 from http.server import ThreadingHTTPServer
-from pathlib import Path
-from types import MethodType
 
 try:
     from importlib.resources import files as _files
 except ImportError:
     from importlib_resources import files as _files
+
+from histoqc.data import package_resource_copytree
 
 
 class HistoQCHTTPRequestHandler(SimpleHTTPRequestHandler):
@@ -43,35 +43,6 @@ class HistoQCHTTPRequestHandler(SimpleHTTPRequestHandler):
         return path
 
 
-def write_user_interface(out_dir):
-    """helper for copying the histoqc ui to a directory"""
-
-    def _traverse_copy(traversable, root):
-        # copy an importlib.resources Traversable structure
-        # to a pathlib.Path directory recursively
-        assert root.is_dir()
-
-        if isinstance(traversable.name, MethodType):
-            # workaround for https://bugs.python.org/issue43643
-            name = traversable.name()
-        else:
-            name = traversable.name
-
-        pth = root.joinpath(name)
-
-        if traversable.is_file():
-            pth.write_bytes(traversable.read_bytes())
-
-        elif traversable.is_dir():
-            pth.mkdir(exist_ok=True)
-            for t in traversable.iterdir():
-                _traverse_copy(t, pth)
-
-    ui_traversable = _files('histoqc.ui') / "UserInterface"
-    out_path = Path(out_dir)
-    _traverse_copy(ui_traversable, out_path)
-
-
 def run_server(data_directory, *, host="0.0.0.0", port=8000):
     """run the histoqc user interface"""
 
@@ -95,7 +66,7 @@ def run_server(data_directory, *, host="0.0.0.0", port=8000):
     # --- prepare ui structure ----------------------------------------
 
     with tempfile.TemporaryDirectory() as tmp_dir:
-        write_user_interface(tmp_dir)
+        package_resource_copytree('histoqc.ui', 'UserInterface', tmp_dir)
         ui_directory = os.path.join(tmp_dir, "UserInterface")
 
         _handler = partial(HistoQCHTTPRequestHandler,
