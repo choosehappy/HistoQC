@@ -53,10 +53,6 @@ def worker(idx, file_name, *,
         log_manager.logger.error(
             f"{file_name} - Error analyzing file (skipping): \t {err_str}"
         )
-        import traceback
-        print("\n\n\n\n")
-        print(traceback.format_exc())
-        print("\n\n\n\n")
         if exc.__traceback__.tb_next is not None:
             func_tb_obj = (file_name, str(exc.__traceback__.tb_next.tb_frame.f_code))
         else:
