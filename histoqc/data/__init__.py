@@ -74,7 +74,7 @@ class _ManagedPkgData(ContextDecorator):
         # with the histoqc package data examples if available
         if 'templates' in section:
             _templates = []
-            for template in map(str.strip, section['templates']):
+            for template in map(str.strip, section['templates'].split('\n')):
                 f_template = os.path.join(os.getcwd(), template)
 
                 if not os.path.isfile(f_template):
@@ -84,7 +84,7 @@ class _ManagedPkgData(ContextDecorator):
                         f_template = f_template_pkg_data
 
                 _templates.append(f_template)
-            section['templates'] = _templates
+            section['templates'] = '\n'.join(_templates)
 
     def _inject_ClassificationModule_byExampleWithFeatures(self, section):
         # replace template files in a byExampleWithFeatures config section
