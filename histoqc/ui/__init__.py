@@ -43,8 +43,9 @@ class HistoQCHTTPRequestHandler(SimpleHTTPRequestHandler):
         return path
 
 
-def run_server(data_directory, *, host="0.0.0.0", port=8000):
-    """run the histoqc user interface"""
+@contextlib.contextmanager
+def _create_server(data_directory, *, host="0.0.0.0", port=8000):
+    """server contextmanager (to simplify testing)"""
 
     # --- prepare server classes --------------------------------------
 
@@ -76,16 +77,26 @@ def run_server(data_directory, *, host="0.0.0.0", port=8000):
         # --- start serving -------------------------------------------
 
         with _DualStackServer(addr, _handler) as httpd:
+            yield httpd
 
-            host, port = httpd.socket.getsockname()[:2]
-            url_host = f'[{host}]' if ':' in host else host
-            print(f"HistoQC data directory: '{data_directory}'")
-            print(
-                f"Serving HistoQC UI on {host} port {port} "
-                f"(http://{url_host}:{port}/) ..."
-            )
-            try:
-                httpd.serve_forever()
-            except KeyboardInterrupt:
-                print("\nKeyboard interrupt received, exiting.")
-                return 0
+
+def _serve_httpd(httpd):
+    """serve helper"""
+    host, port = httpd.socket.getsockname()[:2]
+    url_host = f'[{host}]' if ':' in host else host
+    print(
+        f"Serving HistoQC UI on {host} port {port} "
+        f"(http://{url_host}:{port}/) ..."
+    )
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:  # pragma: no cover
+        print("\nKeyboard interrupt received, exiting.")
+        return 0
+
+
+def run_server(data_directory, *, host="0.0.0.0", port=8000):
+    """run the histoqc user interface"""
+    with _create_server(data_directory, host=host, port=port) as httpd:
+        print(f"HistoQC data directory: '{data_directory}'")
+        _serve_httpd(httpd)
