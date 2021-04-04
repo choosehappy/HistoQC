@@ -134,6 +134,9 @@ class MultiProcessingLogManager:
                 qh = QueueHandler(self._log_queue)
                 root.setLevel(logging.INFO)
                 root.addHandler(qh)
+                # note: this should be revisited and set by the main process
+                warnings.filterwarnings('ignore')
+                logging.captureWarnings(True)
             return root
 
     @contextmanager
