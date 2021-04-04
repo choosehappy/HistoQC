@@ -21,8 +21,10 @@ from histoqc._worker import worker_setup
 from histoqc._worker import worker_success
 from histoqc._worker import worker_error
 from histoqc.config import read_config_template
+from histoqc.data import managed_pkg_data
 
 
+@managed_pkg_data
 def main(argv=None):
     """main entry point for histoqc pipelines"""
     if argv is None:
@@ -74,7 +76,11 @@ def main(argv=None):
         lm.logger.warning(f"Configuration file not set (--config), using default")
         config.read_string(read_config_template())
     else:
-        config.read_file(args.config)
+        config.read(args.config)
+
+    # --- provide models, pen and templates as fallbacks from package data ----
+
+    managed_pkg_data.inject_pkg_data_fallback(config)
 
     # --- load the process queue (error early) --------------------------------
 
