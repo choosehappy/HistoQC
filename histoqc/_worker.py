@@ -81,9 +81,9 @@ def worker_success(s, result_file):
         if result_file.is_empty_file():
             result_file.write_headers(s)
 
-        _fields = '\t'.join(str(s[field]) for field in s['output'])
+        _fields = '\t'.join([str(s[field]) for field in s['output']])
         _warnings = '|'.join(s['warnings'])
-        result_file.write_line("\t".join([*_fields, _warnings]))
+        result_file.write_line("\t".join([_fields, _warnings]))
 
 
 def worker_error(e, failed):
