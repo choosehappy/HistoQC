@@ -10,6 +10,12 @@ ui_files = [
     for f in glob.iglob("histoqc/ui/UserInterface/**/*", recursive=True)
     if os.path.isfile(f)
 ]
+data_files = [
+    os.path.relpath(f, "histoqc/data/")
+    for folder in ['models', 'pen', 'templates']
+    for f in glob.iglob(f"histoqc/data/{folder}/**/*", recursive=True)
+    if os.path.isfile(f)
+]
 
 setup(
     use_scm_version={
@@ -19,6 +25,8 @@ setup(
     },
     setup_requires=['setuptools_scm'],
     package_data={
-        'histoqc.ui': ui_files
+        'histoqc.config': ['*.ini'],
+        'histoqc.data': data_files,
+        'histoqc.ui': ui_files,
     }
 )

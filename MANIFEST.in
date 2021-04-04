@@ -4,7 +4,8 @@ exclude .git*
 exclude .*.yml
 recursive-exclude . *secrets*
 
-# ini config files
-include histoqc/config/*.ini
-# include user interface
-graft histoqc/ui/UserInterface
+# remove version controlled files
+exclude AnnotationModule/*
+exclude libopenslide-0.dll
+exclude environment*.yml
+exclude Dockerfile

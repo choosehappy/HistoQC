@@ -21,7 +21,6 @@ name: histoqc
 channels:
   - sdvillal  # newer/better versions of everything that matters
   - conda-forge
-  - defaults
 
 dependencies:
   - python >=3.8
