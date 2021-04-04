@@ -26,7 +26,7 @@ def list_config_templates():
     for filename in _resources.contents('histoqc.config'):
         m = CONFIG_TEMPLATE_RE.match(filename)
         if m:
-            templates[m.group('name')] = filename
+            templates[m.group('name') or 'default'] = filename
     return templates
 
 

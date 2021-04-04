@@ -18,6 +18,7 @@ MANIFEST
 
 .venv
 venv/
+htmlcov/
 
 histoqc/_version.py
 environment.yml
