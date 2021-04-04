@@ -9,3 +9,18 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools_scm]
 write_to = "histoqc/_version.py"
 version_scheme = "post-release"
+
+[tool.pytest.ini_options]
+addopts = "-v"
+
+[tool.coverage.run]
+source = ["histoqc"]
+
+[tool.coverage.report]
+exclude_lines = [
+  "pragma: no cover",
+  "raise NotImplementedError",
+  "if TYPE_CHECKING:",
+  "if MYPY:",
+  "except ImportError:",
+]

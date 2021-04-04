@@ -14,7 +14,9 @@ wheels/
 *.egg-info/
 *.egg
 *.whl
+.coverage*
 MANIFEST
+histoqc/tests/data/*
 
 .venv
 venv/
