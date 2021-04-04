@@ -1,5 +1,6 @@
 import os
 import shutil
+import textwrap
 
 import pytest
 
@@ -43,6 +44,47 @@ def multi_svs_dir(tmp_path_factory, svs_small):
     yield pth
 
 
+@pytest.fixture(scope='function')
+def minimal_config(tmp_path_factory):
+    pth = tmp_path_factory.mktemp('config').joinpath('min_config.ini')
+    pth.write_text(
+        textwrap.dedent("""\
+            [pipeline]
+            steps= BasicModule.getBasicStats
+                BasicModule.finalComputations
+
+
+            [BaseImage.BaseImage]
+            image_work_size = 1.25x
+
+            #three options: relative2mask, absolute, relative2image
+            mask_statistics = relative2mask
+
+            confirm_base_mag: False
+
+
+            [BasicModule.getBasicStats]
+            image_work_size = 1.25x
+            """)
+    )
+    yield pth
+
+
 def test_cli_multiprocess(multi_svs_dir, tmp_path):
     assert main(['-n', '2', '-p', os.fspath(multi_svs_dir), '-o', os.fspath(tmp_path), '*.svs']) == 0
     assert _filenames_in(tmp_path) == _filenames_in(multi_svs_dir).union(['error.log', 'results.tsv'])
+
+
+def test_cli_multiprocess_batching(multi_svs_dir, tmp_path, minimal_config, tmp_path_factory):
+    spth = tmp_path_factory.mktemp('spth')
+
+    assert main([
+        '-n', '2',
+        '-b', '1',
+        '-c', os.fspath(minimal_config),
+        '-p', os.fspath(multi_svs_dir),
+        '-o', os.fspath(tmp_path),
+        '--symlink', os.fspath(spth),
+        '*.svs'
+    ]) == 0
+    assert _filenames_in(tmp_path) == _filenames_in(multi_svs_dir).union(['error.log', 'results_0.tsv', 'results_1.tsv'])
