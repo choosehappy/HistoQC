@@ -79,6 +79,7 @@ def run_server(data_directory, *, host="0.0.0.0", port=8000):
 
             host, port = httpd.socket.getsockname()[:2]
             url_host = f'[{host}]' if ':' in host else host
+            print(f"HistoQC data directory: '{data_directory}'")
             print(
                 f"Serving HistoQC UI on {host} port {port} "
                 f"(http://{url_host}:{port}/) ..."
