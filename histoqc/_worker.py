@@ -54,9 +54,9 @@ def worker(idx, file_name, *,
             f"{file_name} - Error analyzing file (skipping): \t {err_str}"
         )
         if exc.__traceback__.tb_next is not None:
-            func_tb_obj = (file_name, str(exc.__traceback__.tb_next.tb_frame.f_code))
+            func_tb_obj = str(exc.__traceback__.tb_next.tb_frame.f_code)
         else:
-            func_tb_obj = (file_name, str(exc.__traceback__))
+            func_tb_obj = str(exc.__traceback__)
 
         exc.__histoqc_err__ = (file_name, err_str, func_tb_obj)
         raise exc
@@ -89,10 +89,10 @@ def worker_success(s, result_file):
 def worker_error(e, failed):
     """error callback"""
     if hasattr(e, '__histoqc_err__'):
-        file_name, err_str, _ = e.__histoqc_err__
+        file_name, err_str, tb = e.__histoqc_err__
     else:
         # error outside of pipeline
         # todo: it would be better to handle all of this as a decorator
         #   around the worker function
-        file_name, err_str = "N/A", f"error outside of pipeline {e!r}"
-    failed.append((file_name, err_str))
+        file_name, err_str, tb = "N/A", f"error outside of pipeline {e!r}", None
+    failed.append((file_name, err_str, tb))

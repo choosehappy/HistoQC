@@ -201,8 +201,8 @@ def main(argv=None):
         lm.logger.info(f"There are {len(failed)} explicitly failed images (available also in error.log),"
                        " warnings are listed in warnings column in output")
 
-        for file_name, error in failed:
-            lm.logger.info(f"{file_name}\t{error}")
+        for file_name, error, tb in failed:
+            lm.logger.info(f"{file_name}\t{error}\n{tb}")
 
     if args.symlink is not None:
         origin = os.path.realpath(args.outdir)
