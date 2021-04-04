@@ -218,7 +218,7 @@ def main(argv=None):
                 f"Error creating symlink to output in '{args.symlink}', "
                 f"Please create manually: ln -s {origin} {target}"
             )
-
+    return 0
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
