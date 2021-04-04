@@ -72,9 +72,9 @@ def main(argv=None):
     # --- parse the pipeline configuration ------------------------------------
 
     config = configparser.ConfigParser()
-    if args.config is None:
+    if not args.config:
         lm.logger.warning(f"Configuration file not set (--config), using default")
-        config.read_string(read_config_template())
+        config.read_string(read_config_template('default'))
     else:
         config.read(args.config)
 
