@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 import sys
 
 from ast import literal_eval as make_tuple
@@ -172,7 +173,7 @@ def byExampleWithFeatures(s, params):
             model_labels = np.empty([0, 1])
 
             for ex in params["examples"].splitlines():
-                ex = ex.split(":")
+                ex = re.split(r'(?<!\W[A-Za-z]):(?!\\)', ex)  # workaround for windows: don't split on i.e. C:\
                 img = io.imread(ex[0])
                 eximg = compute_features(img, params)
                 eximg = eximg.reshape(-1, eximg.shape[2])
