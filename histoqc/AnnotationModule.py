@@ -1,5 +1,5 @@
 import logging
-from BaseImage import printMaskHelper
+from histoqc.BaseImage import printMaskHelper
 from skimage import io, img_as_ubyte
 from skimage.draw import polygon
 import os

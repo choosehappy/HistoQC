@@ -1,0 +1,11 @@
+# default excludes
+prune .github
+exclude .git*
+exclude .*.yml
+recursive-exclude . *secrets*
+
+# remove version controlled files
+exclude AnnotationModule/*
+exclude libopenslide-0.dll
+exclude environment*.yml
+exclude Dockerfile
