@@ -2,7 +2,7 @@ import logging
 import os
 import numpy as np
 from BaseImage import printMaskHelper
-from skimage import io, morphology, img_as_ubyte
+from skimage import io, morphology, img_as_ubyte, measure
 
 from scipy import ndimage as ndi
 
@@ -22,7 +22,25 @@ def removeSmallObjects(s, params):
     prev_mask = s["img_mask_use"]
     s["img_mask_use"] = img_reduced
 
-    s.addToPrintList("percent_small_tissue_removed",
+
+    rps = measure.regionprops(morphology.label(img_small))
+    if rps:
+        areas = np.asarray([rp.area for rp in rps])
+        nobj = len(rps)
+        area_max = areas.max()
+        area_mean = areas.mean()
+    else:
+        nobj = area_max = area_mean = 0
+
+    s.addToPrintList("small_tissue_removed_num_regions", str(nobj))
+    s.addToPrintList("small_tissue_removed_mean_area", str(area_mean))
+    s.addToPrintList("small_tissue_removed_max_area", str(area_max))
+
+
+
+
+
+    s.addToPrintList("small_tissue_removed_percent",
                      printMaskHelper(params.get("mask_statistics", s["mask_statistics"]), prev_mask, s["img_mask_use"]))
 
 
@@ -69,7 +87,22 @@ def removeFatlikeTissue(s, params):
     prev_mask = s["img_mask_use"]
     s["img_mask_use"] = prev_mask & ~mask_fat
 
-    s.addToPrintList("percent_fatlike_tissue_removed",
+    rps = measure.regionprops(morphology.label(mask_fat))
+    if rps:
+        areas = np.asarray([rp.area for rp in rps])
+        nobj = len(rps)
+        area_max = areas.max()
+        area_mean = areas.mean()
+    else:
+        nobj = area_max = area_mean = 0
+
+    s.addToPrintList("fatlike_tissue_removed_num_regions", str(nobj))
+    s.addToPrintList("fatlike_tissue_removed_mean_area", str(area_mean))
+    s.addToPrintList("fatlike_tissue_removed_max_area", str(area_max))
+
+
+
+    s.addToPrintList("fatlike_tissue_removed_percent",
                      printMaskHelper(params.get("mask_statistics", s["mask_statistics"]), prev_mask, s["img_mask_use"]))
 
     if len(s["img_mask_use"].nonzero()[0]) == 0:  # add warning in case the final tissue is empty
@@ -85,13 +118,27 @@ def fillSmallHoles(s, params):
     img_reduced = morphology.remove_small_holes(s["img_mask_use"], area_threshold=min_size)
     img_small = img_reduced & np.invert(s["img_mask_use"])
 
+
     io.imsave(s["outdir"] + os.sep + s["filename"] + "_small_fill.png", img_as_ubyte(img_small))
     s["img_mask_small_removed"] = (img_small * 255) > 0
 
     prev_mask = s["img_mask_use"]
     s["img_mask_use"] = img_reduced
 
-    s.addToPrintList("percent_small_tissue_filled",
+    rps = measure.regionprops(morphology.label(img_small))
+    if rps:
+        areas = np.asarray([rp.area for rp in rps])
+        nobj = len(rps)
+        area_max = areas.max()
+        area_mean = areas.mean()
+    else:
+        nobj = area_max = area_mean = 0
+
+    s.addToPrintList("small_tissue_filled_num_regions", str(nobj))
+    s.addToPrintList("small_tissue_filled_mean_area", str(area_mean))
+    s.addToPrintList("small_tissue_filled_max_area", str(area_max))
+
+    s.addToPrintList("small_tissue_filled_percent",
                      printMaskHelper(params.get("mask_statistics", s["mask_statistics"]), prev_mask, s["img_mask_use"]))
 
     if len(s["img_mask_use"].nonzero()[0]) == 0:  # add warning in case the final tissue is empty

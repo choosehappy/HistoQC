@@ -92,6 +92,7 @@ var UMAP_SPREAD = 1;
 var DEFAULT_IMAGE_EXTENSIONS = [
     "_thumb.png",
     "_fuse.png",
+    "_equalized_thumb.png",
     "_areathresh.png",
     "_blurry.png",
     "_bubble.png",

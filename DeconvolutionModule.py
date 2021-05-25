@@ -51,6 +51,10 @@ def seperateStains(s, params):
     for c in range(0, 3):
         dc = dimg[:, :, c]
 
+        clip_max_val = np.quantile(dc.flatten(), .99)
+        dc = np.clip(dc, a_min=0, a_max=clip_max_val)
+
+
         if use_mask:
             dc_sub = dc[mask]
             dc_min = dc_sub.min()

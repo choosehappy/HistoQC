@@ -2,9 +2,10 @@ import logging
 import os
 import numpy as np
 import inspect
+import zlib, dill
 from distutils.util import strtobool
 
-#os.environ['PATH'] = 'C:\\research\\openslide\\bin' + ';' + os.environ['PATH'] #can either specify openslide bin path in PATH, or add it dynamically
+os.environ['PATH'] = 'C:\\research\\openslide\\bin' + ';' + os.environ['PATH'] #can either specify openslide bin path in PATH, or add it dynamically
 import openslide
 
 
@@ -47,6 +48,8 @@ class BaseImage(dict):
     def __init__(self, fname, fname_outdir, params):
         dict.__init__(self)
 
+        self.in_memory_compression = strtobool(params.get("in_memory_compression", "False"))
+
         self["warnings"] = ['']  # this needs to be first key in case anything else wants to add to it
         self["output"] = []
 
@@ -74,6 +77,18 @@ class BaseImage(dict):
         self["img_mask_force"] = []
 
         self["completed"] = []
+
+    def __getitem__(self, key):
+        value = super(BaseImage, self).__getitem__(key)
+        if hasattr(self,"in_memory_compression") and  self.in_memory_compression and key.startswith("img"):
+            value = dill.loads(zlib.decompress(value))
+        return value
+
+    def __setitem__(self, key, value):
+        if hasattr(self,"in_memory_compression") and self.in_memory_compression and key.startswith("img"):
+            value = zlib.compress(dill.dumps(value), level=5)
+
+        return super(BaseImage, self).__setitem__(key,value)
 
     def addToPrintList(self, name, val):
         self[name] = val
