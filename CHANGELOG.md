@@ -49,3 +49,8 @@ As always, please note that the provided configuration files are examples (and o
 ## Version 2.0
 
 Bumped python version to >3.7 and scikit-image version to > 0.18 which breaks previous compatibility
+
+## Pre-2.0 
+
+2018-07-18: Added the functionality that pixel level metrics (e.g., number of blurry pixels) can be reported as aboslute numbers, relative to the mask size, or relative to the previous mask area. see [issue #115](https://github.com/choosehappy/HistoQC/issues/115)
+
