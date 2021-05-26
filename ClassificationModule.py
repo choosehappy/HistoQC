@@ -151,6 +151,7 @@ def byExampleWithFeatures(s, params):
     logging.info(f"{s['filename']} - \tClassificationModule.byExample:\t{name}")
 
     thresh = float(params.get("threshold", .5))
+    nsamples_per_example = float(params.get("nsamples_per_example", -1))
 
     examples = params.get("examples", "")
     if examples == "":
@@ -176,9 +177,17 @@ def byExampleWithFeatures(s, params):
                 img = io.imread(ex[0])
                 eximg = compute_features(img, params)
                 eximg = eximg.reshape(-1, eximg.shape[2])
-                model_vals.append(eximg)
 
                 mask = io.imread(ex[1], as_gray=True).reshape(-1, 1)
+
+                if nsamples_per_example != -1: #sub sambling required
+                    nitems = nsamples_per_example if nsamples_per_example > 1 else int(mask.shape[0]*nsamples_per_example)
+                    idxkeep = np.random.choice(mask.shape[0], size=int(nitems))
+                    eximg = eximg[idxkeep, :]
+                    mask = mask[idxkeep]
+
+
+                model_vals.append(eximg)
                 model_labels = np.vstack((model_labels, mask))
 
             # do stuff here with model_vals
