@@ -2,7 +2,7 @@ FROM ubuntu:20.10
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update \
-    && apt-get install -y git python3-pip python3.6 \
+    && apt-get install -y git python3-pip python3.8 \
     && apt-get install -y openslide-tools
 
 # uncomment:
@@ -20,6 +20,8 @@ RUN apt-get update \
     #ENV LANG pl_PL.UTF-8
     #ENV LANGUAGE pl_PL
     #ENV LC_ALL pl_PL.UTF-8
+
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 0
 
 RUN cd /opt \
     && git clone https://github.com/choosehappy/HistoQC.git \
