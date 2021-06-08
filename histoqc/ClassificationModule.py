@@ -1,12 +1,13 @@
 import logging
 import os
+import re
 import sys
 
 from ast import literal_eval as make_tuple
 
 from distutils.util import strtobool
 
-from BaseImage import printMaskHelper
+from histoqc.BaseImage import printMaskHelper
 from skimage import io, img_as_ubyte
 from skimage.filters import gabor_kernel, frangi, gaussian, median, laplace
 from skimage.color import rgb2gray
@@ -173,7 +174,7 @@ def byExampleWithFeatures(s, params):
             model_labels = np.empty([0, 1])
 
             for ex in params["examples"].splitlines():
-                ex = ex.split(":")
+                ex = re.split(r'(?<!\W[A-Za-z]):(?!\\)', ex)  # workaround for windows: don't split on i.e. C:\
                 img = io.imread(ex[0])
                 eximg = compute_features(img, params)
                 eximg = eximg.reshape(-1, eximg.shape[2])

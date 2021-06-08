@@ -1,7 +1,7 @@
 import logging
 import os
 import numpy as np
-from BaseImage import printMaskHelper
+from histoqc.BaseImage import printMaskHelper
 from skimage import io, color, img_as_ubyte
 from distutils.util import strtobool
 from skimage.filters import threshold_otsu, rank

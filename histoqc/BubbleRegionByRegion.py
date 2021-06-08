@@ -5,7 +5,7 @@ import sys
 from ast import literal_eval as make_tuple
 
 from distutils.util import strtobool
-from BaseImage import printMaskHelper
+from histoqc.BaseImage import printMaskHelper
 
 import scipy.signal
 
