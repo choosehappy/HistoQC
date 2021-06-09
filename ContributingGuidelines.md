@@ -62,7 +62,7 @@ Please be aware that there are enhancements planned already - you should vote or
 
 ### Working together
 
-HistoQC is being developed at Case Westen Reserve University. 
+HistoQC is being developed at Case Western Reserve University. 
 Ways to contribute (other than forking this repository) include [joining Andrew's group](http://ccipd.case.edu), as well as collaborating on research projects and methods that can be integrated back into HistoQC for everyone to use.
 
 Contact Andrew at andrew.janowczyk@case.edu if you are interested in further discussions!

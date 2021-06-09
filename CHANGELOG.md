@@ -1,5 +1,20 @@
 ﻿# Changelog
 
+## Version 3.0beta
+
+HistoQC has been nicely packaged thanks to ap--!
+
+As a result a lot of quality of live improvements have now been implemented.
+
+This includes:
+1) installable module
+2) httpd server for easier ui hosting and removing the need for moving the data to the UI directory
+3) Easier integration into development and testing environments
+4) Integration of unit tests via pytest
+
+Please see updated Readme.md for usage instructions. Much more painless, I promise!
+
+
 ## Version 2.1
 
 A number of additional features and improvements have been added to this version, helping to support the quality control of brightfield immunohistochemical staining (in particular Hematoxylin and DAB have been extensively tested):

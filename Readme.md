@@ -23,6 +23,7 @@ And the following additional python package:
 4. scipy
 5. skimage
 6. sklearn
+7. pytest (optional)
 
 
 You can likely install the python requirements using something like (note python 3+ requirement):
@@ -38,11 +39,13 @@ The most basic docker image can be created with the included (7-line) Dockerfile
 # Basic Usage
 ---
 
+Running the pipeline is now done via a python module:
+
 ```  
-C:\Research\code\qc>python qc_pipeline.py --help
-usage: qc_pipeline.py [-h] [-o OUTDIR] [-p BASEPATH] [-c CONFIG] [-f]
-                      [-b BATCH] [-n NTHREADS] [-s]
-                      [input_pattern [input_pattern ...]]
+C:\Research\code\HistoQC>python -m histoqc --help
+usage: __main__.py [-h] [-o OUTDIR] [-p BASEPATH] [-c CONFIG] [-f] [-b BATCH]
+                   [-n NPROCESSES] [--symlink TARGET_DIR]
+                   input_pattern [input_pattern ...]
 
 positional arguments:
   input_pattern         input filename pattern (try: *.svs or
@@ -52,7 +55,7 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
   -o OUTDIR, --outdir OUTDIR
-                        outputdir, default ./histoqc_output
+                        outputdir, default ./histoqc_output_YYMMDD-hhmmss
   -p BASEPATH, --basepath BASEPATH
                         base path to add to file names, helps when producing
                         data using existing output file as input
@@ -61,15 +64,72 @@ optional arguments:
   -f, --force           force overwriting of existing files
   -b BATCH, --batch BATCH
                         break results file into subsets of this size
-  -n NTHREADS, --nthreads NTHREADS
-                        number of threads to launch
-  -s, --symlinkoff      turn OFF symlink creation
+  -n NPROCESSES, --nprocesses NPROCESSES
+                        number of processes to launch
+  --symlink TARGET_DIR  create symlink to outdir in TARGET_DIR
 
 ```
 
+HistoQC now has a httpd server which allows for improved result viewing, it can be accessed like so:
 
-Prefered usage is to run from the HistoQC directory, .e.g,:  HistoQC> python qc_pipeline.py -c config.ini -n 4 remote_file_location/*.svs 
-(Note: filenames in config.ini are *relative* to directory of execution, unless absolute paths are used)
+```
+C:\Research\code\HistoQC>python -m histoqc.ui --help
+usage: __main__.py [-h] [--bind ADDRESS] [--port PORT] [--deploy OUT_DIR]
+                   [data_directory]
+
+positional arguments:
+  data_directory        Specify the data directory [default:current directory]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --bind ADDRESS, -b ADDRESS
+                        Specify alternate bind address [default: all
+                        interfaces]
+  --port PORT           Specify alternate port [default: 8000]
+  --deploy OUT_DIR      Write UI to OUT_DIR
+
+```
+
+Lastly, supplied configuration files can be viewed and modified like so:
+
+```
+
+C:\Research\code\HistoQC>python -m histoqc.config --help
+usage: __main__.py [-h] [--list] [--show NAME]
+
+show example config
+
+optional arguments:
+  -h, --help   show this help message and exit
+  --list       list available configs
+  --show NAME  show named example config
+  
+  
+```
+
+
+If you would like, you can install HistoQC into your system by using 
+
+```
+python setup.py install
+```
+
+Installed or simply git-cloned, a typical command line for running the tool thus looks like:
+
+```
+python -m histoqc -c config_v2.1.ini -n 3 "*.svs"
+```
+
+which will use 3 process to operate on all svs files using a configuration file.
+
+afterwards you can view the results in your web-browser simply by following the directions after typing:
+
+```
+python -m histoqc.ui
+```
+
+
+
 
 In case of errors, HistoQC can be run with the same output directory and will begin where it left off, identifying completed images by the presence of an existing directory.
                             
@@ -77,8 +137,28 @@ Afterwards, double click index.html to open front end user interface, select the
 
 This can also be done remotely, but is a bit more complex, see advanced usage.
 
+# Configuration modifications
+---
+
+HistoQC's performance is significantly improved if you select an appropriate configuration file as a starting point and modify it to suit your specific use case.
+
+If you would like to see a list of provided config files to start you off, you can type
+
+```
+python -m histoqc.config --list
+```
+
+and then you can select one and write it to file like so for your modification and tuning:
+
+```
+python -m histoqc.config --show ihc > myconfig_ihc.ini
+````
+
+
+
 # Advanced Usage
 ---
+
 
 See [wiki](https://github.com/choosehappy/HistoQC/wiki)
 
