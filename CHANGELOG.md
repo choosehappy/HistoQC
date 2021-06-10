@@ -2,7 +2,7 @@
 
 ## Version 3.0beta
 
-HistoQC has been nicely packaged thanks to ap--!
+HistoQC has been nicely packaged thanks to [Andreas Poehlmann](https://github.com/ap--) _(Machine Learning Research - Bayer AG)_ !
 
 As a result a lot of quality of live improvements have now been implemented.
 

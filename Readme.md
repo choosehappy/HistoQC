@@ -111,7 +111,11 @@ optional arguments:
 If you would like, you can install HistoQC into your system by using 
 
 ```
-python setup.py install
+git clone https://github.com/choosehappy/HistoQC.git
+cd HistoQC
+python -m pip install --upgrade pip  # (optional) upgrade pip to newest version
+pip install -r requirements.txt      # install pinned versions of packages
+pip install .
 ```
 
 Installed or simply git-cloned, a typical command line for running the tool thus looks like:

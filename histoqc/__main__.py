@@ -30,7 +30,7 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
 
-    parser = argparse.ArgumentParser(description='')
+    parser = argparse.ArgumentParser(prog="histoqc", description='Run HistoQC main quality control pipeline for digital pathology images')
     parser.add_argument('input_pattern',
                         help="input filename pattern (try: *.svs or target_path/*.svs ),"
                              " or tsv file containing list of files to analyze",

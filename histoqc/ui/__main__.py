@@ -11,7 +11,7 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
 
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(prog="histoqc.ui",description="launch server for result viewing in user interface")
     parser.add_argument('--bind', '-b', metavar='ADDRESS',
                         default='0.0.0.0',
                         help='Specify alternate bind address '
