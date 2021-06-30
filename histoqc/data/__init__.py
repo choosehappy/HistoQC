@@ -90,18 +90,26 @@ class _ManagedPkgData(ContextDecorator):
         # replace template files in a byExampleWithFeatures config section
         # with the histoqc package data templates if available
         if 'examples' in section:
-            _examples = []
-            for example in map(str.strip, section['examples'].split(":")):
-                f_example = os.path.join(os.getcwd(), example)
+            # mimic the code structure in ClassificationModule.byExampleWithFeatures,
+            # which expects example templates to be specified as pairs.
+            # each template in the pair is separated by a ':' and pairs are separated by a newline.
+            _lines = []
+            for ex in section["examples"].splitlines():
+                ex = re.split(r'(?<!\W[A-Za-z]):(?!\\)', ex)  # workaround for windows: don't split on i.e. C:backslash
+                _examples = []
+                for example in ex:
+                    f_example = os.path.join(os.getcwd(), example)
 
-                if not os.path.isfile(f_example):
-                    tmp = self.get_tmp_dir()
-                    f_example_pkg_data = os.path.join(tmp, example)
-                    if os.path.isfile(f_example_pkg_data):
-                        f_example = f_example_pkg_data
+                    if not os.path.isfile(f_example):
+                        tmp = self.get_tmp_dir()
+                        f_example_pkg_data = os.path.join(tmp, example)
+                        if os.path.isfile(f_example_pkg_data):
+                            f_example = f_example_pkg_data
 
-                _examples.append(f_example)
-            section['examples'] = ":".join(_examples)
+                    _examples.append(f_example)
+                _line = ":".join(_examples)
+                _lines.append(_line)
+            section['examples'] = "\n".join(_lines)
 
 
 managed_pkg_data = _ManagedPkgData()
