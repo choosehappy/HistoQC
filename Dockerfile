@@ -26,20 +26,7 @@ ENV PATH="/opt/HistoQC/venv/bin:$PATH"
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         libopenslide0 \
+        libtk8.6 \
     && rm -rf /var/lib/apt/lists/*
 
-# uncomment:
-    # 1 - this additional RUN only if you are facing issues with UTF8 when running your container
-    # 2 - all ENV variables in comment
-
-    #RUN apt-get update -y \
-    #    && apt-get install --reinstall -y locales \
-    #    # uncomment chosen locale to enable it's generation
-    #    && sed -i 's/# pl_PL.UTF-8 UTF-8/pl_PL.UTF-8 UTF-8/' /etc/locale.gen \
-    #    # generate chosen locale
-    #    && locale-gen pl_PL.UTF-8
-
-    ## set system-wide locale settings
-    #ENV LANG pl_PL.UTF-8
-    #ENV LANGUAGE pl_PL
-    #ENV LC_ALL pl_PL.UTF-8
+WORKDIR /data
