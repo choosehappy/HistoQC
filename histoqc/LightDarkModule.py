@@ -15,7 +15,7 @@ import matplotlib.pyplot as plt
 
 def getIntensityThresholdOtsu(s, params):
     logging.info(f"{s['filename']} - \tLightDarkModule.getIntensityThresholdOtsu")
-    name = "otsu"
+    name = params.get("name", "classTask")    
     local = strtobool(params.get("local", "False"))
     radius = float(params.get("radius", 15))
     selem = disk(radius)
@@ -25,7 +25,6 @@ def getIntensityThresholdOtsu(s, params):
 
     if local:
         thresh = rank.otsu(img, selem)
-        name += "local"
     else:
         thresh = threshold_otsu(img)
 
