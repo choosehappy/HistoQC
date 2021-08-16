@@ -135,21 +135,25 @@ class BaseImage(dict):
                 down_factor = base_mag / target_mag
                 level = osh.get_best_level_for_downsample(down_factor)
                 relative_down = down_factor / osh.level_downsamples[level]
-                win_size = 2048
-                win_size_down = int(win_size * 1 / relative_down)
-                dim_base = osh.level_dimensions[0]
-                output = []
-                for x in range(0, dim_base[0], round(win_size * osh.level_downsamples[level])):
-                    row_piece = []
-                    for y in range(0, dim_base[1], round(win_size * osh.level_downsamples[level])):
-                        aa = osh.read_region((x, y), level, (win_size, win_size))
-                        bb = aa.resize((win_size_down, win_size_down))
-                        row_piece.append(bb)
-                    row_piece = np.concatenate(row_piece, axis=0)[:, :, 0:3]
-                    output.append(row_piece)
+                if relative_down == 1.0: #there exists an open slide level exactly for this requested mag
+                    output = osh.read_region((0, 0), level, osh.level_dimensions[level])
+                    output = np.asarray(output)[:, :, 0:3]
+                else: #there does not exist an openslide level for this mag, need to create ony dynamically
+                    win_size = 2048
+                    win_size_down = int(win_size * 1 / relative_down)
+                    dim_base = osh.level_dimensions[0]
+                    output = []
+                    for x in range(0, dim_base[0], round(win_size * osh.level_downsamples[level])):
+                        row_piece = []
+                        for y in range(0, dim_base[1], round(win_size * osh.level_downsamples[level])):
+                            aa = osh.read_region((x, y), level, (win_size, win_size))
+                            bb = aa.resize((win_size_down, win_size_down))
+                            row_piece.append(bb)
+                        row_piece = np.concatenate(row_piece, axis=0)[:, :, 0:3]
+                        output.append(row_piece)
 
-                output = np.concatenate(output, axis=1)
-                output = output[0:round(dim_base[1] * 1 / down_factor), 0:round(dim_base[0] * 1 / down_factor), :]
+                    output = np.concatenate(output, axis=1)
+                    output = output[0:round(dim_base[1] * 1 / down_factor), 0:round(dim_base[0] * 1 / down_factor), :]
                 self[key] = output
             else:
                 logging.error(
