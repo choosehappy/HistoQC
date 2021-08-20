@@ -13,20 +13,20 @@ from distutils.util import strtobool
 import matplotlib.pyplot as plt
 
 
-def seperateStains(s, params):
-    logging.info(f"{s['filename']} - \tseperateStains")
+def separateStains(s, params):
+    logging.info(f"{s['filename']} - \tseparateStains")
     stain = params.get("stain", "")
     use_mask = strtobool(params.get("use_mask", "True"))
 
     if stain == "":
-        logging.error(f"{s['filename']} - stain not set in DeconvolutionModule.seperateStains")
+        logging.error(f"{s['filename']} - stain not set in DeconvolutionModule.separateStains")
         sys.exit(1)
         return
 
     stain_matrix = getattr(sys.modules[__name__], stain, "")
 
     if stain_matrix == "":
-        logging.error(f"{s['filename']} - Unknown stain matrix specified in DeconolutionModule.seperateStains")
+        logging.error(f"{s['filename']} - Unknown stain matrix specified in DeconolutionModule.separateStains")
         sys.exit(1)
         return
 
@@ -38,9 +38,9 @@ def seperateStains(s, params):
             s.addToPrintList(f"deconv_c{c}_mean", str(-100))
             io.imsave(s["outdir"] + os.sep + s["filename"] + f"_deconv_c{c}.png", img_as_ubyte(np.zeros(mask.shape)))
 
-        logging.warning(f"{s['filename']} - DeconvolutionModule.seperateStains: NO tissue "
+        logging.warning(f"{s['filename']} - DeconvolutionModule.separateStains: NO tissue "
                              f"remains detectable! Saving Black images")
-        s["warnings"].append(f"DeconvolutionModule.seperateStains: NO tissue "
+        s["warnings"].append(f"DeconvolutionModule.separateStains: NO tissue "
                              f"remains detectable! Saving Black images")
 
         return
