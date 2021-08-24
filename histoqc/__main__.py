@@ -95,7 +95,7 @@ def main(argv=None):
             return -1
 
     # --- create output directory and move log --------------------------------
-
+    args.outdir = os.path.expanduser(args.outdir)
     os.makedirs(args.outdir, exist_ok=True)
     move_logging_file_handler(logging.getLogger(), args.outdir)
 
@@ -119,7 +119,7 @@ def main(argv=None):
     results.add_header(f"command_line_args:\t{' '.join(argv)}")
 
     # --- receive input file list (there are 3 options) -----------------------
-
+    args.basepath = os.path.expanduser(args.basepath)
     if len(args.input_pattern) > 1:
         # more than one input_pattern is interpreted as a list of files
         # (basepath is ignored)
