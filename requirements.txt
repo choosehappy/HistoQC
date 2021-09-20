@@ -6,3 +6,4 @@ scipy==1.6.1
 matplotlib==3.3.4
 dill==0.3.3
 pytest
+importlib-resources
