@@ -34,5 +34,8 @@ def read_config_template(name=None):
     """return the contents of a configuration template"""
     templates = list_config_templates()
     if name not in templates:
-        raise KeyError(f'no configuration template found under key {name!r}')
+        if _resources.is_resource('histoqc.config', name):
+            return _resources.read_text('histoqc.config', name)
+        else:
+            raise KeyError(f'no configuration template found under key {name!r}')
     return _resources.read_text('histoqc.config', templates[name])
