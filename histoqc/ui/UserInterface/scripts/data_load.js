@@ -60,6 +60,12 @@ function load_raw_data () {
 			.text("Current dataset: " + cur_file.name + " | Size: " + 
 				ORIGINAL_DATASET.length + " slides");
 
+		if (ORIGINAL_DATASET.length >= 500) {
+			CALC_UMAP = false;
+		} else {
+			CALC_UMAP = true;
+		}
+
 		// update all necessary global variables -------------------------------
 		// build case list
 		ORIGINAL_CASE_LIST = ORIGINAL_DATASET.map(function (d) {

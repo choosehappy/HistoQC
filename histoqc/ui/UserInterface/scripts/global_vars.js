@@ -95,6 +95,7 @@ var CHART_SVG, PARAC_SVG,
 var PARA_COOR_SELECTED;
 var CURRENT_PARALLEL_ATTRIBUTES;
 var COLOR_PLATE = [];
+var CALC_UMAP;
 
 /****************** IMAGE VIEW ****************/
 var SKIP_IMAGE_EXTENSIONS = [];
