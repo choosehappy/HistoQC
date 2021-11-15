@@ -298,6 +298,18 @@ function calc_umap_embedding (cases) {
 		});
 
 		return data;
+	} else if (!CALC_UMAP) {
+		var data = cases.map(function (d, i) {
+			return {
+				case_name: d["filename"],
+				groupid: d["groupid"],
+				testind: d["testind"],
+				x_pos: 0,
+				y_pos: 0
+			};
+		});
+
+		return data;		
 	} else {
 		var pre_matrix = cases.map(function (d) {
 			var case_value = [];
@@ -376,6 +388,7 @@ function init_scatter_vars_selector(
 	});
 
 	$("#umap-rerun-btn").on("click", function () {
+		CALC_UMAP = true;
 		update_chart_view("scatter_plot", CURRENT_MULTI_SELECTED);
 	});
 
