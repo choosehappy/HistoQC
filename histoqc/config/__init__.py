@@ -14,7 +14,7 @@ except ImportError:
 # note to developers:
 #   to store a new ini file in the histoqc package add an ini file that
 #   matches the regular expression below to this directory
-CONFIG_TEMPLATE_RE = re.compile(r'config(_(?P<name>[A-Za-z][A-Za-z0-9]+))?[.]ini')
+CONFIG_TEMPLATE_RE = re.compile(r'config(_(?P<name>[A-Za-z][A-Za-z0-9.]+))?[.]ini')
 
 
 def list_config_templates():
@@ -34,8 +34,5 @@ def read_config_template(name=None):
     """return the contents of a configuration template"""
     templates = list_config_templates()
     if name not in templates:
-        if _resources.is_resource('histoqc.config', name):
-            return _resources.read_text('histoqc.config', name)
-        else:
-            raise KeyError(f'no configuration template found under key {name!r}')
+        raise KeyError(f'no configuration template found under key {name!r}')
     return _resources.read_text('histoqc.config', templates[name])
