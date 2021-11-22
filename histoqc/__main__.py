@@ -75,8 +75,11 @@ def main(argv=None):
     if not args.config:
         lm.logger.warning(f"Configuration file not set (--config), using default")
         config.read_string(read_config_template('default'))
+    elif os.path.exists(args.config):
+        config.read(args.config) #Will read the config file
     else:
-        config.read(args.config)
+        lm.logger.warning(f"Configuration file {args.config} assuming to be a template...checking.")
+        config.read_string(read_config_template(args.config))
 
     # --- provide models, pen and templates as fallbacks from package data ----
 

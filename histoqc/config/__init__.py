@@ -14,7 +14,7 @@ except ImportError:
 # note to developers:
 #   to store a new ini file in the histoqc package add an ini file that
 #   matches the regular expression below to this directory
-CONFIG_TEMPLATE_RE = re.compile(r'config(_(?P<name>[A-Za-z][A-Za-z0-9]+))?[.]ini')
+CONFIG_TEMPLATE_RE = re.compile(r'config(_(?P<name>[A-Za-z][A-Za-z0-9.]+))?[.]ini')
 
 
 def list_config_templates():
