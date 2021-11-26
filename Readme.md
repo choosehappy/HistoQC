@@ -121,24 +121,35 @@ pip install .
 Installed or simply git-cloned, a typical command line for running the tool thus looks like:
 
 ```
-python -m histoqc -c config_v2.1.ini -n 3 "*.svs"
+python -m histoqc -c v2.1 -n 3 "*.svs"
 ```
 
-which will use 3 process to operate on all svs files using a configuration file.
+which will use 3 process to operate on all svs files using the named configuration file config_v2.1.ini from the config directory.
 
-afterwards you can view the results in your web-browser simply by following the directions after typing:
+Alternatively one can specify their own modified config file using an absolute or relative filename:
+
+```
+python -m histoqc.config --show light > mylight.ini
+python -m histoqc -c ./mylight.ini -n 3 "*.svs"
+```
+
+
+Afterward completion of slide processing you can view the results in your web-browser simply by following the directions after typing:
 
 ```
 python -m histoqc.ui
 ```
 
+Which will likely say something like:
+```
+HistoQC data directory: 'D:\temp\HistoQC'
+Serving HistoQC UI on 0.0.0.0 port 8000 (http://0.0.0.0:8000/) ...
+```
 
-
+Allowing you to browse to http://localhost:8000/ to select your results.tsv file.
 
 In case of errors, HistoQC can be run with the same output directory and will begin where it left off, identifying completed images by the presence of an existing directory.
                             
-Afterwards, double click index.html to open front end user interface, select the respective results.tsv file from the Data directory
-
 This can also be done remotely, but is a bit more complex, see advanced usage.
 
 # Configuration modifications
