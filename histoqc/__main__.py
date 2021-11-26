@@ -45,7 +45,7 @@ def main(argv=None):
                         default="",
                         type=str)
     parser.add_argument('-c', '--config',
-                        help="config file to use",
+                        help="config file to use, either by name supplied by histoqc.config (e.g., v2.1) or filename",
                         type=str)
     parser.add_argument('-f', '--force',
                         help="force overwriting of existing files",
