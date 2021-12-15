@@ -23,7 +23,7 @@ def getHistogram(s, params):
     ax.hist(img, bins=bins, density=True, range=(0, 255), histtype='step', color=("r", "g", "b"))
 
     ax.grid(True)
-    ax.set_title('Color Distirubtion for ' + s["filename"])
+    ax.set_title('Color Distribution for ' + s["filename"])
     ax.set_xlabel('Pixel Val')
     ax.set_ylabel('Density')
     plt.savefig(s["outdir"] + os.sep + s["filename"] + "_hist.png")
