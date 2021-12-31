@@ -1,7 +1,5 @@
 /* Image View model.
  * initialize/update the image view, enter/exit selected stage & detailed stage for image view.
- * last modified: 03/17/2018 14:24:00
- * update log: Add id to image blocks. Add multi-select. Re-define the generate_img_block function.
  */ 
 
 
@@ -11,8 +9,11 @@ function initialize_image_view (case_list) {
 	$div.empty();
 
 	CURRENT_IMAGE_TYPE = DEFAULT_IMAGE_EXTENSIONS.indexOf(DEFAULT_IMAGE_EXTENSION);
+	MAX_GALLERY_PAGE = Math.ceil(case_list.length / GALLERY_SIZE);
 
-	for (var i = 0; i < case_list.length; i++) {
+	var page = 1;
+	$("#img-page-display").text(page + " / " + MAX_GALLERY_PAGE);
+	for (var i = ((page - 1) * GALLERY_SIZE); i < Math.min(case_list.length, page * GALLERY_SIZE); i++) {
 		$div.append(
 			generate_img_block(
 				"overview-image-block", case_list[i], 
@@ -30,19 +31,18 @@ function initialize_image_view (case_list) {
 }
 
 
-function update_image_view (case_list) {
-	// TODO: rewrite update function.
-
+function update_image_view (case_list, page) {
 	update_image_view_height();
 
 	var $div = $("#overview-gallery");
 	$div.empty();
 
-	for (var i = 0; i < ORIGINAL_CASE_LIST.length; i++) {
+	$("#img-page-display").text(page + " / " + MAX_GALLERY_PAGE);
+	for (var i = ((page - 1) * GALLERY_SIZE); i < Math.min(case_list.length, page * GALLERY_SIZE); i++) {
 		$div.append(
 			generate_img_block(
-				"overview-image-block", ORIGINAL_CASE_LIST[i], 
-				CURRENT_IMAGE_TYPE, CURRENT_COMPARE_TYPE, ORIGINAL_CASE_LIST[i]
+				"overview-image-block", case_list[i], 
+				CURRENT_IMAGE_TYPE, CURRENT_COMPARE_TYPE, case_list[i]
 			)
 		);
 	}
@@ -51,8 +51,6 @@ function update_image_view (case_list) {
 		src_list = this.src.split('/');
 		enter_select_mode(src_list[src_list.length-2].replace("%20", " "));
 	});
-
-	update_multi_selected_image_view(case_list);
 }
 
 
@@ -124,13 +122,16 @@ function exit_select_image_view () {
 
 
 function update_multi_selected_image_view (file_names) {
-	ORIGINAL_CASE_LIST.forEach(function (d) {
-		if (file_names.indexOf(d) == -1) {
-			$("#" + ORIGINAL_CASE_DICT[d]["dom_id"]).css("display", "none");
-		} else {
-			$("#" + ORIGINAL_CASE_DICT[d]["dom_id"]).css("display", "flex");
-		}
-	});
+	// ORIGINAL_CASE_LIST.forEach(function (d) {
+	// 	if (file_names.indexOf(d) == -1) {
+	// 		$("#" + ORIGINAL_CASE_DICT[d]["dom_id"]).css("display", "none");
+	// 	} else {
+	// 		$("#" + ORIGINAL_CASE_DICT[d]["dom_id"]).css("display", "flex");
+	// 	}
+	// });
+	MAX_GALLERY_PAGE = Math.ceil(file_names.length / GALLERY_SIZE);
+	CURRENT_GALLERY_PAGE = 1;
+	update_image_view(file_names, CURRENT_GALLERY_PAGE);
 }
 
 
@@ -219,7 +220,7 @@ function init_image_selector () {
 
 	$img_selector.change(function () {
 		CURRENT_IMAGE_TYPE = $(this).val();
-		update_image_view(CURRENT_CASE_LIST);
+		update_image_view(CURRENT_CASE_LIST, CURRENT_GALLERY_PAGE);
 	});
 
 	$cmp_selector.change(function () {
@@ -229,11 +230,25 @@ function init_image_selector () {
 		} else {
 			$("#comparison-select > option").last().text("compare ...");
 		}
-		update_image_view(CURRENT_CASE_LIST);
+		update_image_view(CURRENT_CASE_LIST, CURRENT_GALLERY_PAGE);
 	});
 
 	$("#exit-image-select-view-btn").click(function () {
 		exit_select_mode();
+	});
+
+	$("#img-page-left-btn").click(function () {
+		if (CURRENT_GALLERY_PAGE > 1) {
+			CURRENT_GALLERY_PAGE = CURRENT_GALLERY_PAGE - 1;
+			update_image_view(CURRENT_CASE_LIST, CURRENT_GALLERY_PAGE);
+		}
+	});
+
+	$("#img-page-right-btn").click(function () {
+		if (CURRENT_GALLERY_PAGE < MAX_GALLERY_PAGE) {
+			CURRENT_GALLERY_PAGE = CURRENT_GALLERY_PAGE + 1;
+			update_image_view(CURRENT_CASE_LIST, CURRENT_GALLERY_PAGE);
+		}
 	});
 
 	$("#overlay-image > figure > img").click(function () {

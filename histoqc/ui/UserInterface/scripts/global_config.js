@@ -120,3 +120,6 @@ var SMALL_IMAGE_EXTENSIONS = [
 ];
 // Default image type
 var DEFAULT_IMAGE_EXTENSION = "_thumb.png";
+
+// number of images to display in the image gallery
+var GALLERY_SIZE = 20;

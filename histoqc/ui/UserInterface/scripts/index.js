@@ -216,7 +216,7 @@ function update_views () {
 		update_chart_view(CURRENT_VIS_TYPE, CURRENT_MULTI_SELECTED);
 	}
 	if (INITIALIZED_VIEWS.indexOf("image") >= 0) {
-		update_image_view(CURRENT_CASE_LIST);
+		update_image_view(CURRENT_CASE_LIST, CURRENT_GALLERY_PAGE);
 	}
 }
 
