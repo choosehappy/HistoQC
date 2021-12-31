@@ -139,6 +139,16 @@ th {
 	display: none;
 }
 
+#img-page-left-btn {
+	border-top-left-radius: 0.2rem;
+    border-bottom-left-radius: 0.2rem;
+}
+
+#img-page-right-btn {
+	border-top-right-radius: 0.2rem;
+    border-bottom-right-radius: 0.2rem;
+}
+
 /*#img-select,
 #comparison-select,
 #chart-select,
