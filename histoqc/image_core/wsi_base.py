@@ -5,7 +5,12 @@ import re
 from distutils.util import strtobool
 
 import numpy as np
-from openslide import OpenSlide
+if hasattr(os, "add_dll_directory"):
+    with os.add_dll_directory(os.path.join(os.getcwd(), 'bin')):
+        from openslide import OpenSlide
+else:
+    from openslide import OpenSlide
+
 
 from histoqc.image_core.BaseImage import BaseImage, getMag
 

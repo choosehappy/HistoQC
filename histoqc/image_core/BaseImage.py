@@ -9,7 +9,11 @@ import numpy as np
 from typing import List, Tuple, Union, Dict, Any, Literal
 
 # os.environ['PATH'] = 'C:\\research\\openslide\\bin' + ';' + os.environ['PATH'] #can either specify openslide bin path in PATH, or add it dynamically
-import openslide
+if hasattr(os, "add_dll_directory"):
+    with os.add_dll_directory(os.path.join(os.getcwd(), 'bin')):
+        import openslide
+else:
+    import openslide
 
 
 def printMaskHelper(type, prev_mask, curr_mask):
@@ -30,7 +34,7 @@ def printMaskHelper(type, prev_mask, curr_mask):
 # magnification if not present in open slide, and/or to confirm openslide base magnification
 def getMag(s, params):
     logging.info(f"{s['filename']} - \tgetMag")
-    osh = s["os_handle"]
+    osh: openslide.OpenSlide = s["os_handle"]
     mag = osh.properties.get("openslide.objective-power", "NA")
     if mag == "NA":  # openslide doesn't set objective-power for all SVS files:
         # https://github.com/openslide/openslide/issues/247
