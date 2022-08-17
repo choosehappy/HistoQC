@@ -1,6 +1,5 @@
 import skimage
-from histoqc.BaseImage import printMaskHelper
-from skimage import io, img_as_ubyte, morphology, measure
+from skimage import morphology, measure
 from skimage.color import rgb2gray
 from skimage.filters import rank
 import numpy as np

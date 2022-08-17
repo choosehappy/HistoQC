@@ -1,13 +1,10 @@
 import logging
 import os
 import numpy as np
-from histoqc.BaseImage import printMaskHelper
+from histoqc.image_core.BaseImage import printMaskHelper
 from skimage import io, morphology, img_as_ubyte, measure
 
 from scipy import ndimage as ndi
-
-import matplotlib.pyplot as plt  # these 2 are used for debugging
-from histoqc.SaveModule import blend2Images #for easier debugging
 
 
 def removeSmallObjects(s, params):

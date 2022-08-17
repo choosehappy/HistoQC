@@ -1,16 +1,13 @@
 import logging
 import os
 import numpy as np
-from histoqc.BaseImage import printMaskHelper
+from histoqc.image_core.BaseImage import printMaskHelper
 from skimage import io, color, img_as_ubyte
 from distutils.util import strtobool
 from skimage.filters import threshold_otsu, rank
 from skimage.morphology import disk
 from sklearn.cluster import KMeans
 from skimage import exposure
-
-import matplotlib.pyplot as plt
-
 
 
 def getIntensityThresholdOtsu(s, params):

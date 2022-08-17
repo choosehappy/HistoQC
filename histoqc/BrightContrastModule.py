@@ -46,7 +46,6 @@ def getBrightnessByChannelinColorSpace(s, params):
     mask_to_use: Union[np.ndarray, None] = utilities.working_mask(s[mask_name], invert=invert,
                                                                   limit_to_mask=limit_to_mask)
     suffix = "_" + to_color_space
-
     mean_val, std_val = bright_contrast.brightness_by_channel_in_color_space(img, mask_to_use, to_color_space)
 
     for chan in range(0, 3):
@@ -76,13 +75,15 @@ def getContrast(s, params):
     # it may give you "valid" numeric values but in fact the whole procedure turns nonsense,
     # and it is hard to spot it out.
 
-    if not mask_to_use.any():
+    # defined the working mask to use but there are no positive pixels left
+    if mask_to_use is not None and not mask_to_use.any():
 
         logging.warning(f"{s['filename']} - After BrightContrastModule.getContrast: NO tissue "
                         f"detected, statistics are impossible to compute, defaulting to -100 !")
         s["warnings"].append(f"After BrightContrastModule.getContrast: NO tissue remains "
                              f"detected, statistics are impossible to compute, defaulting to -100 !")
+
     all_contrasts: Dict[str, float] = bright_contrast.contrast_stats(img, mask_to_use)
-    for contrast_name, contrast_value in all_contrasts:
+    for contrast_name, contrast_value in all_contrasts.items():
         s.addToPrintList(f"{prefix}{contrast_name}", str(contrast_value))
     return

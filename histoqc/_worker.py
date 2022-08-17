@@ -1,8 +1,9 @@
 """histoqc worker functions"""
 import os
 import shutil
-
-from histoqc.BaseImage import BaseImage
+from typing import Type
+from histoqc.image_core.BaseImage import BaseImage
+from histoqc.image_core.construct import get_image_class
 from histoqc._pipeline import load_pipeline
 from histoqc._pipeline import setup_plotting_backend
 
@@ -37,7 +38,9 @@ def worker(idx, file_name, *,
     log_manager.logger.info(f"-----Working on:\t{file_name}\t\t{idx+1} of {num_files}")
 
     try:
-        s = BaseImage(file_name, fname_outdir, dict(config.items("BaseImage.BaseImage")))
+        base_image_params = dict(config.items("BaseImage.BaseImage"))
+        image_type_class: Type[BaseImage] = get_image_class(base_image_params)
+        s: BaseImage = image_type_class.build(file_name, fname_outdir, base_image_params)
 
         for process, process_params in process_queue:
             process_params["lock"] = lock
@@ -72,7 +75,7 @@ def worker(idx, file_name, *,
         return s
 
 
-def worker_success(s, result_file):
+def worker_success(s: BaseImage, result_file):
     """success callback"""
     if s is None:
         return

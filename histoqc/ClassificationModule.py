@@ -7,7 +7,7 @@ from ast import literal_eval as make_tuple
 
 from distutils.util import strtobool
 
-from histoqc.BaseImage import printMaskHelper
+from histoqc.image_core.BaseImage import printMaskHelper
 from skimage import io, img_as_ubyte
 from skimage.filters import gabor_kernel, frangi, gaussian, median, laplace
 from skimage.color import rgb2gray
@@ -20,8 +20,6 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import RandomForestClassifier
 
 import numpy as np
-
-import matplotlib.pyplot as plt
 
 
 def pixelWise(s, params):

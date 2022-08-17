@@ -1,13 +1,10 @@
 import logging
 import os
 
-import numpy as np
 import skimage
-from skimage import io, img_as_ubyte, morphology, measure
-from skimage.color import rgb2gray
-from skimage.filters import rank
+from skimage import io, img_as_ubyte
 
-from histoqc.BaseImage import printMaskHelper
+from histoqc.image_core.BaseImage import printMaskHelper
 from histoqc.functional import blur_detection
 
 

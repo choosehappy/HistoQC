@@ -1,10 +1,8 @@
 import logging
 import os
-from histoqc.BaseImage import printMaskHelper
+from histoqc.image_core.BaseImage import printMaskHelper
 from skimage.morphology import remove_small_objects, binary_opening, disk
-from skimage import io, color, img_as_ubyte
-
-import matplotlib.pyplot as plt
+from skimage import io, img_as_ubyte
 
 
 def getBasicStats(s, params):
