@@ -13,7 +13,8 @@ else:
 
 
 from histoqc.image_core.BaseImage import BaseImage, getMag
-
+from histoqc.image_core.image_handle.base_class import ImageHandle
+from histoqc.image_core.image_handle import OSHandle
 # it is so stupid that there is no branch reset group in re
 # compatible with the previous definition of valid input: leading zero and leading decimals are supported
 __REGEX_SIMPLE_LEADING_DEC = r"^(\.\d+X?)$"
@@ -23,25 +24,17 @@ _PATTERN_DIM_LEADING_DEC: re.Pattern = re.compile(__REGEX_SIMPLE_LEADING_DEC)
 _PATTERN_DIM_LEADING_NUMERIC: re.Pattern = re.compile(__REGEX_SIMPLE_LEADING_NUMERIC)
 
 
-class SlideImage(BaseImage):
+class SlideImage(BaseImage[OSHandle]):
 
-    @property
-    def resource_handle(self):
-        raise self["os_handle"]
+    def new_image_handle(self, fname, params) -> OSHandle:
+        return OSHandle.build(fname, params)
 
     @classmethod
     def build(cls, fname, fname_outdir, params):
         return cls(fname, fname_outdir, params)
 
-    def init_resource(self, fname, params):
-        self["os_handle"] = OpenSlide(fname)
-        self["image_base_size"] = self["os_handle"].dimensions
-        self["base_mag"] = getMag(self, params)
-        self.addToPrintList("base_mag", self["base_mag"])
-
     def __init__(self, fname, fname_outdir, params):
         super().__init__(fname, fname_outdir, params)
-        self.init_resource(fname, params)
         self["img_mask_use"] = np.ones(self.getImgThumb(self["image_work_size"]).shape[0:2], dtype=bool)
 
     @staticmethod
@@ -56,7 +49,6 @@ class SlideImage(BaseImage):
     @staticmethod
     def _from_pyramid_helper(osh: OpenSlide, dim):
         assert isinstance(dim, int)
-
         return osh.read_region((0, 0), dim, osh.level_dimensions[dim])
         # self[key] = np.asarray(img)[:, :, 0:3]
 
@@ -135,11 +127,11 @@ class SlideImage(BaseImage):
             return -1
 
         if "X" in dim.upper():
-            return self._from_mag(self['os_handle'], self.base_mag, dim)
+            return self._from_mag(osh, self.base_mag, dim)
 
         dim = float(dim)
         # decimal number in (0, 1) --> downsample factor
-        # is dim.is_integer really useful?
+        # is "not dim.is_integer()" really necessary here?
         if 0 < dim < 1 and not dim.is_integer():
             return self._thumb_downsample_factor(osh, dim)
         elif dim < 100:
@@ -150,7 +142,8 @@ class SlideImage(BaseImage):
 
     def getImgThumb(self, dim):
         key = f"img_{dim}"
-        osh = self["os_handle"]
+        osh = self.image_handle.handle
+        assert isinstance(osh, OpenSlide), f"Unsupported file handle in SlideImage f:{type(osh)}"
         if key not in self:
             # noinspection PyTypeChecker
             self[key] = self._thumbnail(osh, dim)[:, :, 0:3]

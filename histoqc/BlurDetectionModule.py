@@ -4,7 +4,7 @@ import os
 import skimage
 from skimage import io, img_as_ubyte
 
-from histoqc.image_core.BaseImage import printMaskHelper
+from histoqc.image_core.BaseImage import printMaskHelper, BaseImage
 from histoqc.functional import blur_detection
 
 
@@ -13,7 +13,7 @@ from histoqc.functional import blur_detection
 # https://pdfs.semanticscholar.org/8c67/5bf5b542b98bf81dcf70bd869ab52ab8aae9.pdf
 
 
-def identifyBlurryRegions(s, params):
+def identifyBlurryRegions(s: BaseImage, params):
     logging.info(f"{s['filename']} - \tidentifyBlurryRegions")
 
     blur_radius = int(params.get("blur_radius", 7))

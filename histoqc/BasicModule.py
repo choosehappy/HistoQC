@@ -1,13 +1,13 @@
 import logging
 import os
-from histoqc.image_core.BaseImage import printMaskHelper
+from histoqc.image_core.BaseImage import printMaskHelper, BaseImage
 from skimage.morphology import remove_small_objects, binary_opening, disk
 from skimage import io, img_as_ubyte
 
 
-def getBasicStats(s, params):
+def getBasicStats(s: BaseImage, params):
     logging.info(f"{s['filename']} - \tgetBasicStats")
-    osh = s["os_handle"]
+    osh = s.image_handle
     s.addToPrintList("type", osh.properties.get("openslide.vendor", "NA"))
     s.addToPrintList("levels", osh.properties.get("openslide.level-count", "NA"))
     s.addToPrintList("height", osh.properties.get("openslide.level[0].height", "NA"))

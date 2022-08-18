@@ -3,7 +3,7 @@ import os
 import shutil
 from typing import Type
 from histoqc.image_core.BaseImage import BaseImage
-from histoqc.image_core.construct import get_image_class
+from histoqc.image_core.factory import get_image_class
 from histoqc._pipeline import load_pipeline
 from histoqc._pipeline import setup_plotting_backend
 
@@ -71,7 +71,8 @@ def worker(idx, file_name, *,
         #   file handle. This will need fixing in BaseImage.
         #   -> best solution would be to make BaseImage a contextmanager and close
         #      and cleanup the OpenSlide handle on __exit__
-        s["os_handle"] = None  # need to get rid of handle because it can't be pickled
+        # s["os_handle"] = None  # need to get rid of handle because it can't be pickled
+        s.clear_handles()
         return s
 
 

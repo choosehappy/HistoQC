@@ -4,12 +4,13 @@ from histoqc.image_core.BaseImage import BaseImage
 class PILImage(BaseImage):
     ...
 
-    @property
-    def resource_handle(self):
-        return self['pil_handle']
-
-    def init_resource(self, *args, **kwargs):
-        raise NotImplementedError
+    def _init_resource(self, fname, params):
+        #
+        self["os_handle"] = OpenSlide(fname)
+        # self["image_base_size"] = self["os_handle"].dimensions
+        # self["base_mag"] = getMag(self, params)
+        # self.addToPrintList("base_mag", self["base_mag"])
+        ...
 
     @classmethod
     def build(cls, fname, fname_outdir, params):
