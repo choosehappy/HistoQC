@@ -1,3 +1,5 @@
+import re
+
 import dill
 import logging
 import os
@@ -15,6 +17,21 @@ from histoqc.image_core.image_handle.base_class import ImageHandle
 from histoqc.image_core.image_handle import OSHandle
 from histoqc._import_openslide import openslide
 from histoqc.image_core.meta import ATTR_TYPE
+
+
+# it is so stupid that there is no branch reset group in re
+# compatible with the previous definition of valid input: leading zero and leading decimals are supported
+__REGEX_SIMPLE_LEADING_DEC = r"^(\.\d+X?)$"
+__REGEX_SIMPLE_LEADING_NUMERIC = r"^(\d+\.?\d*X?)"
+_PATTERN_DIM_LEADING_DEC: re.Pattern = re.compile(__REGEX_SIMPLE_LEADING_DEC, flags=re.IGNORECASE)
+_PATTERN_DIM_LEADING_NUMERIC: re.Pattern = re.compile(__REGEX_SIMPLE_LEADING_NUMERIC, flags=re.IGNORECASE)
+
+__REGEX_FLOAT_DEC_SHORT = r"^(\.\d+)$"
+__REGEX_FLOAT_FULL = r"^(\d+\.?\d*)"
+_PATTERN_FLOAT_DEC_SHORT = re.compile(__REGEX_FLOAT_DEC_SHORT, flags=re.IGNORECASE)
+_PATTERN_FLOAT_FULL = re.compile(__REGEX_FLOAT_FULL, flags=re.IGNORECASE)
+
+MAG_NA: str = "NA"
 
 
 def printMaskHelper(type, prev_mask, curr_mask):
@@ -42,6 +59,13 @@ class BaseImage(dict, ABC, Generic[HandleType]):
     mask_statistics_types: List[str] = ["relative2mask", "absolute", "relative2image"]
     __image_handle: Union[HandleType, None]
 
+    @staticmethod
+    def validate_dim(dim: str):
+        matched = _PATTERN_DIM_LEADING_DEC.match(dim) or _PATTERN_DIM_LEADING_NUMERIC.match(dim)
+        if matched:
+            return dim
+        return None
+
     @abstractmethod
     def new_image_handle(self, fname, params) -> HandleType:
         raise NotImplementedError
@@ -52,7 +76,7 @@ class BaseImage(dict, ABC, Generic[HandleType]):
         raise NotImplementedError
 
     @abstractmethod
-    def getImgThumb(self, dim):
+    def getImgThumb(self, dim) -> np.ndarray:
         raise NotImplementedError
 
     def addToPrintList(self, name, val):
@@ -106,6 +130,7 @@ class BaseImage(dict, ABC, Generic[HandleType]):
         return self.__image_handle
 
     # I want to keep the dict keys of BaseImage untouched for now, avoiding too much refactoring.
+    # For PILImage, base_mag is given by the config.ini or None
     def _init_resource(self, fname, params):
         handle = self.new_image_handle(fname, params)
         self.__image_handle = handle
@@ -115,10 +140,14 @@ class BaseImage(dict, ABC, Generic[HandleType]):
         self["base_mag"] = getMag(self, params)
         self.addToPrintList("base_mag", self["base_mag"])
 
+    def _init_mask_use(self):
+        self["img_mask_use"] = np.ones(self.getImgThumb(self["image_work_size"]).shape[0:2], dtype=bool)
+
     def __init__(self, fname: str, fname_outdir: str, params: Dict[str, Any]):
         super().__init__()
         self._default_dict_config(fname, fname_outdir, params)
         self._init_resource(fname, params)
+        self._init_mask_use()
 
     def clear_handles(self):
         self["os_handle"] = None
@@ -129,39 +158,62 @@ class BaseImage(dict, ABC, Generic[HandleType]):
         return super().get(key, default)
 
 
-def __validate_mag(s: BaseImage, mag, params, warning_str):
-    if (mag == "NA" or strtobool(
+def __validate_mag_values(s: BaseImage, mag, params, warning_str):
+    if (mag == MAG_NA or strtobool(
             params.get("confirm_base_mag", "False"))):
         # do analysis work here
         logging.warning(warning_str)
         s["warnings"].append(warning_str)
+        return mag
     else:
         mag = float(mag)
     return mag
+
+
+def validateSizeFactors(mag: Union[str, int, float]):
+    """Validate size factors, e.g., magnification, explicit size, or downsample ratios.
+    Args:
+        mag:
+
+    Returns:
+        Validated size factor either as a float number or "NA" (MAG_NA)
+    """
+    if isinstance(mag, (int, float)):
+        return float(mag)
+    numeric_mag_str_flag = (_PATTERN_DIM_LEADING_DEC.match(mag) or _PATTERN_DIM_LEADING_NUMERIC.match(mag))
+    invalid_flag = mag == MAG_NA or not numeric_mag_str_flag
+    if invalid_flag:
+        return MAG_NA
+    # regex determines X must either be abscent or at the end of the string
+    if "X" in mag.upper():
+        mag = mag[0:-1]
+    return float(mag)
 
 
 # this function is seperated out because in the future we hope to have automatic detection of
 # magnification if not present in open slide, and/or to confirm openslide base magnification
 def getMagOS(s: BaseImage, params, warning_str):
     osh: openslide.OpenSlide = s.image_handle
-    mag = osh.properties.get("openslide.objective-power", "NA")
-    if mag == "NA":  # openslide doesn't set objective-power for all SVS files:
+    mag = osh.properties.get("openslide.objective-power", MAG_NA)
+    if mag == MAG_NA:  # openslide doesn't set objective-power for all SVS files:
         # https://github.com/openslide/openslide/issues/247
-        mag = osh.properties.get("aperio.AppMag", "NA")
-    mag = __validate_mag(s, mag, params, warning_str)
+        mag = osh.properties.get("aperio.AppMag", MAG_NA)
+    mag = __validate_mag_values(s, mag, params, warning_str)
     return mag
 
 
 def getMagPredefined(s: BaseImage, params, warning_str):
-    mag = s.get("base_mag", "NA")
-    return __validate_mag(s, mag, params, warning_str)
+    mag = params.get("base_mag", MAG_NA)
+    mag = validateSizeFactors(mag)
+    return __validate_mag_values(s, mag, params, warning_str)
 
 
 def getMag(s: BaseImage, params):
     logging.info(f"{s['filename']} - \tgetMag")
     warning_str_wsi = f"{s['filename']} - Unknown base magnification for file"
-    if isinstance(s.image_handle, OSHandle):
-        return getMagOS(s, params, warning_str_wsi)
     warning_str_roi = f"{s['filename']} - Mag of PIL BaseImage must be specified manually"
-    return getMagPredefined(s, params, warning_str_roi)
-
+    if isinstance(s.image_handle, OSHandle):
+        mag = getMagOS(s, params, warning_str_wsi)
+    else:
+        mag = getMagPredefined(s, params, warning_str_roi)
+    return validateSizeFactors(mag)

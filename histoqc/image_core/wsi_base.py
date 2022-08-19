@@ -1,30 +1,15 @@
 import inspect
 import logging
 import os
-import re
-from distutils.util import strtobool
 
 import numpy as np
-if hasattr(os, "add_dll_directory"):
-    with os.add_dll_directory(os.path.join(os.getcwd(), 'bin')):
-        from openslide import OpenSlide
-else:
-    from openslide import OpenSlide
-
-
-from histoqc.image_core.BaseImage import BaseImage, getMag
-from histoqc.image_core.image_handle.base_class import ImageHandle
+from histoqc._import_openslide import openslide
+from openslide import OpenSlide
+from histoqc.image_core.BaseImage import BaseImage, MAG_NA
 from histoqc.image_core.image_handle import OSHandle
-# it is so stupid that there is no branch reset group in re
-# compatible with the previous definition of valid input: leading zero and leading decimals are supported
-__REGEX_SIMPLE_LEADING_DEC = r"^(\.\d+X?)$"
-__REGEX_SIMPLE_LEADING_NUMERIC = r"^(\d+\.?\d*X?)"
-
-_PATTERN_DIM_LEADING_DEC: re.Pattern = re.compile(__REGEX_SIMPLE_LEADING_DEC)
-_PATTERN_DIM_LEADING_NUMERIC: re.Pattern = re.compile(__REGEX_SIMPLE_LEADING_NUMERIC)
 
 
-class SlideImage(BaseImage[OSHandle]):
+class SlideBaseImage(BaseImage[OSHandle]):
 
     def new_image_handle(self, fname, params) -> OSHandle:
         return OSHandle.build(fname, params)
@@ -35,7 +20,6 @@ class SlideImage(BaseImage[OSHandle]):
 
     def __init__(self, fname, fname_outdir, params):
         super().__init__(fname, fname_outdir, params)
-        self["img_mask_use"] = np.ones(self.getImgThumb(self["image_work_size"]).shape[0:2], dtype=bool)
 
     @staticmethod
     def _thumb_downsample_factor_helper(osh: OpenSlide, dim):
@@ -65,7 +49,7 @@ class SlideImage(BaseImage[OSHandle]):
                 f"! Downstream output may not be correct")
         logging.info(
             f"{self['filename']} - \t\tloading image from level {dim} of size {osh.level_dimensions[dim]}")
-        return SlideImage._from_pyramid_helper(osh, dim)
+        return SlideBaseImage._from_pyramid_helper(osh, dim)
 
     @staticmethod
     def _from_mag_helper(osh: OpenSlide, base_mag, dim):
@@ -95,14 +79,14 @@ class SlideImage(BaseImage[OSHandle]):
         return output
 
     def _from_mag(self, osh, base_mag, dim):
-        if base_mag != "NA":  # if base magnification is not known, it is set to NA by basic module
+        if base_mag != MAG_NA:  # if base magnification is not known, it is set to NA by basic module
             base_mag = float(base_mag)
         else:  # without knowing base mag, can't use this scaling, push error and exit
             logging.error(
                 f"{self['filename']}: Has unknown or uncalculated base magnification, "
                 f"cannot specify magnification scale: {base_mag}! Did you try getMag?")
             return -1
-        return SlideImage._from_mag_helper(osh, base_mag, dim)
+        return SlideBaseImage._from_mag_helper(osh, base_mag, dim)
 
     @staticmethod
     def _from_size_helper(osh: OpenSlide, dim):
@@ -110,17 +94,10 @@ class SlideImage(BaseImage[OSHandle]):
 
     def _from_size(self, osh: OpenSlide, dim):
         logging.info(f"{self['filename']} - \t\tcreating image thumb of size {str(dim)}")
-        return SlideImage._from_size_helper(osh, dim)
-
-    @staticmethod
-    def _validate_dim_helper(dim: str):
-        matched = _PATTERN_DIM_LEADING_DEC.match(dim) or _PATTERN_DIM_LEADING_NUMERIC.match(dim)
-        if matched:
-            return dim
-        return None
+        return SlideBaseImage._from_size_helper(osh, dim)
 
     def _thumbnail(self, osh: OpenSlide, dim):
-        dim = SlideImage._validate_dim_helper(dim)
+        dim = super().validate_dim(dim)
         if dim is None:
             logging.error(
                 f"{self['filename']}: Unknown image level setting: {dim}!")
@@ -140,12 +117,19 @@ class SlideImage(BaseImage[OSHandle]):
         # explicit size
         return self._from_size(osh, dim)
 
+    # still entangled with the exposed os_handle but we don't need to touch it as long as the interface is unified
     def getImgThumb(self, dim):
         key = f"img_{dim}"
         osh = self.image_handle.handle
         assert isinstance(osh, OpenSlide), f"Unsupported file handle in SlideImage f:{type(osh)}"
-        if key not in self:
+        if key in self:
             # noinspection PyTypeChecker
-            self[key] = self._thumbnail(osh, dim)[:, :, 0:3]
+            return self[key]
+        result = self._thumbnail(osh, dim)[:, :, 0:3]
+        # for consistency with the prev version: if dim is not valid, no results are memorized at all
+        if result == -1:
+            return -1
+        # noinspection PyTypeChecker
+        self[key] = result
         # noinspection PyTypeChecker
         return self[key]

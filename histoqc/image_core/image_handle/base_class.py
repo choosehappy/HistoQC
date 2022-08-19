@@ -2,7 +2,22 @@ from abc import ABC, abstractmethod
 from typing import Tuple, Dict, Any, Generic, TypeVar, Mapping
 from histoqc.image_core.meta import ATTR_TYPE
 from PIL.Image import Image
+import logging
 T = TypeVar("T")
+
+
+def validate_boundary(msg_body=""):
+    def _wrapper(func):
+        def _factory(self: "ImageHandle", level: int):
+            minimum_index = len(self._level_dimensions) - 1
+            # exceeds max level index
+            if level > minimum_index:
+                logging.warning(f"{self.fname}: {msg_body}. Level: {level} vs. max level idx allowed: {minimum_index}")
+                level = minimum_index
+            return func(self, level)
+        _factory.__name__ = func.__name__
+        return _factory
+    return _wrapper
 
 
 class ImageHandle(ABC, Generic[T]):
@@ -29,13 +44,24 @@ class ImageHandle(ABC, Generic[T]):
 
     @property
     @abstractmethod
-    def base_size(self) -> Tuple[int, ...]:
+    def base_size(self) -> Tuple[int, int]:
         raise NotImplementedError
 
     @property
     @abstractmethod
-    def level_dimensions(self) -> Tuple[Tuple[int, ...]]:
+    def _level_dimensions(self) -> Tuple[Tuple[int, int]]:
         raise NotImplementedError
+
+    @validate_boundary(msg_body="Current level idx exceeds the max idx of the level_dimensions")
+    def get_level_dimensions(self, level: int) -> Tuple[int, int]:
+        """A wrapper to handle the cases of the level.
+        Args:
+            level:
+
+        Returns:
+
+        """
+        return self._level_dimensions[level]
 
     def __init__(self, handle: T, fname: str):
         self.__handle = handle

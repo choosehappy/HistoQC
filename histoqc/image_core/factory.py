@@ -1,4 +1,5 @@
-from histoqc.image_core.wsi_base import SlideImage
+from histoqc.image_core.wsi_base import SlideBaseImage
+from histoqc.image_core.pil_base import PILBaseImage
 from histoqc.image_core.BaseImage import BaseImage
 from typing import Type, Dict
 
@@ -7,7 +8,8 @@ TYPE_WSI = 'wsi'
 TYPE_PIL = 'pil'
 
 _img_type_to_class: Dict[str, Type[BaseImage]] = {
-    TYPE_WSI: SlideImage
+    TYPE_WSI: SlideBaseImage,
+    TYPE_PIL: PILBaseImage,
 }
 
 

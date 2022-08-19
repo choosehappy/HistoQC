@@ -24,14 +24,14 @@ def roiWise(s: BaseImage, params):
 
     image_handle = s.image_handle  # s["os_handle"]
 
-    dim_base = image_handle.level_dimensions[0]
-    dims = image_handle.level_dimensions[level]
-
+    dim_base = image_handle.get_level_dimensions(0)
+    dims = image_handle.get_level_dimensions(level)
     ratio_x = dim_base[0] / dims[0]  # figure out the difference between desi
     ratio_y = dim_base[1] / dims[1]
 
     frangi_scale_range = (1, 6)
     frangi_scale_step = 2
+    frangi_sigma = frangi_scale_range + (frangi_scale_step, )
     frangi_beta1 = .5
     frangi_beta2 = 100
     frangi_black_ridges = True
@@ -44,7 +44,13 @@ def roiWise(s: BaseImage, params):
             region = np.asarray(image_handle.read_region((x, y), 1, (win_size, win_size)))
             region = region[:, :, 0:3]  # remove alpha channel
             g = rgb2gray(region)
-            feat = frangi(g, frangi_scale_range, frangi_scale_step, frangi_beta1, frangi_beta2, frangi_black_ridges)
+
+            # frangi_scale_range, frangi_scale_step
+            # change of args during the version update of sklearn. Gotta specify the sigma as (range + step)
+            # in kwargs
+            feat = frangi(g, sigmas=frangi_sigma, alpha=frangi_beta1, beta=frangi_beta2,
+                          black_ridges=frangi_black_ridges)
+
             feat = feat / 8.875854409275627e-08
             region_mask = np.bitwise_and(g < .3, feat > 5)
             region_mask = remove_small_objects(region_mask, min_size=100, in_place=True)

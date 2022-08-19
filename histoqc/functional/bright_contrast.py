@@ -145,10 +145,12 @@ def _michelson(img: np.ndarray) -> float:
     return (max_img - min_img) / denominator
 
 
-def _tenengrad_unnormalized(img: np.ndarray, mask: np.ndarray):
+# np.sqrt(np.sum(sobel_img)) / img.size
+def _tenengrad(img: np.ndarray, mask: np.ndarray):
     assert img.size > 0
     sobel_img = sobel(img) ** 2
-    return np.sqrt(np.sum(sobel_img))
+    sobel_img = _masking_collated(sobel_img, mask)
+    return np.sqrt(np.sum(sobel_img)) / sobel_img.size
 
 
 def validate_tissue_mask(mask: Union[np.ndarray, None]):
@@ -196,9 +198,7 @@ def tenengrad_contrast_helper(img: np.ndarray, mask: Union[np.ndarray, None]) ->
     mask = validate_tissue_mask(mask)
     # get gradient map first
 
-    grad_map = _tenengrad_unnormalized(img, mask)
-    region_size = _masking_collated(img, mask).size
-    return grad_map / region_size
+    return _tenengrad(img, mask)
 
 
 _CONTRAST_NAME_TO_METHOD: Dict[str, Callable[[np.ndarray, Union[np.ndarray, None]], float]] = {

@@ -16,7 +16,7 @@ def blur_in_img(img: np.ndarray, blur_radius: float, blur_threshold: float):
     Args:
         img: Working image. Ideally using the low mag thumbnails of the slides.
         blur_radius: Radius computed from the the Gaussian kernel. Smaller radius (also smaller sigma / kernel size)
-            leads to more sensitive detection since sharper
+            leads to more sensitive detection
         blur_threshold: Threshold any pixels with lower intensity in the filtered image as the blurred region.
 
     Returns:

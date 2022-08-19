@@ -12,11 +12,11 @@ class OSHandle(ImageHandle[openslide.OpenSlide]):
         return self.handle.properties
 
     @property
-    def base_size(self) -> Tuple[int, ...]:
+    def base_size(self) -> Tuple[int, int]:
         return self.handle.dimensions
 
     @property
-    def level_dimensions(self) -> Tuple[Tuple[int, ...]]:
+    def _level_dimensions(self) -> Tuple[Tuple[int, int]]:
         return self.handle.level_dimensions
 
     @classmethod
