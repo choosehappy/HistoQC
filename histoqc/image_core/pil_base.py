@@ -60,7 +60,7 @@ class PILBaseImage(BaseImage[PILHandle]):
     @staticmethod
     def _resized_pil_helper(image_handle, size_factor):
         assert 0 < size_factor <= 1, f"For downsample via resize ops, the factor should be within (0, 1]"
-        width, height = image_handle.base_size
+        width, height = image_handle.base_size_wh
         new_width = int(width * size_factor)
         new_height = int(height * size_factor)
         return image_handle.handle.resize((new_width, new_height), BILINEAR)

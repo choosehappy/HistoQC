@@ -44,7 +44,7 @@ class ImageHandle(ABC, Generic[T]):
 
     @property
     @abstractmethod
-    def base_size(self) -> Tuple[int, int]:
+    def base_size_wh(self) -> Tuple[int, int]:
         raise NotImplementedError
 
     @property

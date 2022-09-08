@@ -20,13 +20,14 @@ class PILHandle(ImageHandle[PILImage]):
         return self.__property_placeholder
 
     @property
-    def base_size(self) -> Tuple[int, ...]:
+    def base_size_wh(self) -> Tuple[int, ...]:
+        # width height
         return self.handle.size
 
     @property
     def _level_dimensions(self) -> Tuple[Tuple[int, ...]]:
         if self.__level_dimensions is None:
-            self.__level_dimensions = (self.base_size, )
+            self.__level_dimensions = (self.base_size_wh,)
         return self.__level_dimensions
 
     def get_level_dimensions(self, level: int) -> Tuple[int, int]:

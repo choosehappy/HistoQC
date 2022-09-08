@@ -127,7 +127,7 @@ class SlideBaseImage(BaseImage[OSHandle]):
             return self[key]
         result = self._thumbnail(osh, dim)[:, :, 0:3]
         # for consistency with the prev version: if dim is not valid, no results are memorized at all
-        if result == -1:
+        if isinstance(result, int) and result == -1:
             return -1
         # noinspection PyTypeChecker
         self[key] = result

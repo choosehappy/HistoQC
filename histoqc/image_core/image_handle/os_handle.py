@@ -12,7 +12,8 @@ class OSHandle(ImageHandle[openslide.OpenSlide]):
         return self.handle.properties
 
     @property
-    def base_size(self) -> Tuple[int, int]:
+    def base_size_wh(self) -> Tuple[int, int]:
+        # width height
         return self.handle.dimensions
 
     @property

@@ -17,7 +17,7 @@ from contextlib import nullcontext
 from importlib import import_module
 from logging.config import dictConfig
 from logging.handlers import QueueHandler
-
+from typing import List, Tuple, Callable, Dict, Any
 
 # --- logging helpers -------------------------------------------------
 
@@ -362,7 +362,7 @@ class BatchedResultFile:
         return bool(glob.glob(os.path.join(dst, cls.FILENAME_GLOB)))
 
 
-def load_pipeline(config):
+def load_pipeline(config) -> List[Tuple[Callable, Dict[str, Any]]]:
     """load functions and parameters from config
 
     Parameters
@@ -371,7 +371,7 @@ def load_pipeline(config):
     """
     steps = config.get(section='pipeline', option='steps').splitlines()
 
-    process_queue = []
+    process_queue: List[Tuple[Callable, Dict[str, Any]]] = []
     for process in steps:
         mod_name, func_name = process.split('.')
 

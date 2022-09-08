@@ -6,6 +6,7 @@ from typing import Literal
 # For type checkers of literal key values in the codings -- get warnings if I make mistakes
 # Ideally I may use const variables to replace any hardcoded literal values, but it may interfere with the coding
 # styles of other contributors -- so instead I use the hardcoded literal type annotation for get and set items
+
 ATTR_TYPE_BASE = Literal["in_memory_compression", "warnings", "output", "outdir", "dir",
                          "os_handle", "image_base_size", "image_work_size", "mask_statistics", "base_mag",
                          "img_mask_use", "img_mask_force", "completed", 'filename']
