@@ -1,8 +1,11 @@
 import logging
 import numpy as np
 from skimage.filters import sobel
-from skimage.color import convert_colorspace, rgb2gray
+from skimage.color import rgb2gray
 from distutils.util import strtobool
+from histoqc.functional import bright_contrast, utilities
+from histoqc.functional.bright_contrast import CONTRAST_NAME_RMS, CONTRAST_NAME_MICHELSON, CONTRAST_NAME_TENENGRAD
+from typing import Union, Dict
 
 
 def getBrightnessGray(s, params):
@@ -10,23 +13,18 @@ def getBrightnessGray(s, params):
     prefix = prefix+"_" if prefix else ""
     logging.info(f"{s['filename']} - \tgetContrast:{prefix}")
 
-    limit_to_mask = strtobool(params.get("limit_to_mask", "True"))
-    invert = strtobool(params.get("invert", "False"))
+    limit_to_mask = strtobool(str(params.get("limit_to_mask", "True")))
+    invert = strtobool(str(params.get("invert", "False")))
     mask_name = params.get("mask_name", "img_mask_use")
 
     img = s.getImgThumb(s["image_work_size"])
 
-    img_g = rgb2gray(img)
-    if limit_to_mask:
+    mask_to_use: Union[np.ndarray, None] = utilities.working_mask(s[mask_name], invert=invert,
+                                                                  limit_to_mask=limit_to_mask)
+    mean_intensity, std_intensity = bright_contrast.brightness_gray(img, mask_to_use)
 
-        mask = s[mask_name] if not invert else ~s[mask_name]
-
-        img_g = img_g[mask]
-        if img_g.size == 0:
-            img_g = np.array(-100)
-
-    s.addToPrintList(f"{prefix}grayscale_brightness", str(img_g.mean()))
-    s.addToPrintList(f"{prefix}grayscale_brightness_std", str(img_g.std()))
+    s.addToPrintList(f"{prefix}grayscale_brightness", str(mean_intensity))
+    s.addToPrintList(f"{prefix}grayscale_brightness_std", str(std_intensity))
 
     return
 
@@ -38,31 +36,21 @@ def getBrightnessByChannelinColorSpace(s, params):
     logging.info(f"{s['filename']} - \tgetContrast:{prefix}")
 
     to_color_space = params.get("to_color_space", "RGB")
-    limit_to_mask = strtobool(params.get("limit_to_mask", "True"))
+    limit_to_mask = strtobool(str(params.get("limit_to_mask", "True")))
     mask_name = params.get("mask_name", "img_mask_use")
 
-    invert = strtobool(params.get("invert", "False"))
-
+    invert = strtobool(str(params.get("invert", "False")))
 
     img = s.getImgThumb(s["image_work_size"])
-
-    suffix = ""
-    if (to_color_space != "RGB"):
-        img = convert_colorspace(img, "RGB", to_color_space)
-        suffix = "_" + to_color_space
+    # todo refactor
+    mask_to_use: Union[np.ndarray, None] = utilities.working_mask(s[mask_name], invert=invert,
+                                                                  limit_to_mask=limit_to_mask)
+    suffix = "_" + to_color_space
+    mean_val, std_val = bright_contrast.brightness_by_channel_in_color_space(img, mask_to_use, to_color_space)
 
     for chan in range(0, 3):
-        vals = img[:, :, chan]
-        if (limit_to_mask):
-
-            mask = s[mask_name] if not invert else ~s[mask_name]
-            vals = vals[mask]
-
-            if vals.size == 0:
-                vals = np.array(-100)
-
-        s.addToPrintList(f"{prefix}chan{chan+1}_brightness{suffix}", str(vals.mean()))
-        s.addToPrintList(f"{prefix}chan{chan+1}_brightness_std{suffix}", str(vals.std()))
+        s.addToPrintList(f"{prefix}chan{chan+1}_brightness{suffix}", str(mean_val[chan]))
+        s.addToPrintList(f"{prefix}chan{chan+1}_brightness_std{suffix}", str(std_val[chan]))
 
     return
 
@@ -72,52 +60,30 @@ def getContrast(s, params):
     prefix = prefix + "_" if prefix else ""
 
     logging.info(f"{s['filename']} - \tgetContrast:{prefix}")
-    limit_to_mask = strtobool(params.get("limit_to_mask", True))
+    limit_to_mask = strtobool(str(params.get("limit_to_mask", "True")))
     mask_name = params.get("mask_name", "img_mask_use")
 
-    invert = strtobool(params.get("invert", "False"))
-
+    invert = strtobool(str(params.get("invert", "False")))
 
     img = s.getImgThumb(s["image_work_size"])
+    mask_to_use: Union[np.ndarray, None] = utilities.working_mask(s[mask_name], invert=bool(invert),
+                                                                  limit_to_mask=bool(limit_to_mask))
     img = rgb2gray(img)
 
-    sobel_img = sobel(img) ** 2
+    # why not simpy using nan to replace any default value + warning? tbh even impossible values as default values may
+    # not be the best idea here. You slip just a little bit in other methods that might use such values for arithmetics,
+    # it may give you "valid" numeric values but in fact the whole procedure turns nonsense,
+    # and it is hard to spot it out.
 
-    if limit_to_mask:
-
-        mask = s[mask_name] if not invert else ~s[mask_name]
-
-        sobel_img = sobel_img[mask]
-        img = img[s["img_mask_use"]]
-
-    if img.size == 0: # need a check to ensure that mask wasn't empty AND limit_to_mask is true, still want to
-                      # produce metrics for completeness with warning
-
-        s.addToPrintList(f"{prefix}tenenGrad_contrast", str(-100))
-        s.addToPrintList(f"{prefix}michelson_contrast", str(-100))
-        s.addToPrintList(f"{prefix}rms_contrast", str(-100))
-
+    # defined the working mask to use but there are no positive pixels left
+    if mask_to_use is not None and not mask_to_use.any():
 
         logging.warning(f"{s['filename']} - After BrightContrastModule.getContrast: NO tissue "
                         f"detected, statistics are impossible to compute, defaulting to -100 !")
         s["warnings"].append(f"After BrightContrastModule.getContrast: NO tissue remains "
                              f"detected, statistics are impossible to compute, defaulting to -100 !")
 
-        return
-
-
-    # tenenGrad - Note this must be performed on full image and then subsetted if limiting to mask
-    tenenGrad_contrast = np.sqrt(np.sum(sobel_img)) / img.size
-    s.addToPrintList(f"{prefix}tenenGrad_contrast", str(tenenGrad_contrast))
-
-    # Michelson contrast
-    max_img = img.max()
-    min_img = img.min()
-    contrast = (max_img - min_img) / (max_img + min_img)
-    s.addToPrintList(f"{prefix}michelson_contrast", str(contrast))
-
-    # RMS contrast
-    rms_contrast = np.sqrt(pow(img - img.mean(), 2).sum() / img.size)
-    s.addToPrintList(f"{prefix}rms_contrast", str(rms_contrast))
-
+    all_contrasts: Dict[str, float] = bright_contrast.contrast_stats(img, mask_to_use)
+    for contrast_name, contrast_value in all_contrasts.items():
+        s.addToPrintList(f"{prefix}{contrast_name}", str(contrast_value))
     return

@@ -1,5 +1,5 @@
 import logging
-from histoqc.BaseImage import printMaskHelper
+from histoqc.image_core.BaseImage import printMaskHelper
 from skimage import io, img_as_ubyte
 from skimage.draw import polygon
 import os
@@ -7,6 +7,7 @@ from pathlib import PurePosixPath, Path
 import json
 import xml.etree.ElementTree as ET
 import numpy as np
+
 
 def get_points_from_xml(xml_fname):
     """
@@ -47,6 +48,7 @@ def get_points_from_xml(xml_fname):
 
     return points
 
+
 def get_points_from_geojson(s, fname):
     """
     Parses a typical GeoJSON file containing one or more Polygon or MultiPolygon features.
@@ -75,10 +77,12 @@ def get_points_from_geojson(s, fname):
             s["warnings"].append(msg)
     return point_sets
 
+
 def resize_points(points, resize_factor):
     for k, pointSet in enumerate(points):
         points[k] = [(int(p[0] * resize_factor), int(p[1] * resize_factor)) for p in pointSet]
     return points.copy()
+
 
 def mask_out_annotation(s, point_sets):
     """Returns the mask of annotations"""
@@ -94,6 +98,7 @@ def mask_out_annotation(s, point_sets):
         mask[rr,cc] = 1
 
     return mask
+
 
 def xmlMask(s, params):
     logging.info(f"{s['filename']} - \txmlMask")
@@ -130,6 +135,7 @@ def xmlMask(s, params):
             f"After AnnotationModule.xmlMask NO tissue remains detectable! Downstream modules likely to be incorrect/fail")
 
     return
+
 
 def geoJSONMask(s, params):
     logging.info(f"{s['filename']} - \tgeoJSONMask")

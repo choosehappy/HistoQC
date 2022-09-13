@@ -2,8 +2,9 @@ import hashlib
 import pathlib
 import shutil
 import urllib.request
-
+from histoqc._import_openslide import openslide
 import pytest
+import os
 
 # openslide aperio test images
 IMAGES_BASE_URL = "http://openslide.cs.cmu.edu/download/openslide-testdata/Aperio/"
@@ -38,3 +39,22 @@ def svs_small():
         pytest.fail("incorrect md5")
     else:
         yield img_fn.absolute()
+
+
+@pytest.fixture(scope='session')
+def svs_small_mag(svs_small):
+    osh = openslide.OpenSlide(str(svs_small))
+    mag = osh.properties.get('aperio.AppMag')
+    yield mag
+
+
+@pytest.fixture(scope='session')
+def img_src(svs_small):
+    svs_loc = str(svs_small)
+    osh = openslide.OpenSlide(svs_loc)
+    width, height = 2048, 2048
+    sample_region = osh.read_region((0, 0), 0, (width, height))
+    data_dir = os.path.split(svs_loc)[0]
+    img_dest = os.path.join(data_dir, f"sample_pil.png")
+    sample_region.convert("RGB").save(img_dest)
+    yield sample_region, img_dest

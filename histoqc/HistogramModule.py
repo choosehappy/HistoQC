@@ -10,7 +10,7 @@ global_holder = {} #this holds a local copy of the histograms of the template im
 
 def getHistogram(s, params):
     logging.info(f"{s['filename']} - \tgetHistogram")
-    limit_to_mask = strtobool(params.get("limit_to_mask", True))
+    limit_to_mask = strtobool(str(params.get("limit_to_mask", "True")))
     bins = int(params.get("bins", 20))
 
     img = s.getImgThumb(s["image_work_size"])
@@ -46,8 +46,10 @@ def computeHistogram(img, bins, mask=-1):
 def compareToTemplates(s, params):
     logging.info(f"{s['filename']} - \tcompareToTemplates")
     bins = int(params.get("bins", 20))
-    limit_to_mask = strtobool(params.get("limit_to_mask", True))
-    if (not global_holder.get("templates", False)): #if the histograms haven't already been computed, compute and store them now
+    limit_to_mask = strtobool(str(params.get("limit_to_mask", "True")))
+    # if the histograms haven't already been computed,
+    # compute and store them now
+    if not global_holder.get("templates", False):
         templates = {}
         for template in params["templates"].splitlines():
             templates[os.path.splitext(os.path.basename(template))[0]] = computeHistogram(io.imread(template), bins)

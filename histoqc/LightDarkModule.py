@@ -1,7 +1,7 @@
 import logging
 import os
 import numpy as np
-from histoqc.BaseImage import printMaskHelper
+from histoqc.image_core.BaseImage import printMaskHelper
 from skimage import io, color, img_as_ubyte
 from distutils.util import strtobool
 from skimage.filters import threshold_otsu, rank
@@ -9,14 +9,11 @@ from skimage.morphology import disk
 from sklearn.cluster import KMeans
 from skimage import exposure
 
-import matplotlib.pyplot as plt
-
-
 
 def getIntensityThresholdOtsu(s, params):
     logging.info(f"{s['filename']} - \tLightDarkModule.getIntensityThresholdOtsu")
     name = params.get("name", "classTask")    
-    local = strtobool(params.get("local", "False"))
+    local = strtobool(str(params.get("local", "False")))
     radius = float(params.get("radius", 15))
     selem = disk(radius)
 
@@ -31,7 +28,7 @@ def getIntensityThresholdOtsu(s, params):
     map = img < thresh
 
     s["img_mask_" + name] = map > 0
-    if strtobool(params.get("invert", "False")):
+    if strtobool(str(params.get("invert", "False"))):
         s["img_mask_" + name] = ~s["img_mask_" + name]
 
     io.imsave(s["outdir"] + os.sep + s["filename"] + "_" + name + ".png", img_as_ubyte(s["img_mask_" + name]))
@@ -75,7 +72,7 @@ def getIntensityThresholdPercent(s, params):
 
 
 
-    if strtobool(params.get("invert", "False")):
+    if strtobool(str(params.get("invert", "False"))):
         s["img_mask_" + name] = ~s["img_mask_" + name]
 
     prev_mask = s["img_mask_use"]
@@ -119,7 +116,7 @@ def removeBrightestPixels(s, params):
 
 
 
-    if strtobool(params.get("invert", "False")):
+    if strtobool(str(params.get("invert", "False"))):
         s["img_mask_bright"] = ~s["img_mask_bright"]
 
     prev_mask = s["img_mask_use"]
@@ -154,7 +151,7 @@ def minimumPixelIntensityNeighborhoodFiltering(s,params):
     s["img_mask_bright"] = imgfilt > threshold
 
 
-    if strtobool(params.get("invert", "True")):
+    if strtobool(str(params.get("invert", "True"))):
         s["img_mask_bright"] = ~s["img_mask_bright"]
 
     prev_mask = s["img_mask_use"]

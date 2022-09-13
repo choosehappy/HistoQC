@@ -7,7 +7,7 @@ from ast import literal_eval as make_tuple
 
 from distutils.util import strtobool
 
-from histoqc.BaseImage import printMaskHelper
+from histoqc.image_core.BaseImage import printMaskHelper
 from skimage import io, img_as_ubyte
 from skimage.filters import gabor_kernel, frangi, gaussian, median, laplace
 from skimage.color import rgb2gray
@@ -20,8 +20,6 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import RandomForestClassifier
 
 import numpy as np
-
-import matplotlib.pyplot as plt
 
 
 def pixelWise(s, params):
@@ -88,7 +86,7 @@ def compute_lbp(img, params):
 
 def compute_gaussian(img, params):
     gaussian_sigma = int(params.get("gaussian_sigma", 1))
-    gaussian_multichan = strtobool(params.get("gaussian_multichan", False))
+    gaussian_multichan = strtobool(str(params.get("gaussian_multichan", "False")))
 
     if (gaussian_multichan):
         return gaussian(img, sigma=gaussian_sigma, multichannel=gaussian_multichan)
@@ -131,7 +129,7 @@ def compute_frangi(img, params):
     frangi_scale_step = float(params.get("frangi_scale_step", 2))
     frangi_beta1 = float(params.get("frangi_beta1", .5))
     frangi_beta2 = float(params.get("frangi_beta2", 15))
-    frangi_black_ridges = strtobool(params.get("frangi_black_ridges", "True"))
+    frangi_black_ridges = strtobool(str(params.get("frangi_black_ridges", "True")))
     feat = frangi(rgb2gray(img), scale_range = frangi_scale_range, scale_step =frangi_scale_step, beta =frangi_beta1, gamma=frangi_beta2, black_ridges  =frangi_black_ridges)
     return feat[:, :, None]  # add singleton dimension
 

@@ -1,22 +1,20 @@
 import logging
 import os
-from histoqc.BaseImage import printMaskHelper
+from histoqc.image_core.BaseImage import printMaskHelper, BaseImage, MAG_NA
 from skimage.morphology import remove_small_objects, binary_opening, disk
-from skimage import io, color, img_as_ubyte
-
-import matplotlib.pyplot as plt
+from skimage import io, img_as_ubyte
 
 
-def getBasicStats(s, params):
+def getBasicStats(s: BaseImage, params):
     logging.info(f"{s['filename']} - \tgetBasicStats")
-    osh = s["os_handle"]
-    s.addToPrintList("type", osh.properties.get("openslide.vendor", "NA"))
-    s.addToPrintList("levels", osh.properties.get("openslide.level-count", "NA"))
-    s.addToPrintList("height", osh.properties.get("openslide.level[0].height", "NA"))
-    s.addToPrintList("width", osh.properties.get("openslide.level[0].width", "NA"))
-    s.addToPrintList("mpp_x", osh.properties.get("openslide.mpp-x", "NA"))
-    s.addToPrintList("mpp_y", osh.properties.get("openslide.mpp-y", "NA"))
-    s.addToPrintList("comment", osh.properties.get("openslide.comment", "NA").replace("\n", " ").replace("\r", " "))
+    osh = s.image_handle
+    s.addToPrintList("type", osh.properties.get("openslide.vendor", MAG_NA))
+    s.addToPrintList("levels", osh.properties.get("openslide.level-count", MAG_NA))
+    s.addToPrintList("height", osh.properties.get("openslide.level[0].height", MAG_NA))
+    s.addToPrintList("width", osh.properties.get("openslide.level[0].width", MAG_NA))
+    s.addToPrintList("mpp_x", osh.properties.get("openslide.mpp-x", MAG_NA))
+    s.addToPrintList("mpp_y", osh.properties.get("openslide.mpp-y", MAG_NA))
+    s.addToPrintList("comment", osh.properties.get("openslide.comment", MAG_NA).replace("\n", " ").replace("\r", " "))
     return
 
 
