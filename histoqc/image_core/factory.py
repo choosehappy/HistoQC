@@ -1,7 +1,7 @@
 from histoqc.image_core.wsi_base import SlideBaseImage
 from histoqc.image_core.pil_base import PILBaseImage
 from histoqc.image_core.BaseImage import BaseImage
-from typing import Type, Dict
+from typing import Type, Dict, Optional
 from histoqc._import_openslide import openslide
 
 # enum is introduced in 3.10.
@@ -23,7 +23,11 @@ def get_image_class(params) -> Type[BaseImage]:
     return _img_type_to_class[image_type]
 
 
-def format_img_type(filename: str):
+def format_img_type(filename: Optional[str]):
+    # if not specified --> try PILBaseImage wherein an existing array/PIL can be used to instantiate the BaseImage
+    if filename is None:
+        return PILBaseImage
+
     support_format = openslide.OpenSlide.detect_format(filename)
     if support_format is None:
         return PILBaseImage

@@ -16,7 +16,7 @@ def estimateGreyComatrixFeatures(s, params):
     npatches = int(params.get("npatches", 100))
     nlevels = int(params.get("nlevels", 8))
     feats = params.get("feats","contrast:dissimilarity:homogeneity:ASM:energy:correlation").split(':')
-    invert = strtobool(params.get("invert", "False"))
+    invert = strtobool(str(params.get("invert", "False")))
     mask_name = params.get("mask_name","img_mask_use")
 
 

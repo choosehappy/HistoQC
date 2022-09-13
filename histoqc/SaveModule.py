@@ -28,7 +28,7 @@ def saveFinalMask(s, params):
 
     io.imsave(s["outdir"] + os.sep + s["filename"] + "_mask_use.png", img_as_ubyte(mask))
 
-    if strtobool(params.get("use_mask", "True")):  # should we create and save the fusion mask?
+    if strtobool(str(params.get("use_mask", "True"))):  # should we create and save the fusion mask?
         img = s.getImgThumb(s["image_work_size"])
         out = blend2Images(img, mask)
         io.imsave(s["outdir"] + os.sep + s["filename"] + "_fuse.png", img_as_ubyte(out))

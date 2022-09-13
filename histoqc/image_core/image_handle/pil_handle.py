@@ -39,17 +39,30 @@ class PILHandle(ImageHandle[PILImage]):
 
     @staticmethod
     def __new_pil_handle(fname: Optional[str], params: Dict[ATTR_TYPE, Any]):
-        if fname is not None:
-            return Image.open(fname)
         img_data = params.get(PILHandle.KEY_IMAGE_DATA, None)
+        if img_data is None:
+            assert fname is not None, f"filename and the image array input in params cannot both be None"
+            return Image.open(fname).convert("RGB")
+        #
         assert img_data is not None, f"No valid array data or fname"
         if isinstance(img_data, PILImage):
-            return img_data
+            return img_data.convert("RGB")
         assert isinstance(img_data, np.ndarray), f"Only numpy.ndarray is accepted: {type(img_data)}"
-        return Image.fromarray(img_data)
+        return Image.fromarray(img_data).convert("RGB")
 
     @classmethod
     def build(cls, fname: Optional[str], params: Dict[ATTR_TYPE, Any], **kwargs):
+        """Instantiate the Handle by either the filename or an existing array/PIL object in params.
+        Existing array/PIL have the highest priority to build the handle -- if arrays/PIL are passed then the
+        filename only serves as an identifier for outputs (e.g., results.tsv)
+        Args:
+            fname:
+            params:
+            **kwargs:
+
+        Returns:
+            an PIL.Image.Image object in RGB mode.
+        """
         handle = PILHandle.__new_pil_handle(fname, params)
         return cls(handle, fname)
 

@@ -13,8 +13,8 @@ def getBrightnessGray(s, params):
     prefix = prefix+"_" if prefix else ""
     logging.info(f"{s['filename']} - \tgetContrast:{prefix}")
 
-    limit_to_mask = strtobool(params.get("limit_to_mask", "True"))
-    invert = strtobool(params.get("invert", "False"))
+    limit_to_mask = strtobool(str(params.get("limit_to_mask", "True")))
+    invert = strtobool(str(params.get("invert", "False")))
     mask_name = params.get("mask_name", "img_mask_use")
 
     img = s.getImgThumb(s["image_work_size"])
@@ -36,10 +36,10 @@ def getBrightnessByChannelinColorSpace(s, params):
     logging.info(f"{s['filename']} - \tgetContrast:{prefix}")
 
     to_color_space = params.get("to_color_space", "RGB")
-    limit_to_mask = strtobool(params.get("limit_to_mask", "True"))
+    limit_to_mask = strtobool(str(params.get("limit_to_mask", "True")))
     mask_name = params.get("mask_name", "img_mask_use")
 
-    invert = strtobool(params.get("invert", "False"))
+    invert = strtobool(str(params.get("invert", "False")))
 
     img = s.getImgThumb(s["image_work_size"])
     # todo refactor
@@ -60,10 +60,10 @@ def getContrast(s, params):
     prefix = prefix + "_" if prefix else ""
 
     logging.info(f"{s['filename']} - \tgetContrast:{prefix}")
-    limit_to_mask = strtobool(params.get("limit_to_mask", True))
+    limit_to_mask = strtobool(str(params.get("limit_to_mask", "True")))
     mask_name = params.get("mask_name", "img_mask_use")
 
-    invert = strtobool(params.get("invert", "False"))
+    invert = strtobool(str(params.get("invert", "False")))
 
     img = s.getImgThumb(s["image_work_size"])
     mask_to_use: Union[np.ndarray, None] = utilities.working_mask(s[mask_name], invert=bool(invert),

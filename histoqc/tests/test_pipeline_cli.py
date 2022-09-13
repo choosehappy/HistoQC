@@ -129,13 +129,22 @@ def config_helper(base_img_conf):
     txt = textwrap.dedent(f"""\
             [pipeline]
             steps= BasicModule.getBasicStats
+                   MorphologyModule.removeFatlikeTissue
+                   MorphologyModule.fillSmallHoles
+                   MorphologyModule.removeSmallObjects
                    BlurDetectionModule.identifyBlurryRegions
                    BrightContrastModule.getContrast
                    BrightContrastModule.getBrightnessGray
                    BrightContrastModule.getBrightnessByChannelinColorSpace:RGB
                    BrightContrastModule.getBrightnessByChannelinColorSpace:YUV
-                   TileExtractionModule.TileExtractor
-                   BasicModule.finalComputations                  
+                   TileExtractionModule.extract
+                   BasicModule.finalProcessingSpur
+                   BasicModule.finalProcessingArea
+                   HistogramModule.getHistogram
+                   DeconvolutionModule.separateStains
+                   SaveModule.saveFinalMask
+                   SaveModule.saveThumbnails
+                   BasicModule.finalComputations                
             \
             {base_img_conf}
             \
@@ -161,6 +170,20 @@ def config_helper(base_img_conf):
             [BrightContrastModule.getBrightnessByChannelinColorSpace:YUV]
             limit_to_mask: True
             to_color_space: YUV
+            [DeconvolutionModule.separateStains]
+            ;hed_from_rgb: Hematoxylin + Eosin + DAB
+            ;hdx_from_rgb: Hematoxylin + DAB
+            ;fgx_from_rgb: Feulgen + Light Green
+            ;bex_from_rgb: Giemsa stain : Methyl Blue + Eosin
+            ;rbd_from_rgb: FastRed + FastBlue + DAB
+            ;gdx_from_rgb: Methyl Green + DAB
+            ;hax_from_rgb: Hematoxylin + AEC
+            ;bro_from_rgb: Blue matrix Anilline Blue + Red matrix Azocarmine + Orange matrix Orange-G
+            ;bpx_from_rgb: Methyl Blue + Ponceau Fuchsin
+            ;ahx_from_rgb: Alcian Blue + Hematoxylin
+            ;hpx_from_rgb: Hematoxylin + PAS
+            stain: hed_from_rgb
+            use_mask: True
             """)
     return txt
 
@@ -186,6 +209,8 @@ def test_cli_ext_wsi(multi_svs_dir, tmp_path, config_contrast_ext_wsi):
                  '-o', os.fspath(tmp_path),
                  '*.svs']) == 0
     assert _filenames_in(tmp_path) == _filenames_in(multi_svs_dir).union(['error.log', 'results.tsv'])
+    assert all(['tiles' in _filenames_in(tmp_path / x) for x in _filenames_in(multi_svs_dir)])
+    assert all([f"{x}_tile_bbox.png" in _filenames_in(tmp_path / x) for x in _filenames_in(multi_svs_dir)])
 
 
 def test_cli_ext_pil(multi_png_dir, tmp_path, config_contrast_ext_pil):
@@ -193,3 +218,5 @@ def test_cli_ext_pil(multi_png_dir, tmp_path, config_contrast_ext_pil):
                  '-c', os.fspath(config_contrast_ext_pil),
                  '-p', os.fspath(multi_png_dir), '-o', os.fspath(tmp_path), '*.png']) == 0
     assert _filenames_in(tmp_path) == _filenames_in(multi_png_dir).union(['error.log', 'results.tsv'])
+    assert all(['tiles' in _filenames_in(tmp_path / x) for x in _filenames_in(multi_png_dir)])
+    assert all([f"{x}_tile_bbox.png" in _filenames_in(tmp_path / x) for x in _filenames_in(multi_png_dir)])

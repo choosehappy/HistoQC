@@ -8,7 +8,8 @@ from distutils.util import strtobool
 from abc import ABC, abstractmethod
 import numpy as np
 from PIL import Image, ImageDraw
-from typing import List, Dict, Any, TypeVar, Generic, Union, Tuple, Literal, Callable, get_args
+from contextlib import contextmanager
+from typing import List, Dict, Any, TypeVar, Generic, Union, Tuple, Literal, Callable, Optional, get_args
 
 # os.environ['PATH'] = 'C:\\research\\openslide\\bin' + ';'
 # + os.environ['PATH'] #can either specify openslide bin path in PATH, or add it dynamically
@@ -50,6 +51,9 @@ def printMaskHelper(type, prev_mask, curr_mask):
 
 
 class MaskTileWindows:
+    """
+    Locate the window of tiles in the given downsampled mask. Output Convention: (left, top, right, bottom)
+    """
 
     __rp_list: List
     __mask: np.ndarray
@@ -60,7 +64,7 @@ class MaskTileWindows:
 
     @property
     def mask_pil(self) -> Image.Image:
-        return self.__mask_pil
+        return Image.fromarray(self._mask)
 
     @property
     def _mask(self) -> np.ndarray:
@@ -75,6 +79,10 @@ class MaskTileWindows:
         return getattr(self, attr_name)
 
     def _tile_windows_on_mask(self) -> List[List[Tuple[int, int, int, int]]]:
+        """Helper function to locate the windows of each region in format of (left, top, right, bottom)
+        Returns:
+            List of List of (left, top, right, bottom), nested by connected regions in the mask
+        """
         result_list: List[List[Tuple[int, int, int, int]]] = []
         for region in self._rp_list:
             rp_bbox = region.bbox
@@ -89,12 +97,21 @@ class MaskTileWindows:
 
     @property
     def windows_on_mask(self) -> List[List[Tuple[int, int, int, int]]]:
+        """
+        Returns:
+            Obtain the cached tile windows on the given mask. Results are cached.
+        """
         if not hasattr(self, '__windows_on_mask') or self.__windows_on_mask is None:
             self.__windows_on_mask = self._tile_windows_on_mask()
         return self.__windows_on_mask
 
     @property
     def windows_on_original_image(self) -> List[List[Tuple[int, int, int, int]]]:
+        """Zoom the windows from the mask (which is often downsampled) to the original image, using the defined
+        size factor
+        Returns:
+            Zoomed windows on the original image (left, top, right, bottom)
+        """
         if not hasattr(self, '__windows_on_original_image') or self.__windows_on_original_image is None:
             self.__windows_on_original_image = MaskTileWindows.__window_list_resize(self.windows_on_mask,
                                                                                     self.__size_factor)
@@ -102,7 +119,6 @@ class MaskTileWindows:
 
     def __init_mask(self, mask: np.ndarray):
         self.__mask = mask
-        self.__mask_pil = Image.fromarray(mask)
 
     def __init__(self, mask: np.ndarray, *, work_tile_size: int, work_stride: int,
                  size_factor: float,
@@ -122,14 +138,16 @@ class MaskTileWindows:
 
     @staticmethod
     def max_tile_bbox_top_left_coord(rp_bbox: Tuple[int, int, int, int], work_tile_size: int, work_stride: int):
-        """
+        """ find the coords of the top/left corner of the most right / bottom tile ever possible given the current
+        size and stride
         Args:
-            rp_bbox: [top, left, bottom, right]. Half-open -- [Left, Right) and [Top, Bottom)
-            work_tile_size:
-            work_stride:
-
+            rp_bbox: [top, left, bottom, right]. Half-open -- [Left, Right) and [Top, Bottom). Note that this is the
+                convention of sklearn's region properties, which is different to the (left, top, right, bottom) used by
+                PIL or OpenSlide
+            work_tile_size: Tile size on the working mask, which might be downsampled.
+            work_stride: Stride size on the working mask, which might be downsampled.
         Returns:
-
+            Tuple[int, int]
         """
         assert work_stride > 0
         assert work_tile_size > 0
@@ -151,9 +169,12 @@ class MaskTileWindows:
     def region_tile_cand_pil_window_on_mask(rp_bbox: Tuple[int, int, int, int],
                                             work_tile_size: int,
                                             work_stride: int) -> List[Tuple[int, int, int, int]]:
-        """
+        """ Split the region given by the region property bounding box into a grid of tile windows. Support overlapping.
+        This computes the all possible window given by the rp regardless of the tissue condition. Refinement can be
+        performed in further steps.
         Args:
-            rp_bbox: [top, left, bottom, right]. Half-open -- [Left, Right) and [Top, Bottom)
+            rp_bbox: sklearn region property style: [top, left, bottom, right]. Half-open
+                -- [Left, Right) and [Top, Bottom)
             work_tile_size:
             work_stride:
 
@@ -174,6 +195,16 @@ class MaskTileWindows:
     def validate_tile_mask_area_thresh(mask_pil: Image.Image,
                                        tile_window_on_mask: Tuple[int, int, int, int],
                                        tissue_thresh: float) -> bool:
+        """ Validate whether the given tile window (left, top, right, bottom) contains sufficient tissue. This is
+        computed by calculating the tissue % in the corresponding mask region.
+        Args:
+            mask_pil:
+            tile_window_on_mask: List of (left, top, right, bottom)
+            tissue_thresh: minimum requirement of tissue percentage
+
+        Returns:
+            True if the window has sufficient tissue.
+        """
         # left, top, right, bottom = tile_window
         window_pil = mask_pil.crop(tile_window_on_mask)
         window_np = np.array(window_pil, copy=False)
@@ -184,12 +215,13 @@ class MaskTileWindows:
     def _valid_tile_windows_on_mask_helper(mask_pil: Image.Image,
                                            tile_cand_pil_window_on_mask: List[Tuple[int, int, int, int]],
                                            tissue_thresh: float) -> List[Tuple[int, int, int, int]]:
-        """ Potential tile windows with sufficient usable tissue
+        """ All tile windows with sufficient usable tissue from the grid of window candidates
         Args:
             mask_pil:
-            tile_cand_pil_window_on_mask: left, top, right, bottom
-            tissue_thresh
+            tile_cand_pil_window_on_mask: left, top, right, bottom. Potential candidates of windows
+            tissue_thresh: minimum requirement of tissue %
         Returns:
+            List of validated windows (left, top, right, bottom)  from the given candidates.
         """
         # output = []
         # for window in tile_cand_pil_window:
@@ -205,12 +237,26 @@ class MaskTileWindows:
                                 work_tile_size: int,
                                 work_stride: int,
                                 tissue_thresh: float) -> List[Tuple[int, int, int, int]]:
+        """Wrapper. Obtain the valid window with sufficient tissue from a list of region property objects based on
+        a given mask. For each individual region, a list of window in format (left, top, right, bottom) is obtained.
+        Resulting lists of windows of all regions are nested into a list as the object.
+        Args:
+            mask_pil: PIL handle of the downsampled mask
+            rp_bbox: bounding box of sklearn region properties. Note that its convention is [top, left, bottom, right],
+                which is different to the (left, top, right, bottom) in PIL and OpenSlide
+            work_tile_size: Working tile size on the downsampled mask
+            work_stride:    Working stride size on the downsampled mask
+            tissue_thresh:  Minimum requirement of tissue % in each window
+
+        Returns:
+            List of (left, top, right, bottom)
+        """
         cand = MaskTileWindows.region_tile_cand_pil_window_on_mask(rp_bbox, work_tile_size, work_stride)
         return MaskTileWindows._valid_tile_windows_on_mask_helper(mask_pil, cand, tissue_thresh)
 
     @staticmethod
     def __window_resize_helper(window_on_mask: Tuple[int, int, int, int], size_factor) -> Tuple[int, int, int, int]:
-        """
+        """Helper function to zoom the window coordinates on downsampled mask to the original sized image.
         Args:
             window_on_mask:  (left, top, right, bottom)
             size_factor:  size_factor = img_size / mask_size
@@ -218,6 +264,7 @@ class MaskTileWindows:
         Returns:
             Resized (left, top, right, bottom)
         """
+
         return tuple(int(r * size_factor) for r in window_on_mask)
 
     @staticmethod
@@ -258,6 +305,15 @@ class BaseImage(dict, ABC, Generic[HandleType]):
 
     @staticmethod
     def validate_dim(dim: str):
+        """Validate the string format of the dim as the input of getImgThumb method. It must pure number or number
+        ended with "X", case-insensitive.
+        Args:
+            dim: input dim string. It is force cast to str if not a string type
+
+        Returns:
+            dim if valid. None if not a valid input.
+        """
+        dim = str(dim)
         matched = _PATTERN_DIM_LEADING_DEC.match(dim) or _PATTERN_DIM_LEADING_NUMERIC.match(dim)
         if matched:
             return dim
@@ -296,8 +352,28 @@ class BaseImage(dict, ABC, Generic[HandleType]):
 
         return super().__setitem__(key, value)
 
-    def _default_dict_config(self, fname: str, fname_outdir: str, params: Dict[str, Any]):
-        self.in_memory_compression = strtobool(params.get("in_memory_compression", "False"))
+    @staticmethod
+    def __not_none_str(input_str):
+        """If an array is given then the fname only serves as the identifier for the output visualization.
+        Make the fname empty string if None
+        Returns:
+
+        """
+        return "" if input_str is None else str(input_str)
+
+    def _default_dict_config(self, fname: Optional[str], fname_outdir: str, params: Dict[str, Any]):
+        """Common configuration of dict entries.
+        Args:
+            fname: identifier of the object. Note that at this stage ImageHandle is already created, either by the file
+                name, or by the array/PIL data. The fname is only for the output visualization purpose.
+            fname_outdir:
+            params: Parameters exclusive for BaseImage
+
+        Returns:
+
+        """
+        fname = BaseImage.__not_none_str(fname)
+        self.in_memory_compression = strtobool(str(params.get("in_memory_compression", "False")))
 
         self["warnings"]: str = ['']  # this needs to be first key in case anything else wants to add to it
         self["output"]: List[str] = []
@@ -328,7 +404,16 @@ class BaseImage(dict, ABC, Generic[HandleType]):
 
     # I want to keep the dict keys of BaseImage untouched for now, avoiding too much refactoring.
     # For PILImage, base_mag is given by the config.ini or None
-    def _init_resource(self, fname, params):
+    def _init_resource(self, fname, params: Dict):
+        """ Create handles and assign properties like size and mag based on the handle or predefined parameters.
+        Actual image handle type is determined by the subclass (either PILBaseImage or SlideBaseImage)
+        Args:
+            fname: URI of the image data. For PILBaseImage (using PILHandle), the fname could be merely an identifier
+                for result printing, if an existing array/PIL is given to the constructor.
+            params: parameters dict to instantiate the BsaeImage and ImageHandle.
+        Returns:
+
+        """
         handle = self.new_image_handle(fname, params)
         self.__image_handle = handle
         # for backward compatibility only
@@ -338,6 +423,10 @@ class BaseImage(dict, ABC, Generic[HandleType]):
         self.addToPrintList("base_mag", self["base_mag"])
 
     def _init_mask_use(self):
+        """Initialize the mask using the current working size. All ones --> everywhere usable.
+        Returns:
+
+        """
         self["img_mask_use"] = np.ones(self.getImgThumb(self["image_work_size"]).shape[0:2], dtype=bool)
 
     def _init_tile_window_cache(self):
@@ -400,6 +489,12 @@ class BaseImage(dict, ABC, Generic[HandleType]):
             root_dict[key] = self._tile_windows_helper(tile_size, tile_stride, tissue_thresh)
         return root_dict[key]
 
+    def clear_tile_window(self, tile_size: int = 256, tile_stride: int = 256,
+                                tissue_thresh: float = 0.5):
+        key = f"{tile_size}_{tile_stride}_{tissue_thresh}"
+        root_dict = self.__tile_window_cache
+        root_dict.pop(key, None)
+
     @staticmethod
     def __bbox_overlay_helper(img: np.ndarray, windows_grouped_by_region: List[List[Tuple[int, int, int, int]]],
                               outline: str = 'green', width: int = 2) -> Image.Image:
@@ -461,11 +556,31 @@ class BaseImage(dict, ABC, Generic[HandleType]):
         size = (width, height)
         return location, size
 
+    @contextmanager
+    def mp_tile_window_manager(self,
+                               tile_size: int = 256,
+                               tile_stride: int = 256, tissue_thresh: float = 0.5, force_rewrite: bool = False):
+        """Avoid pickling the MaskTileWindow in MP. Clear cached objects on exit
+        Args:
+            tile_size:
+            tile_stride:
+            tissue_thresh:
+            force_rewrite:
+
+        Returns:
+
+        """
+        self.tile_windows(tile_size, tile_stride, tissue_thresh, force_rewrite=force_rewrite)
+        yield
+        # clearn cache
+        self.clear_tile_window(tile_size, tile_stride, tissue_thresh)
+
     def valid_tile_extraction(self,
                               path, *, prefix='', suffix='.png',
                               screen_callbacks: Callable = default_screen_identity.__func__,
                               tile_size: int = 256,
                               tile_stride: int = 256, tissue_thresh: float = 0.5, force_rewrite: bool = False):
+
         tw: MaskTileWindows = self.tile_windows(tile_size, tile_stride, tissue_thresh, force_rewrite=force_rewrite)
         window_list_of_regions = tw.windows_on_original_image
         for region_windows in window_list_of_regions:
@@ -487,7 +602,7 @@ class BaseImage(dict, ABC, Generic[HandleType]):
 # Utils
 def __validate_mag_values(s: BaseImage, mag, params, warning_str):
     if (mag == MAG_NA or strtobool(
-            params.get("confirm_base_mag", "False"))):
+            str(params.get("confirm_base_mag", "False")))):
         # do analysis work here
         logging.warning(warning_str)
         s["warnings"].append(warning_str)

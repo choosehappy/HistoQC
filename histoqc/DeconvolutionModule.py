@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 def separateStains(s, params):
     logging.info(f"{s['filename']} - \tseparateStains")
     stain = params.get("stain", "")
-    use_mask = strtobool(params.get("use_mask", "True"))
+    use_mask = strtobool(str(params.get("use_mask", "True")))
 
     if stain == "":
         logging.error(f"{s['filename']} - stain not set in DeconvolutionModule.separateStains")

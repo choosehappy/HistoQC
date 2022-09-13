@@ -11,9 +11,16 @@ class Pipeline(Callable):
     _process_queue: List[Tuple[Callable, Dict[str, Any]]]
     __mpm: Manager
 
+    def __len__(self):
+        return len(self.process_queue)
+
     @property
     def mpm(self):
         return self.__mpm
+
+    @property
+    def process_queue(self):
+        return self._process_queue
 
     def _init_default_mp(self, mpm):
         if mpm is None:
@@ -26,12 +33,12 @@ class Pipeline(Callable):
         self._init_default_mp(mpm)
 
     @classmethod
-    def from_config(cls, config: configparser.ConfigParser, mpm: Manager):
+    def from_config(cls, config: configparser.ConfigParser, mpm: Manager) -> "Pipeline":
         process_queue = load_pipeline(config)
         return cls.from_funcs(process_queue, mpm)
 
     @classmethod
-    def from_funcs(cls, process_params: List[Tuple[Callable, Dict[str, Any]]], mpm: Manager):
+    def from_funcs(cls, process_params: List[Tuple[Callable, Dict[str, Any]]], mpm: Manager) -> "Pipeline":
         return cls(process_params, mpm)
 
     def __call__(self, s):
