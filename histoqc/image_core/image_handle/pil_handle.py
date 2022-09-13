@@ -1,6 +1,6 @@
 from .base_class import ImageHandle
 from histoqc._import_openslide import openslide
-from typing import Tuple, Dict, Any, List, Union, get_args
+from typing import Tuple, Dict, Any, List, Union, get_args, Optional
 from histoqc.image_core.meta import ATTR_TYPE
 from PIL import Image
 from PIL.Image import Image as PILImage
@@ -38,16 +38,18 @@ class PILHandle(ImageHandle[PILImage]):
         return super().get_level_dimensions(level)
 
     @staticmethod
-    def __new_pil_handle(fname: str, params: Dict[ATTR_TYPE, Any]):
+    def __new_pil_handle(fname: Optional[str], params: Dict[ATTR_TYPE, Any]):
         if fname is not None:
             return Image.open(fname)
         img_data = params.get(PILHandle.KEY_IMAGE_DATA, None)
         assert img_data is not None, f"No valid array data or fname"
+        if isinstance(img_data, PILImage):
+            return img_data
         assert isinstance(img_data, np.ndarray), f"Only numpy.ndarray is accepted: {type(img_data)}"
         return Image.fromarray(img_data)
 
     @classmethod
-    def build(cls, fname: str, params: Dict[ATTR_TYPE, Any], **kwargs):
+    def build(cls, fname: Optional[str], params: Dict[ATTR_TYPE, Any], **kwargs):
         handle = PILHandle.__new_pil_handle(fname, params)
         return cls(handle, fname)
 

@@ -164,9 +164,9 @@ class MaskTileWindows:
         tile_max_top, tile_max_left = MaskTileWindows.max_tile_bbox_top_left_coord(rp_bbox,
                                                                                    work_tile_size,
                                                                                    work_stride)
-        all_tops = np.arange(top_rp, tile_max_top + 1, work_stride)
-        all_lefts = np.arange(left_rp, tile_max_left + 1, work_stride)
-        def window(left, top, size): return left, top, left + size, top + size
+        all_tops = np.arange(top_rp, tile_max_top + 1, work_stride, dtype=int)
+        all_lefts = np.arange(left_rp, tile_max_left + 1, work_stride, dtype=int)
+        def window(left, top, size): return int(left), int(top), int(left + size), int(top + size)
         all_tile_pil_window = [window(left, top, work_tile_size) for left in all_lefts for top in all_tops]
         return all_tile_pil_window
 
@@ -209,7 +209,7 @@ class MaskTileWindows:
         return MaskTileWindows._valid_tile_windows_on_mask_helper(mask_pil, cand, tissue_thresh)
 
     @staticmethod
-    def __window_resize_helper(window_on_mask: Tuple[int, int, int, int], size_factor):
+    def __window_resize_helper(window_on_mask: Tuple[int, int, int, int], size_factor) -> Tuple[int, int, int, int]:
         """
         Args:
             window_on_mask:  (left, top, right, bottom)
@@ -218,7 +218,7 @@ class MaskTileWindows:
         Returns:
             Resized (left, top, right, bottom)
         """
-        return tuple(r * size_factor for r in window_on_mask)
+        return tuple(int(r * size_factor) for r in window_on_mask)
 
     @staticmethod
     def __window_list_resize(window_on_mask: List[List[Tuple[int, int, int, int]]],
@@ -449,6 +449,12 @@ class BaseImage(dict, ABC, Generic[HandleType]):
 
         """
         left, top, right, bottom = window
+
+        left = int(left)
+        top = int(top)
+        right = int(right)
+        bottom = int(bottom)
+
         location = (left, top)
         width = right - left
         height = bottom - top
@@ -457,7 +463,7 @@ class BaseImage(dict, ABC, Generic[HandleType]):
 
     def valid_tile_extraction(self,
                               path, *, prefix='', suffix='.png',
-                              screen_callbacks: Callable = default_screen_identity,
+                              screen_callbacks: Callable = default_screen_identity.__func__,
                               tile_size: int = 256,
                               tile_stride: int = 256, tissue_thresh: float = 0.5, force_rewrite: bool = False):
         tw: MaskTileWindows = self.tile_windows(tile_size, tile_stride, tissue_thresh, force_rewrite=force_rewrite)
@@ -472,7 +478,7 @@ class BaseImage(dict, ABC, Generic[HandleType]):
                 if not valid_flag:
                     continue
                 # prefix can be the slide name
-                full_export_dest = os.path.join(path, f"{prefix}{suffix}")
+                full_export_dest = os.path.join(path, f"{prefix}_{window}{suffix}")
                 actual_path, actual_base = os.path.split(full_export_dest)
                 os.makedirs(actual_path, exist_ok=True)
                 region.save(full_export_dest)
