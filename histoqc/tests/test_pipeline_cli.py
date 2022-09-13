@@ -44,6 +44,15 @@ def multi_svs_dir(tmp_path_factory, svs_small):
     yield pth
 
 
+@pytest.fixture(scope='module')
+def multi_png_dir(tmp_path_factory, img_src):
+    sample_region, img_dest = img_src
+    pth = tmp_path_factory.mktemp('histoqc_test_multi_png')
+    shutil.copy(img_dest, pth.joinpath('1.png'))
+    shutil.copy(img_dest, pth.joinpath('2.png'))
+    yield pth
+
+
 @pytest.fixture(scope='function')
 def minimal_config(tmp_path_factory):
     pth = tmp_path_factory.mktemp('config').joinpath('min_config.ini')
@@ -88,3 +97,99 @@ def test_cli_multiprocess_batching(multi_svs_dir, tmp_path, minimal_config, tmp_
         '*.svs'
     ]) == 0
     assert _filenames_in(tmp_path) == _filenames_in(multi_svs_dir).union(['error.log', 'results_0.tsv', 'results_1.tsv'])
+
+
+@pytest.fixture(scope='module')
+def wsi_base_config():
+    conf_txt = """
+            [BaseImage.BaseImage]
+            image_work_size = 1.25x
+            #three options: relative2mask, absolute, relative2image
+            mask_statistics = relative2mask
+            confirm_base_mag: False
+            \
+    """
+    yield conf_txt
+
+
+@pytest.fixture(scope='module')
+def pil_base_config(wsi_base_config, svs_small_mag):
+    conf_txt = f"""
+            [BaseImage.BaseImage]
+            image_work_size = 1.25x
+            #three options: relative2mask, absolute, relative2image
+            mask_statistics = relative2mask
+            confirm_base_mag: False
+            base_mag: {svs_small_mag} \
+    """
+    yield conf_txt
+
+
+def config_helper(base_img_conf):
+    txt = textwrap.dedent(f"""\
+            [pipeline]
+            steps= BasicModule.getBasicStats
+                   BlurDetectionModule.identifyBlurryRegions
+                   BrightContrastModule.getContrast
+                   BrightContrastModule.getBrightnessGray
+                   BrightContrastModule.getBrightnessByChannelinColorSpace:RGB
+                   BrightContrastModule.getBrightnessByChannelinColorSpace:YUV
+                   TileExtractionModule.TileExtractor
+                   BasicModule.finalComputations                  
+            \
+            {base_img_conf}
+            \
+
+            [BasicModule.getBasicStats]
+            image_work_size = 1.25x
+            
+            [BrightContrastModule.getContrast]
+            limit_to_mask: False
+            
+            
+            [BrightContrastModule.getBrightnessGray]
+            limit_to_mask: True
+            
+            [BrightContrastModule.getBrightnessByChannelinColorSpace:RGB]
+            limit_to_mask: True
+            
+            [TileExtractionModule.TileExtractor]
+            tile_size = 256
+            tile_stride = 256
+            tissue_ratio = 0.5
+            
+            [BrightContrastModule.getBrightnessByChannelinColorSpace:YUV]
+            limit_to_mask: True
+            to_color_space: YUV
+            """)
+    return txt
+
+
+@pytest.fixture(scope='module')
+def config_contrast_ext_wsi(tmp_path_factory, wsi_base_config):
+    pth = tmp_path_factory.mktemp('config').joinpath('config_ext_wsi.ini')
+    pth.write_text(config_helper(wsi_base_config))
+    yield pth
+
+
+@pytest.fixture(scope='module')
+def config_contrast_ext_pil(tmp_path_factory, pil_base_config):
+    pth = tmp_path_factory.mktemp('config').joinpath('config_ext_pil.ini')
+    pth.write_text(config_helper(pil_base_config))
+    yield pth
+
+
+def test_cli_ext_wsi(multi_svs_dir, tmp_path, config_contrast_ext_wsi):
+    assert main(['-n', '2',
+                 '-c', os.fspath(config_contrast_ext_wsi),
+                 '-p', os.fspath(multi_svs_dir),
+                 '-o', os.fspath(tmp_path),
+                 '*.svs']) == 0
+    assert _filenames_in(tmp_path) == _filenames_in(multi_svs_dir).union(['error.log', 'results.tsv'])
+
+
+def test_cli_ext_pil(multi_png_dir, tmp_path, config_contrast_ext_pil):
+    assert main(['-n', '2',
+                 '-c', os.fspath(config_contrast_ext_pil),
+                 '-p', os.fspath(multi_png_dir), '-o', os.fspath(tmp_path), '*.png']) == 0
+    assert _filenames_in(tmp_path) == _filenames_in(multi_png_dir).union(['error.log', 'results.tsv'])

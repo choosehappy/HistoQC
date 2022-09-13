@@ -6,18 +6,6 @@ from histoqc._import_openslide import openslide
 import pathlib
 
 
-@pytest.fixture(scope='session')
-def img_src(svs_small):
-    svs_loc = str(svs_small)
-    osh = openslide.OpenSlide(svs_loc)
-    width, height = 256, 256
-    sample_region = osh.read_region((0, 0), 0, (width, height))
-    data_dir = os.path.split(svs_loc)[0]
-    img_dest = os.path.join(data_dir, f"sample_pil.png")
-    sample_region.convert("RGB").save(img_dest)
-    yield sample_region, img_dest
-
-
 def image_handles_helper(pil_handle):
     # png_loc = img_src
     # pil_handle: PILHandle = PILHandle.build(png_loc, dict())

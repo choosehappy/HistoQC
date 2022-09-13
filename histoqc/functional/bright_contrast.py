@@ -28,7 +28,8 @@ def _masking_collated(img: np.ndarray, mask: Union[np.ndarray, None]) -> np.ndar
         ndarray with dim N x C. N as the # of pixels being selected by masking
         and C is the # of image Channels. Empty array (0 x C) if there are no pixels left.
     """
-    n_channels = img.ndim
+    assert img.ndim <= 3, f"Unsupported dimension f{img.ndim}"
+    n_channels = np.atleast_3d(img).shape[-1]
     assert n_channels <= 3, f"Unsupported Channel #"
 
     if mask is None:

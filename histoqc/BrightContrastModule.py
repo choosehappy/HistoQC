@@ -66,8 +66,8 @@ def getContrast(s, params):
     invert = strtobool(params.get("invert", "False"))
 
     img = s.getImgThumb(s["image_work_size"])
-    mask_to_use: Union[np.ndarray, None] = utilities.working_mask(s[mask_name], invert=invert,
-                                                                  limit_to_mask=limit_to_mask)
+    mask_to_use: Union[np.ndarray, None] = utilities.working_mask(s[mask_name], invert=bool(invert),
+                                                                  limit_to_mask=bool(limit_to_mask))
     img = rgb2gray(img)
 
     # why not simpy using nan to replace any default value + warning? tbh even impossible values as default values may
