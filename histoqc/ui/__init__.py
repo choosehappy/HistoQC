@@ -4,11 +4,13 @@ serves the histoqc.ui from the package data
 """
 import contextlib
 import os.path
+import shutil
 import socket
 import tempfile
 from functools import partial
 from http.server import SimpleHTTPRequestHandler
 from http.server import ThreadingHTTPServer
+from pathlib import Path
 
 try:
     from importlib.resources import files as _files
@@ -97,6 +99,15 @@ def _serve_httpd(httpd):
 
 def run_server(data_directory, *, host="0.0.0.0", port=8000, resultfile=None):
     """run the histoqc user interface"""
+    if resultfile:
+        print("Copying predefined result file to server folder")
+        current_folder = Path(__file__).parent
+        target_file = current_folder / "UserInterface" / "FIXED.tsv"
+        # If the file already exists, it will be replaced
+        shutil.copy(resultfile, target_file)
     with _create_server(data_directory, host=host, port=port) as httpd:
         print(f"HistoQC data directory: '{data_directory}'")
         _serve_httpd(httpd)
+    if resultfile:
+        print("Removing temp file")
+        target_file.unlink()
