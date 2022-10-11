@@ -26,6 +26,10 @@ def main(argv=None):
     parser.add_argument('--deploy', metavar="OUT_DIR",
                         default=None,
                         help='Write UI to OUT_DIR')
+    parser.add_argument('--resultfile', 
+                        type=str,
+                        default=None,
+                        help='If provided, use this fixed result file rather than what is selected in the UI.')
     args = parser.parse_args(argv)
 
     if args.deploy:
@@ -36,7 +40,7 @@ def main(argv=None):
         return 0
 
     # serve the histoqc ui
-    run_server(args.data_directory, host=args.bind, port=args.port)
+    run_server(args.data_directory, host=args.bind, port=args.port, resultfile=args.resultfile)
 
 
 if __name__ == "__main__":

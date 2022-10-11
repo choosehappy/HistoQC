@@ -95,7 +95,7 @@ def _serve_httpd(httpd):
         return 0
 
 
-def run_server(data_directory, *, host="0.0.0.0", port=8000):
+def run_server(data_directory, *, host="0.0.0.0", port=8000, resultfile=None):
     """run the histoqc user interface"""
     with _create_server(data_directory, host=host, port=port) as httpd:
         print(f"HistoQC data directory: '{data_directory}'")
