@@ -1,5 +1,4 @@
-function load_raw_data () {
-
+function load_uploaded_file() {
 	var $this = $(this);
 	var cur_file = null;
 
@@ -9,93 +8,110 @@ function load_raw_data () {
 	} else {
 		cur_file = $this.get(0).files[0];
 	}
-
-	// hide the "Upload Dataset" button
-	$("#upload-button").css("display", "none");
-
 	// read dataset from the file ----------------------------------------------
 	console.log("[LOG] Read in file: " + cur_file.name.split(".")[0]);
 
 	var fileReader = new FileReader();
 	fileReader.readAsText(cur_file);
 	fileReader.onload = function () {
-
-		console.log("[LOG] App initializing...");
 		var file_text = fileReader.result;
-
-		// parse the file into header and dataset ------------------------------
-		// parse necessary information from the header 
-		var absdirRe = /#outdir:?\s*([^\n]*)\n/;
-		var abs_outdir = absdirRe.exec(file_text)[1];
-		var reldirRe = /([^\\\/]*)$/;
-		var rel_outdir = reldirRe.exec(abs_outdir)[1];
-		DATA_PATH = DATA_PATH + rel_outdir + "/";
-		// the header will be needed when saving result using the table view
-		FILE_HEADER = file_text.split(/#dataset:\s?/)[0] + "#dataset: ";
-
-		// load dataset as list
-		dataset_text = file_text.split(/#dataset:\s?/)[1];
-		ORIGINAL_DATASET = d3.tsv.parse(dataset_text, function (d) {
-			if (d.hasOwnProperty("")) delete d[""];
-			for (var key in d) {
-				if ($.isNumeric(d[key])) {
-					d[key] = +d[key];
-				}
-			}
-			// add placeholder for cohortfinder results
-			if (!d.hasOwnProperty("embed_x")) d["embed_x"] = null;
-			if (!d.hasOwnProperty("embed_y")) d["embed_y"] = null;
-			// non-negative integers in cohortfinder results
-			if (!d.hasOwnProperty("groupid")) d["groupid"] = -1;
-			// 0 or 1 in cohortfinder results
-			if (!d.hasOwnProperty("testind")) d["testind"] = 2;
-			if (!d.hasOwnProperty("sitecol")) d["sitecol"] = "None";
-			if (!d.hasOwnProperty("labelcol")) d["labelcol"] = "None";
-			return d;
-		});
-
-		// show the current loaded dataset name
-		$("#dataset-tag")
-			.css("display", "inline")
-			.text("Current dataset: " + cur_file.name + " | Size: " + 
-				ORIGINAL_DATASET.length + " slides");
-
-		if (ORIGINAL_DATASET.length >= 500) {
-			CALC_UMAP = false;
-		} else {
-			CALC_UMAP = true;
-		}
-
-		// update all necessary global variables -------------------------------
-		// build case list
-		ORIGINAL_CASE_LIST = ORIGINAL_DATASET.map(function (d) {
-			return d["filename"];
-		});
-		// build the lookup table (filename -> dom_id)
-		for (var i = 0; i < ORIGINAL_DATASET.length; i ++) {
-			var cur_file_name = ORIGINAL_DATASET[i]["filename"];
-			ORIGINAL_CASE_DICT[cur_file_name] = {
-				"dom_id": cur_file_name.replace(/\W/g, "-")
-			};
-		}
-		// build feature list
-		ORIGINAL_FEATURE_LIST = Object.keys(ORIGINAL_DATASET[0]);
-		// update current selection
-		PARA_COOR_SELECTED = ORIGINAL_CASE_LIST;
-		CURRENT_PARALLEL_ATTRIBUTES = ORIGINAL_FEATURE_LIST.filter(function(d) {
-			// in DEFAULT_PARAC_ATTRIBUTES and is numeric
-			if (typeof(ORIGINAL_DATASET[0][d]) == "number" && 
-				DEFAULT_PARAC_ATTRIBUTES.indexOf(d) != -1) {
-				return true;
-			}
-			return false;
-		});
-
-		// initiate the UI -----------------------------------------------------
-		CURRENT_MULTI_SELECTED = ORIGINAL_DATASET;
-		CURRENT_CASE_LIST = ORIGINAL_CASE_LIST;
-		init_views();
+		load_raw_data(file_text, cur_file.name);
 	}
+}
+
+function load_fixed_file() {
+	console.log("[LOG] Getting results file from server ...");
+	var fixed = "FIXED.tsv";
+	result = $.get(fixed, function (data, status) {
+		if (status=="success"){
+			console.log("[LOG] Reading file: " + fixed);
+			load_raw_data(data, fixed);
+		}
+		else{
+			alert("Unable to read file " + fixed + " from server. Status: " + status);
+		}
+	});
+}
+
+function load_raw_data (file_text, file_name) {
+
+	// hide the upload buttons
+	$("#upload-button").css("display", "none");
+	$("#view-button").css("display", "none");
+	console.log("[LOG] App initializing...");
+
+	// parse the file into header and dataset ------------------------------
+	// parse necessary information from the header 
+	var absdirRe = /#outdir:?\s*([^\n]*)\n/;
+	var abs_outdir = absdirRe.exec(file_text)[1];
+	var reldirRe = /([^\\\/]*)$/;
+	var rel_outdir = reldirRe.exec(abs_outdir)[1];
+	DATA_PATH = DATA_PATH + rel_outdir + "/";
+	// the header will be needed when saving result using the table view
+	FILE_HEADER = file_text.split(/#dataset:\s?/)[0] + "#dataset: ";
+
+	// load dataset as list
+	dataset_text = file_text.split(/#dataset:\s?/)[1];
+	ORIGINAL_DATASET = d3.tsv.parse(dataset_text, function (d) {
+		if (d.hasOwnProperty("")) delete d[""];
+		for (var key in d) {
+			if ($.isNumeric(d[key])) {
+				d[key] = +d[key];
+			}
+		}
+		// add placeholder for cohortfinder results
+		if (!d.hasOwnProperty("embed_x")) d["embed_x"] = null;
+		if (!d.hasOwnProperty("embed_y")) d["embed_y"] = null;
+		// non-negative integers in cohortfinder results
+		if (!d.hasOwnProperty("groupid")) d["groupid"] = -1;
+		// 0 or 1 in cohortfinder results
+		if (!d.hasOwnProperty("testind")) d["testind"] = 2;
+		if (!d.hasOwnProperty("sitecol")) d["sitecol"] = "None";
+		if (!d.hasOwnProperty("labelcol")) d["labelcol"] = "None";
+		return d;
+	});
+
+	// show the current loaded dataset name
+	$("#dataset-tag")
+		.css("display", "inline")
+		.text("Current dataset: " + file_name + " | Size: " + 
+			ORIGINAL_DATASET.length + " slides");
+
+	if (ORIGINAL_DATASET.length >= 500) {
+		CALC_UMAP = false;
+	} else {
+		CALC_UMAP = true;
+	}
+
+	// update all necessary global variables -------------------------------
+	// build case list
+	ORIGINAL_CASE_LIST = ORIGINAL_DATASET.map(function (d) {
+		return d["filename"];
+	});
+	// build the lookup table (filename -> dom_id)
+	for (var i = 0; i < ORIGINAL_DATASET.length; i ++) {
+		var cur_file_name = ORIGINAL_DATASET[i]["filename"];
+		ORIGINAL_CASE_DICT[cur_file_name] = {
+			"dom_id": cur_file_name.replace(/\W/g, "-")
+		};
+	}
+	// build feature list
+	ORIGINAL_FEATURE_LIST = Object.keys(ORIGINAL_DATASET[0]);
+	// update current selection
+	PARA_COOR_SELECTED = ORIGINAL_CASE_LIST;
+	CURRENT_PARALLEL_ATTRIBUTES = ORIGINAL_FEATURE_LIST.filter(function(d) {
+		// in DEFAULT_PARAC_ATTRIBUTES and is numeric
+		if (typeof(ORIGINAL_DATASET[0][d]) == "number" && 
+			DEFAULT_PARAC_ATTRIBUTES.indexOf(d) != -1) {
+			return true;
+		}
+		return false;
+	});
+
+	// initiate the UI -----------------------------------------------------
+	CURRENT_MULTI_SELECTED = ORIGINAL_DATASET;
+	CURRENT_CASE_LIST = ORIGINAL_CASE_LIST;
+	init_views();
 }
 
 
