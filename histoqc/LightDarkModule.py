@@ -58,18 +58,31 @@ def getIntensityThresholdPercent(s, params):
     lower_thresh = float(params.get("lower_threshold", -float("inf")))
     upper_thresh = float(params.get("upper_threshold", float("inf")))
 
-    lower_var = float(params.get("lower_variance", -float("inf")))
-    upper_var = float(params.get("upper_variance", float("inf")))
+    # Prepare parameter names due to issues #213 and #219
+    # set lower standard deviation
+    if params.get('lower_var'):
+        lower_std = float(params.get('lower_var'))
+    elif params.get('lower_std'):
+        lower_std = float(params.get('lower_std'))
+    else:
+        lower_std = float("inf")
+    # set upper standard deviation
+    if params.get('upper_var'):
+        upper_std = float(params.get('upper_var'))
+    elif params.get('upper_std'):
+        upper_std = float(params.get('upper_std'))
+    else:
+        upper_std = float("inf")
 
     img = s.getImgThumb(s["image_work_size"])
-    img_var = img.std(axis=2)
+    img_std = img.std(axis=2)
 
-    map_var = np.bitwise_and(img_var > lower_var, img_var < upper_var)
+    map_std = np.bitwise_and(img_std > lower_std, img_std < upper_std)
 
     img = color.rgb2gray(img)
     map = np.bitwise_and(img > lower_thresh, img < upper_thresh)
 
-    map = np.bitwise_and(map, map_var)
+    map = np.bitwise_and(map, map_std)
 
     s["img_mask_" + name] = map > 0
 
