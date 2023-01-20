@@ -55,24 +55,14 @@ def getIntensityThresholdPercent(s, params):
     name = params.get("name", "classTask")
     logging.info(f"{s['filename']} - \tLightDarkModule.getIntensityThresholdPercent:\t {name}")
 
-    lower_thresh = float(params.get("lower_threshold", -float("inf")))
-    upper_thresh = float(params.get("upper_threshold", float("inf")))
+    lower_thresh = float(params.get("lower_threshold", "-inf"))
+    upper_thresh = float(params.get("upper_threshold", "inf"))
 
     # Prepare parameter names due to issues #213 and #219
     # set lower standard deviation
-    if params.get('lower_var'):
-        lower_std = float(params.get('lower_var'))
-    elif params.get('lower_std'):
-        lower_std = float(params.get('lower_std'))
-    else:
-        lower_std = float("inf")
+    lower_std = float(args.get("lower_var") or args.get("lower_std") or "-inf")
     # set upper standard deviation
-    if params.get('upper_var'):
-        upper_std = float(params.get('upper_var'))
-    elif params.get('upper_std'):
-        upper_std = float(params.get('upper_std'))
-    else:
-        upper_std = float("inf")
+    upper_std = float(args.get("upper_var") or args.get("upper_std") or "inf")
 
     img = s.getImgThumb(s["image_work_size"])
     img_std = img.std(axis=2)
