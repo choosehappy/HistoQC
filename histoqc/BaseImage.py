@@ -9,14 +9,18 @@ from PIL import Image
 import openslide
 def getBestThumb(s, x, y, size):
     osh = s["os_handle"]
-    if s["bounding_box"]:
-        downsample_factor = max(*(dim / thumb for dim, thumb in zip(osh.dimensions, size)))
-        level = s.getBestLevelForDownsample(downsample_factor)
-        size = tuple((np.array([s["img_bbox"][2],s["img_bbox"][3]])/osh.level_downsamples[level]).astype(int))
-        tile = osh.read_region((x, y), level, size)
-        return rgba2rgb(s, tile)
-    else:
+
+    # get thumb from og
+    if not s["enable_bounding_box"]:
         return osh.get_thumbnail(size)
+    
+    # generate the thumbnail with bounding box at the highest/best level
+    downsample_factor = max(*(dim / thumb for dim, thumb in zip(osh.dimensions, size)))
+    level = s.getBestLevelForDownsample(downsample_factor)
+    size = tuple((np.array([s["img_bbox"][2],s["img_bbox"][3]])/osh.level_downsamples[level]).astype(int))
+    tile = osh.read_region((x, y), level, size)
+    return rgba2rgb(s, tile)
+        
 
 def rgba2rgb(s, img):
     bg_color = "#" + s["os_handle"].properties.get(openslide.PROPERTY_NAME_BACKGROUND_COLOR, "ffffff")
@@ -76,10 +80,11 @@ class BaseImage(dict):
         self["dir"] = os.path.dirname(fname)
 
         self["os_handle"] = openslide.OpenSlide(fname)
-        self["bounding_box"] = strtobool(params.get("bounding_box","False"))
-        # check if the bbox if doesn't have bbox set bounding_box to False
+        self["image_base_size"] = self["os_handle"].dimensions
+        self["enable_bounding_box"] = strtobool(params.get("enable_bounding_box","False"))
+        # check if the bbox if doesn't have bbox set enable_bounding_box to False
         self.setBBox()
-
+        self.addToPrintList("image_bounding_box", self["img_bbox"])
         self["image_work_size"] = params.get("image_work_size", "1.25x")
         self["mask_statistics"] = params.get("mask_statistics", "relative2mask")
         self["base_mag"] = getMag(self, params)
@@ -88,7 +93,7 @@ class BaseImage(dict):
         mask_statistics_types = ["relative2mask", "absolute", "relative2image"]
         if (self["mask_statistics"] not in mask_statistics_types):
             logging.error(
-                f"mask_statistic type \"{self['mask_statistics']}\" is not one of the 3 supported options relative2mask, absolute, relative2image!")
+                f"mask_statistic type '{self['mask_statistics']}' is not one of the 3 supported options relative2mask, absolute, relative2image!")
             exit()
 
         self["img_mask_use"] = np.ones(self.getImgThumb(self["image_work_size"]).shape[0:2], dtype=bool)
@@ -116,23 +121,19 @@ class BaseImage(dict):
         (dim_width, dim_height) = osh.dimensions
         self["img_bbox"] = (0, 0, dim_width, dim_height)
         # try to get bbox if bounding_box is ture
-        if self["bounding_box"]:
+        if self["enable_bounding_box"]:
             # try get bbox from os handle properties
-            x = osh.properties.get(openslide.PROPERTY_NAME_BOUNDS_X)
-            y = osh.properties.get(openslide.PROPERTY_NAME_BOUNDS_Y)
-            width = osh.properties.get(openslide.PROPERTY_NAME_BOUNDS_WIDTH)
-            height = osh.properties.get(openslide.PROPERTY_NAME_BOUNDS_HEIGHT)
-            if x and y and width and height:
-                try:
-                    self["img_bbox"] = tuple(int(num) for num in (x, y, width, height))
-                except:
-                    # no bbox info in slide set bounding_box as Flase
-                    self["bounding_box"] = False
-                    logging.warning(f"{self['filename']}: could not convert the bounding box")
-            else:
-                # no bbox info in slide set bounding_box as Flase
-                self["bounding_box"] = False
-                logging.warning(f"{self['filename']}: could not read the bounding box")
+            try:
+                x = int(osh.properties.get(openslide.PROPERTY_NAME_BOUNDS_X, 'NA'))
+                y = int(osh.properties.get(openslide.PROPERTY_NAME_BOUNDS_Y, 'NA'))
+                width = int(osh.properties.get(openslide.PROPERTY_NAME_BOUNDS_WIDTH, 'NA'))
+                height = int(osh.properties.get(openslide.PROPERTY_NAME_BOUNDS_HEIGHT, 'NA'))
+                self["img_bbox"] = (x, y, width, height)
+            except:
+                # no bbox info in slide set enable_bounding_box as Flase
+                self["enable_bounding_box"] = False
+                logging.warning(f"{self['filename']}: Bounding Box requested but could not read")
+                self["warnings"].append("Bounding Box requested but could not read")
 
     def addToPrintList(self, name, val):
         self[name] = val
@@ -166,11 +167,15 @@ class BaseImage(dict):
                             f"{self['filename']}: Desired Image Level {dim+1} does not exist! Instead using level {osh.level_count-1}! Downstream output may not be correct")
                         self["warnings"].append(
                             f"Desired Image Level {dim+1} does not exist! Instead using level {osh.level_count-1}! Downstream output may not be correct")
-                    size = tuple((np.array(img_base_size)/osh.level_downsamples[level]).astype(int)) if self["bounding_box"] else osh.level_downsamples[level]
+                    size = (tuple((np.array(img_base_size)/osh.level_downsamples[level]).astype(int))
+                            if self["enable_bounding_box"]
+                            else osh.level_downsamples[level])
                     logging.info(
                         f"{self['filename']} - \t\tloading image from level {dim} of size {osh.level_dimensions[level]}")
                     tile = osh.read_region((bx, by), level, size)                
-                    self[key] = np.asarray(rgba2rgb(self, tile)) if np.shape(tile)[-1]==4 else np.asarray(tile)
+                    self[key] = (np.asarray(rgba2rgb(self, tile))
+                                if np.shape(tile)[-1]==4 
+                                else np.asarray(tile))
                 else:  # assume its an explicit size, *WARNING* this will likely cause different images to have different
                     # perceived magnifications!
                     logging.info(f"{self['filename']} - \t\tcreating image thumb of size {str(dim)}")
@@ -189,10 +194,14 @@ class BaseImage(dict):
                 downsample_factor = base_mag / target_mag
                 level = self.getBestLevelForDownsample(downsample_factor)
                 relative_down = downsample_factor/osh.level_downsamples[level]
-                size=tuple((np.array(img_base_size)/osh.level_downsamples[level]).astype(int)) if self["bounding_box"] else img_base_size
+                size=(tuple((np.array(img_base_size)/osh.level_downsamples[level]).astype(int))
+                        if self["enable_bounding_box"]
+                        else osh.level_dimensions[level])
                 if relative_down == 1.0: #there exists an open slide level exactly for this requested mag
                     output = osh.read_region((bx, by), level, size)
-                    output = np.asarray(rgba2rgb(self, output)) if np.shape(output)[-1]==4 else np.asarray(output)
+                    output = (np.asarray(rgba2rgb(self, output))
+                                if np.shape(output)[-1]==4
+                                else np.asarray(output))
                 else: #there does not exist an openslide level for this mag, need to create ony dynamically
                     win_size = 2048
                     win_size_down = int(win_size * 1 / relative_down)
