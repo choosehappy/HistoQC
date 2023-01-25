@@ -29,7 +29,7 @@ def main(argv=None):
     parser.add_argument('--result', '-rs', 
                         type=str,
                         default=None,
-                        help='If provided the result file name, use this fixed result file name rather than what is selected in the UI.')
+                        help='If provided the result file name, UI automatically load the fixed local result file. Especially useful for remote data viewing')
     args = parser.parse_args(argv)
 
     if args.deploy:
