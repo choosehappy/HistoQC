@@ -2,7 +2,8 @@ $(document).ready(function () {
 	console.log("[LOG] Document ready.")
 
 	// app entrance. func `load_raw_data` at data_load.js.
-	$("#upload-input").change(load_raw_data);
+	$("#upload-input").change(load_uploaded_file);
+	$("#view-results").click(load_fixed_file);
 	// app exit. back to the uploading page, reset to the init structure.
 	$("#reset-button").click(function () {window.location.reload();});
 	$(".view-mngmt-btn").click(function(){
