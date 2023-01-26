@@ -36,6 +36,39 @@ def saveFinalMask(s, params):
     return
 
 
+def saveAssociatedImage(s, key:str, dim:int):
+    logging.info(f"{s['filename']} - \tsaveMacro")
+    osh = s["os_handle"]
+
+    if not key in osh.associated_images:
+        message = f"{s['filename']}- \tsave{key} Can't Read '{key}' Image from Slide's Associated Images"
+        logging.warning(message)
+        s["warnings"].append(message)
+        return
+    
+    # get asscociated image by key
+    associated_img = osh.associated_images[key]
+    (width, height)  = associated_img.size
+
+    # calulate the width or height depends on dim
+    if width > height:
+        h = round(dim * height / width)
+        size = (dim, h)
+    else:
+        w = round(dim * width / height)
+        size = (w, dim)
+    
+    associated_img = associated_img.resize(size)
+    associated_img = np.asarray(associated_img)[:, :, 0:3]
+    io.imsave(f"{s['outdir']}{os.sep}{s['filename']}_{key}.png", associated_img)
+
+def saveMacro(s, params):
+    dim = params.get("small_dim", 500)
+    saveAssociatedImage(s, "macro", dim)
+    return
+    
+
+
 def saveThumbnails(s, params):
     logging.info(f"{s['filename']} - \tsaveThumbnail")
     # we create 2 thumbnails for usage in the front end, one relatively small one, and one larger one
