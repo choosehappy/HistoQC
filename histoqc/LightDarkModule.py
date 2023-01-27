@@ -59,25 +59,10 @@ def getIntensityThresholdPercent(s, params):
     upper_thresh = float(params.get("upper_threshold", "inf"))
 
     # Prepare parameter names due to issues #213 and #219
-    
     # set lower standard deviation
-    lower_var = params.get("lower_var")
-    lower_std = float(lower_var or params.get("lower_std") or "-inf")
-    if lower_var:
-        logging.warning(f"{s['filename']} - LightDarkModule.getIntensityThresholdPercent:{name} "
-                        f"lower_var will be deprecated in future versions in favor of lower_std")
-        s["warnings"].append(f"LightDarkModule.getIntensityThresholdPercent:{name} "
-                        f"lower_var will be deprecated in future versions in favor of lower_std")
-
+    lower_std = float(args.get("lower_var") or args.get("lower_std") or "-inf")
     # set upper standard deviation
-    upper_var = params.get("upper_var")
-    if upper_var:
-        logging.warning(f"{s['filename']} - LightDarkModule.getIntensityThresholdPercent:{name} "
-                        f"upper_var will be deprecated in future versions in favor of upper_std")
-        s["warnings"].append(f"LightDarkModule.getIntensityThresholdPercent:{name} "
-                        f"upper_var will be deprecated in future versions in favor of upper_std")
-    
-    upper_std = float(upper_var or params.get("upper_std") or "inf")
+    upper_std = float(args.get("upper_var") or args.get("upper_std") or "inf")
 
     img = s.getImgThumb(s["image_work_size"])
     img_std = img.std(axis=2)
