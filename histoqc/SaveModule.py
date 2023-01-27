@@ -37,11 +37,11 @@ def saveFinalMask(s, params):
 
 
 def saveAssociatedImage(s, key:str, dim:int):
-    logging.info(f"{s['filename']} - \tsaveMacro")
+    logging.info(f"{s['filename']} - \tsave{key.capitalize()}")
     osh = s["os_handle"]
 
     if not key in osh.associated_images:
-        message = f"{s['filename']}- \tsave{key} Can't Read '{key}' Image from Slide's Associated Images"
+        message = f"{s['filename']}- \tsave{key.capitalize()} Can't Read '{key}' Image from Slide's Associated Images"
         logging.warning(message)
         s["warnings"].append(message)
         return
