@@ -55,21 +55,24 @@ def getIntensityThresholdPercent(s, params):
     name = params.get("name", "classTask")
     logging.info(f"{s['filename']} - \tLightDarkModule.getIntensityThresholdPercent:\t {name}")
 
-    lower_thresh = float(params.get("lower_threshold", -float("inf")))
-    upper_thresh = float(params.get("upper_threshold", float("inf")))
+    lower_thresh = float(params.get("lower_threshold", "-inf"))
+    upper_thresh = float(params.get("upper_threshold", "inf"))
 
-    lower_var = float(params.get("lower_variance", -float("inf")))
-    upper_var = float(params.get("upper_variance", float("inf")))
+    # Prepare parameter names due to issues #213 and #219
+    # set lower standard deviation
+    lower_std = float(args.get("lower_var") or args.get("lower_std") or "-inf")
+    # set upper standard deviation
+    upper_std = float(args.get("upper_var") or args.get("upper_std") or "inf")
 
     img = s.getImgThumb(s["image_work_size"])
-    img_var = img.std(axis=2)
+    img_std = img.std(axis=2)
 
-    map_var = np.bitwise_and(img_var > lower_var, img_var < upper_var)
+    map_std = np.bitwise_and(img_std > lower_std, img_std < upper_std)
 
     img = color.rgb2gray(img)
     map = np.bitwise_and(img > lower_thresh, img < upper_thresh)
 
-    map = np.bitwise_and(map, map_var)
+    map = np.bitwise_and(map, map_std)
 
     s["img_mask_" + name] = map > 0
 

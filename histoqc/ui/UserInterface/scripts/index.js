@@ -1,6 +1,8 @@
 $(document).ready(function () {
 	console.log("[LOG] Document ready.")
 
+	load_default_result()
+
 	// app entrance. func `load_raw_data` at data_load.js.
 	$("#upload-input").change(load_raw_data);
 	// app exit. back to the uploading page, reset to the init structure.
@@ -35,6 +37,22 @@ $(document).ready(function () {
 });
 
 
+function load_default_result () {
+	// if the default result file exist 
+	if (typeof DEFAULT_RESULT_FILE_NAME !== 'undefined') {
+		// read tsv file
+		d3.text(DATA_PATH + DEFAULT_RESULT_FILE_NAME, function(error, file_text) {
+			if (error) {
+				$("#upload-button").css("display", "");
+				throw error;
+			}
+			console.log("[LOG] App initializing...");
+			load_result(DEFAULT_RESULT_FILE_NAME, file_text);
+		});
+	} else {
+		$("#upload-button").css("display", "");
+	}
+}
 function reset_views_size () {
 	// TODO: HARD CODE size assignment
 	var total_height = $(window).height() - 

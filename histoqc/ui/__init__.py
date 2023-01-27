@@ -44,7 +44,7 @@ class HistoQCHTTPRequestHandler(SimpleHTTPRequestHandler):
 
 
 @contextlib.contextmanager
-def _create_server(data_directory, *, host="0.0.0.0", port=8000):
+def _create_server(data_directory, *, host="0.0.0.0", port=8000, result=None):
     """server contextmanager (to simplify testing)"""
 
     # --- prepare server classes --------------------------------------
@@ -67,7 +67,7 @@ def _create_server(data_directory, *, host="0.0.0.0", port=8000):
     # --- prepare ui structure ----------------------------------------
 
     with tempfile.TemporaryDirectory() as tmp_dir:
-        package_resource_copytree('histoqc.ui', 'UserInterface', tmp_dir)
+        package_resource_copytree('histoqc.ui', 'UserInterface', tmp_dir, result)
         ui_directory = os.path.join(tmp_dir, "UserInterface")
 
         _handler = partial(HistoQCHTTPRequestHandler,
@@ -95,8 +95,7 @@ def _serve_httpd(httpd):
         return 0
 
 
-def run_server(data_directory, *, host="0.0.0.0", port=8000):
+def run_server(data_directory, *, host="0.0.0.0", port=8000, result=None):
     """run the histoqc user interface"""
-    with _create_server(data_directory, host=host, port=port) as httpd:
-        print(f"HistoQC data directory: '{data_directory}'")
+    with _create_server(data_directory, host=host, port=port, result=result) as httpd:
         _serve_httpd(httpd)
