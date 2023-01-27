@@ -112,7 +112,9 @@ var DEFAULT_IMAGE_EXTENSIONS = [
     "_small_remove.png",
     "_spur.png",
     "_otsu.png",
-    "_otsulocal.png"
+    "_otsulocal.png",
+    "_macro.png"
+
 ];
 // list of image types that have a corresponding _xxx_small.png version
 var SMALL_IMAGE_EXTENSIONS = [
