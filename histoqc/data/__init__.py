@@ -47,7 +47,7 @@ class _ManagedPkgData(ContextDecorator):
                 TemporaryDirectory(prefix=".histoqc_pkg_data_tmp", dir=os.getcwd())
             )
             for rsrc in {'models', 'pen', 'templates'}:
-                package_resource_copytree('histoqc.data', rsrc, self._tmp_dir)
+                package_resource_copytree('histoqc.data', rsrc, self._tmp_dir, None)
         return self._tmp_dir
 
     def inject_pkg_data_fallback(self, config: ConfigParser):

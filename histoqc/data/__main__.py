@@ -20,7 +20,7 @@ def main(argv=None):
 
     # write histoqc package data to directory
     for rsrc in {'models', 'pen', 'templates'}:
-        package_resource_copytree('histoqc.data', rsrc, args.out_dir)
+        package_resource_copytree('histoqc.data', rsrc, args.out_dir, None)
 
     return 0
 

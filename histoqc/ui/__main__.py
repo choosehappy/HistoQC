@@ -36,7 +36,7 @@ def main(argv=None):
         if not os.path.isdir(args.deploy):
             print(f"'{args.deploy}' not a directory", file=sys.stderr)
             return -1
-        package_resource_copytree('histoqc.ui', 'UserInterface', args.deploy)
+        package_resource_copytree('histoqc.ui', 'UserInterface', args.deploy, args.result)
         return 0
 
     # serve the histoqc ui
