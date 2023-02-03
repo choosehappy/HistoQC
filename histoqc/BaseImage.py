@@ -197,7 +197,7 @@ class BaseImage(dict):
                 size=(tuple((np.array(img_base_size)/osh.level_downsamples[level]).astype(int))
                         if self["enable_bounding_box"]
                         else osh.level_dimensions[level])
-                if relative_down == 1.0: #there exists an open slide level exactly for this requested mag
+                if np.isclose(relative_down, 1, atol=.01): #there exists an open slide level exactly for this requested mag
                     output = osh.read_region((bx, by), level, size)
                     output = (np.asarray(rgba2rgb(self, output))
                                 if np.shape(output)[-1]==4

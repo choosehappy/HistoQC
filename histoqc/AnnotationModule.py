@@ -75,16 +75,17 @@ def get_points_from_geojson(s, fname):
             s["warnings"].append(msg)
     return point_sets
 
-def resize_points(points, resize_factor):
+def resize_points(points, resize_factor, offset=(0,0)):
     for k, pointSet in enumerate(points):
-        points[k] = [(int(p[0] * resize_factor), int(p[1] * resize_factor)) for p in pointSet]
+        points[k] = [(int((p[0] - offset[0]) * resize_factor), int((p[1] - offset[1]) * resize_factor)) for p in pointSet]
     return points.copy()
 
 def mask_out_annotation(s, point_sets):
     """Returns the mask of annotations"""
-    resize_factor = np.shape(s["img_mask_use"])[1] / s["image_base_size"][0]
+    (x, y, ncol, nrow) = s["img_bbox"]
+    resize_factor = np.shape(s["img_mask_use"])[1] / ncol
 
-    point_sets = resize_points(point_sets, resize_factor)
+    point_sets = resize_points(point_sets, resize_factor, offset=(x,y))
 
     mask = np.zeros((np.shape(s["img_mask_use"])[0],np.shape(s["img_mask_use"])[1]),dtype=np.uint8)
 
@@ -95,74 +96,69 @@ def mask_out_annotation(s, point_sets):
 
     return mask
 
-def xmlMask(s, params):
-    logging.info(f"{s['filename']} - \txmlMask")
-    mask = s["img_mask_use"]
+def getParams(s, params):
+    # read params - format: xml, json; file_path; suffix; 
+    format = params.get("format", None)
+    file_path = params.get("file_path", None)
+    suffix = params.get("suffix", "")
 
-    xml_basepath = params.get("xml_filepath",None)
-    xml_suffix = params.get("xml_suffix", "")
-    if not xml_basepath:
-        xml_basepath = s["dir"]
+    # try use default value if the params are not provided
+    if not format:
+        msg = f"format is not provided, using xml as the default format."
+        logging.warning(f"{s['filename']} - {msg}")
+        s["warnings"].append(msg) 
+    
+    if not file_path:
+        # warning
+        msg = f"file path is not provided, using \"{s['dir']}\" as the default file path"
+        logging.warning(f"{s['filename']} - {msg}")
+        s["warnings"].append(msg)        
+        file_path = s["dir"]
+    
 
-    xml_fname = xml_basepath + os.sep + PurePosixPath(s['filename']).stem + xml_suffix + '.xml'
-    if not Path(xml_fname).is_file():
-        msg = f"Annotation file {xml_fname} does not exist. Skipping."
+    return (format, file_path, suffix)
+
+def saveAnnotationMask(s, params):
+    logging.info(f"{s['filename']} - \tgetAnnotationMask")
+    
+    (format, file_path, suffix) = getParams(s, params)
+    
+    # annotation file path
+    f_path = f"{file_path}{os.sep}{PurePosixPath(s['filename']).stem}{suffix}.{format}"
+
+    if not Path(f_path).is_file():
+        msg = f"Annotation file {f_path} does not exist. Skipping..."
+        logging.warning(f"{s['filename']} - {msg}")
+        s["warnings"].append(msg)
+        return
+    
+    logging.info(f"{s['filename']} - \tusing {f_path}")
+
+    # read points set
+    if(format.lower() == 'xml'): # xml
+        point_sets = get_points_from_xml(f_path)        
+    elif(format.lower() == 'json'): # geojson
+        point_sets = get_points_from_geojson(s, f_path)
+    else: # unsupported format
+        msg = f"unsupported file format '{format}'. Skipping..."
         logging.warning(f"{s['filename']} - {msg}")
         s["warnings"].append(msg)
         return
 
-    logging.info(f"{s['filename']} - \tusing {xml_fname}")
-
-    point_sets = get_points_from_xml(xml_fname)
     annotationMask = mask_out_annotation(s, point_sets) > 0
-    io.imsave(s["outdir"] + os.sep + s["filename"] + "_xmlMask.png", img_as_ubyte(annotationMask))
 
+    mask_file_name = f"{s['outdir']}{os.sep}{s['filename']}_annot_{format.lower()}.png"
+    io.imsave(mask_file_name, img_as_ubyte(annotationMask))
+    
     prev_mask = s["img_mask_use"]
     s["img_mask_use"] = prev_mask & annotationMask
-
-    s.addToPrintList("xmlMask",
+    s.addToPrintList("getAnnotationMask",
                      printMaskHelper(params.get("mask_statistics", s["mask_statistics"]), prev_mask, s["img_mask_use"]))
 
     if len(s["img_mask_use"].nonzero()[0]) == 0:  # add warning in case the final tissue is empty
         logging.warning(
-            f"{s['filename']} - After AnnotationModule.xmlMask NO tissue remains detectable! Downstream modules likely to be incorrect/fail")
+            f"{s['filename']} - After AnnotationModule.getAnnotationMask NO tissue remains detectable! Downstream modules likely to be incorrect/fail")
         s["warnings"].append(
-            f"After AnnotationModule.xmlMask NO tissue remains detectable! Downstream modules likely to be incorrect/fail")
-
-    return
-
-def geoJSONMask(s, params):
-    logging.info(f"{s['filename']} - \tgeoJSONMask")
-    mask = s["img_mask_use"]
-
-    geojson_basepath = params.get("geojson_filepath",None)
-    geojson_suffix = params.get("geojson_suffix", "")
-    if not geojson_basepath:
-        geojson_basepath = s["dir"]
-
-    fname = geojson_basepath + os.sep + PurePosixPath(s['filename']).stem + geojson_suffix + '.json'
-    if not Path(fname).is_file():
-        msg = f"Annotation file {fname} does not exist. Skipping."
-        logging.warning(f"{s['filename']} - {msg}")
-        s["warnings"].append(msg)
-        return
-
-    logging.info(f"{s['filename']} - \tusing {fname}")
-
-    point_sets = get_points_from_geojson(s, fname)
-    annotationMask = mask_out_annotation(s, point_sets) > 0
-    io.imsave(s["outdir"] + os.sep + s["filename"] + "_geoJSONMask.png", img_as_ubyte(annotationMask))
-
-    prev_mask = s["img_mask_use"]
-    s["img_mask_use"] = prev_mask & annotationMask
-
-    s.addToPrintList("geoJSONMask",
-                     printMaskHelper(params.get("mask_statistics", s["mask_statistics"]), prev_mask, s["img_mask_use"]))
-
-    if len(s["img_mask_use"].nonzero()[0]) == 0:  # add warning in case the final tissue is empty
-        logging.warning(
-            f"{s['filename']} - After AnnotationModule.geoJSONMask NO tissue remains detectable! Downstream modules likely to be incorrect/fail")
-        s["warnings"].append(
-            f"After AnnotationModule.geoJSONMask NO tissue remains detectable! Downstream modules likely to be incorrect/fail")
+            f"After AnnotationModule.getAnnotationMask NO tissue remains detectable! Downstream modules likely to be incorrect/fail")
 
     return
