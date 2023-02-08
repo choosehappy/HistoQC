@@ -104,16 +104,21 @@ def getParams(s, params):
 
     # try use default value if the params are not provided
     if not format:
+        # set default format
+        format = "xml"
+        # warning msg
         msg = f"format is not provided, using xml as the default format."
         logging.warning(f"{s['filename']} - {msg}")
-        s["warnings"].append(msg) 
+        s["warnings"].append(msg)
+        
     
     if not file_path:
-        # warning
+        # set default file path
+        file_path = s["dir"]
+        # warning msg
         msg = f"file path is not provided, using \"{s['dir']}\" as the default file path"
         logging.warning(f"{s['filename']} - {msg}")
-        s["warnings"].append(msg)        
-        file_path = s["dir"]
+        s["warnings"].append(msg)
     
 
     return (format, file_path, suffix)
