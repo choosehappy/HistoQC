@@ -154,6 +154,7 @@ class BaseImage(dict):
             osh = self["os_handle"]
             (bx, by, bwidth, bheight) = self["img_bbox"]
             img_base_size = (bwidth, bheight)
+
             if dim.replace(".", "0", 1).isdigit(): #check to see if dim is a number
                 downscale_factor = float(dim)
                 if downscale_factor < 1 and not dim.is_integer():  # specifying a downscale factor from base
@@ -207,18 +208,28 @@ class BaseImage(dict):
                     win_size_down = int(win_size * 1 / relative_down)
                     
                     output = []
-                    for x in range(bx, bwidth, round(win_size * osh.level_downsamples[level])):
+                    window_increment = round(win_size * osh.level_downsamples[level])
+                    for x in range(bx, bwidth, window_increment):
                         row_piece = []
-                        for y in range(by, bheight, round(win_size * osh.level_downsamples[level])):
-                            aa = osh.read_region((x, y), level, (win_size, win_size))
-                            if np.shape(aa)[-1]==4:
-                                aa = rgba2rgb(self, aa)
-                            bb = aa.resize((win_size_down, win_size_down))
-                            row_piece.append(bb)
+                        for y in range(by, bheight, window_increment):
+                            win_size_x, win_size_y = [win_size] * 2
+
+                            # Adjust extraction size for endcut
+                            if bwidth < x + window_increment:
+                                win_size_x = round(win_size * (bwidth - x) / window_increment)
+                            if bheight < y +  window_increment:
+                                win_size_y = round(win_size * (bheight - y) / window_increment)
+                            win_size_down_x = int(win_size_x * 1 / relative_down)
+                            win_size_down_y = int(win_size_y * 1 / relative_down)
+
+                            region_level = osh.read_region((x, y), level, (win_size_x, win_size_y))
+                            if np.shape(region_level)[-1]==4:
+                                region_level = rgba2rgb(self, region_level)
+                            region_target = region_level.resize((win_size_down_x, win_size_down_y))
+                            row_piece.append(region_target)
                         row_piece = np.concatenate(row_piece, axis=0)
                         output.append(row_piece)
                     output = np.concatenate(output, axis=1)
-                    output = output[0:round(bwidth * 1 / downsample_factor), 0:round(bheight * 1 / downsample_factor), :]
                 self[key] = output
             else:
                 logging.error(
