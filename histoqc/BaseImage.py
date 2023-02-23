@@ -139,7 +139,7 @@ class BaseImage(dict):
             size = float(size)
             # specifies a desired downscaling factor 
             if size < 1:
-                target_downscaling_factor = int(size)
+                target_downscaling_factor = size
                 target_sampling_factor = 1 / target_downscaling_factor
                 target_dims = tuple(np.rint(np.asarray(img_base_size) * target_downscaling_factor).astype(int))
                 
@@ -178,7 +178,7 @@ class BaseImage(dict):
 
         # can't determine operation.
         else:
-            # TODO print out error message
+            # print out error message
             err_msg = f"{self['filename']}: invalid arguments - {size}"
             logging.error(err_msg)
             self["warnings"].append(err_msg)
@@ -191,7 +191,8 @@ def getBestThumb(s: BaseImage, x: int, y: int, dims: Tuple[int, int], target_sam
     
     # get thumb from og
     if not s["enable_bounding_box"]:
-        return np.array(osh.get_thumbnail(dims))
+        max_dim = dims[0] if dims[0] > dims[1] else dims[1]
+        return np.array(osh.get_thumbnail((max_dim, max_dim)))
     
     (level, isExactLevel) = s.getBestLevelForDownsample(target_sampling_factor)
     
@@ -201,12 +202,12 @@ def getBestThumb(s: BaseImage, x: int, y: int, dims: Tuple[int, int], target_sam
         return np.asarray(rgba2rgb(s, tile)) if np.shape(tile)[-1]==4 else np.asarray(tile)
     # scale down the thumb img from the next high level
     else:
-        return resizeTileDownward(s, dims, target_sampling_factor, level)
+        return resizeTileDownward(s, target_sampling_factor, level)
         
 '''
 the followings are helper functions 
 '''
-def resizeTileDownward(self, dims, target_downsampling_factor, level):
+def resizeTileDownward(self, target_downsampling_factor, level):
     osh = self["os_handle"]
     (bx, by, bwidth, bheight) = self["img_bbox"]
     end_x = bx + bwidth
@@ -284,8 +285,8 @@ def getDimensionsByOneDim(s: BaseImage, dim: int) -> Tuple[int, int]:
     (x, y, width, height) = s["img_bbox"]
     # calulate the width or height depends on dim
     if width > height:
-        h = int(round(dim * height / width))
+        h = int(dim * height / width)
         return (dim, h)
     else:
-        w = int(round(dim * width / height))
+        w = int(dim * width / height)
         return (w, dim)
