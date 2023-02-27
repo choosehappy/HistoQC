@@ -103,11 +103,6 @@ class BaseImage(dict):
         else:
             return (osh.get_best_level_for_downsample(downsample_factor), False)
 
-    # this approach sequentially loads smaller tiles, resizes them, and then merges them together,
-    # drastically reducing memory overhead.
-
-
-
     def getImgThumb(self, size: str):
         # get img key with size
         key = "img_" + str(size)
@@ -235,6 +230,9 @@ def resizeTileDownward(self, target_downsampling_factor, level):
             win_width = int(round(win_width / cloest_downsampling_factor))
             win_height = int(round(win_height / cloest_downsampling_factor))
             
+            # TODO Note: this isn't very efficient, and if more efficiency isneeded 
+            # We should likely refactor using "paste" from Image.
+            # Or even just set the pixels directly with indexing.
             cloest_region = osh.read_region((x, y), level, (win_width, win_height))
             if np.shape(cloest_region)[-1]==4:
                 cloest_region = rgba2rgb(self, cloest_region)
@@ -242,7 +240,7 @@ def resizeTileDownward(self, target_downsampling_factor, level):
             row_piece.append(target_region)
         row_piece = np.concatenate(row_piece, axis=0)
         
-        output.append(row_piece)    
+        output.append(row_piece)
     output = np.concatenate(output, axis=1)
     return output
 
