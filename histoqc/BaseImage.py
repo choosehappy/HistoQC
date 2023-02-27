@@ -161,7 +161,7 @@ class BaseImage(dict):
        
             # specifies a desired size of thumbnail
             else:
-                # recommand having the dimension is less than 10k     
+                # recommend having the dimension is less than 10k     
                 if size > 10000:
                     # warning message for the memory overhead
                     msg = f"Suggest using the smaller dimension thumbnail image because of the memory overhead."
