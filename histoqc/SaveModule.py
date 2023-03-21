@@ -67,7 +67,18 @@ def saveMacro(s, params):
     saveAssociatedImage(s, "macro", dim)
     return
     
+def saveMask(s, params):
+    logging.info(f"{s['filename']} - \tsaveMaskUse")
+    suffix = params.get("suffix", None)
+    
+    # check suffix param
+    if not suffix:
+        msg = f"{s['filename']} - \tPlease set the suffix for mask use."
+        logging.error(msg)
+        return
 
+    # save mask
+    io.imsave(f"{s['outdir']}{os.sep}{s['filename']}_{suffix}.png", img_as_ubyte(s["img_mask_use"]))
 
 def saveThumbnails(s, params):
     logging.info(f"{s['filename']} - \tsaveThumbnail")
