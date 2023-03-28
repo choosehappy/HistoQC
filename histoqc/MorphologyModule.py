@@ -13,43 +13,37 @@ from histoqc.SaveModule import blend2Images #for easier debugging
 def removeSmallObjects(s, params):
     logging.info(f"{s['filename']} - \tremoveSmallObjects")
     min_size = int(params.get("min_size", 64))
+    
     img_reduced = morphology.remove_small_objects(s["img_mask_use"], min_size=min_size)
     img_small = np.invert(img_reduced) & s["img_mask_use"]
-
+    
     io.imsave(s["outdir"] + os.sep + s["filename"] + "_small_remove.png", img_as_ubyte(img_small))
     s["img_mask_small_filled"] = (img_small * 255) > 0
 
     prev_mask = s["img_mask_use"]
     s["img_mask_use"] = img_reduced
 
-
-    rps = measure.regionprops(morphology.label(img_small))
-    if rps:
-        areas = np.asarray([rp.area for rp in rps])
-        nobj = len(rps)
-        area_max = areas.max()
-        area_mean = areas.mean()
-    else:
-        nobj = area_max = area_mean = 0
-
+    labels, num_features = ndi.label(img_small)
+    areas = np.zeros(num_features)
+    for i in range(1, num_features+1):
+        areas[i-1] = np.sum(labels == i)
+    
+    nobj = num_features
+    area_max = areas.max()
+    area_mean = areas.mean()
+    
     s.addToPrintList("small_tissue_removed_num_regions", str(nobj))
     s.addToPrintList("small_tissue_removed_mean_area", str(area_mean))
     s.addToPrintList("small_tissue_removed_max_area", str(area_max))
 
-
-
-
-
     s.addToPrintList("small_tissue_removed_percent",
                      printMaskHelper(params.get("mask_statistics", s["mask_statistics"]), prev_mask, s["img_mask_use"]))
-
 
     if len(s["img_mask_use"].nonzero()[0]) == 0:  # add warning in case the final tissue is empty
         logging.warning(f"{s['filename']} - After MorphologyModule.removeSmallObjects: NO tissue "
                         f"remains detectable! Downstream modules likely to be incorrect/fail")
         s["warnings"].append(f"After MorphologyModule.removeSmallObjects: NO tissue remains "
                              f"detectable! Downstream modules likely to be incorrect/fail")
-
     return
 
 
