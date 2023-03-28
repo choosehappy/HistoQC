@@ -8,7 +8,6 @@ from typing import Union, Tuple
 #os.environ['PATH'] = 'C:\\research\\openslide\\bin' + ';' + os.environ['PATH'] #can either specify openslide bin path in PATH, or add it dynamically
 import openslide
 
-
 class BaseImage(dict):
 
     def __init__(self, fname, fname_outdir, params):
@@ -202,47 +201,51 @@ def getBestThumb(s: BaseImage, x: int, y: int, dims: Tuple[int, int], target_sam
 '''
 the followings are helper functions 
 '''
+
 def resizeTileDownward(self, target_downsampling_factor, level):
     osh = self["os_handle"]
     (bx, by, bwidth, bheight) = self["img_bbox"]
     end_x = bx + bwidth
     end_y = by + bheight
     
-    cloest_downsampling_factor = osh.level_downsamples[level]
+    closest_downsampling_factor = osh.level_downsamples[level]
     win_size = 2048
     
-    # create a new img
     output = []
     for x in range(bx, end_x, win_size):
         row_piece = []
         for y in range(by, end_y, win_size):
-            win_width, win_height = [win_size] * 2
-            # Adjust extraction size for endcut
+            win_width = win_size
+            win_height = win_size
             if end_x < x + win_width:
                 win_width = end_x - x
-            if end_y < y +  win_height:
+            if end_y < y + win_height:
                 win_height = end_y - y
-
             
-            win_down_width = int(round(win_width / target_downsampling_factor))
-            win_down_height = int(round(win_height / target_downsampling_factor))
+            region = osh.read_region((x, y), level, (win_width, win_height))
+            if np.shape(region)[-1] == 4:
+                region = rgba2rgb(self, region)
             
-            win_width = int(round(win_width / cloest_downsampling_factor))
-            win_height = int(round(win_height / cloest_downsampling_factor))
-            
-            # TODO Note: this isn't very efficient, and if more efficiency isneeded 
-            # We should likely refactor using "paste" from Image.
-            # Or even just set the pixels directly with indexing.
-            cloest_region = osh.read_region((x, y), level, (win_width, win_height))
-            if np.shape(cloest_region)[-1]==4:
-                cloest_region = rgba2rgb(self, cloest_region)
-            target_region = cloest_region.resize((win_down_width, win_down_height))
-            row_piece.append(target_region)
-        row_piece = np.concatenate(row_piece, axis=0)
+            resized_region = resize_numpy(region, target_downsampling_factor / closest_downsampling_factor)
+            row_piece.append(resized_region)
         
+        row_piece = np.concatenate(row_piece, axis=1)
         output.append(row_piece)
-    output = np.concatenate(output, axis=1)
+    
+    output = np.concatenate(output, axis=0)
     return output
+
+def resize_numpy(img, factor):
+    w, h = img.shape[:2]
+    w_new, h_new = int(round(w/factor)), int(round(h/factor))
+    resized = np.empty((w_new, h_new, 3), dtype=np.uint8)
+    for i in range(3):
+        channel = img[..., i]
+        resized[..., i] = np.round(resize(channel, (w_new, h_new), order=3, mode='reflect') * 255).astype(np.uint8)
+    return resized
+
+def rgba2rgb(self, img):
+    return np.array(Image.fromarray(img).convert('RGB'))
 
 def rgba2rgb(s: BaseImage, img):
     bg_color = "#" + s["os_handle"].properties.get(openslide.PROPERTY_NAME_BACKGROUND_COLOR, "ffffff")
