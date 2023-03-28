@@ -26,15 +26,17 @@ def saveFinalMask(s, params):
     for mask_force in s["img_mask_force"]:
         mask[s[mask_force]] = 0
 
-    io.imsave(s["outdir"] + os.sep + s["filename"] + "_mask_use.png", img_as_ubyte(mask))
+    io.imsave(os.path.join(s["outdir"], f"{s['filename']}_mask_use.png"), mask, dtype=np.uint8)
 
     if strtobool(params.get("use_mask", "True")):  # should we create and save the fusion mask?
         img = s.getImgThumb(s["image_work_size"])
         out = blend2Images(img, mask)
-        io.imsave(s["outdir"] + os.sep + s["filename"] + "_fuse.png", img_as_ubyte(out))
+        io.imsave(os.path.join(s["outdir"], f"{s['filename']}_fuse.png"), out, dtype=np.uint8)
 
     return
 
+
+from skimage import transform
 
 def saveAssociatedImage(s, key:str, dim:int):
     logging.info(f"{s['filename']} - \tsave{key.capitalize()}")
@@ -46,11 +48,12 @@ def saveAssociatedImage(s, key:str, dim:int):
         s["warnings"].append(message)
         return
     
-    # get asscociated image by key
+    # get associated image by key
     associated_img = osh.associated_images[key]
-    (width, height)  = associated_img.size
+    associated_img = np.asarray(associated_img)[:, :, 0:3]
+    (height, width, _)  = associated_img.shape
 
-    # calulate the width or height depends on dim
+    # calculate the width or height depending on dim
     if width > height:
         h = round(dim * height / width)
         size = (dim, h)
@@ -58,9 +61,10 @@ def saveAssociatedImage(s, key:str, dim:int):
         w = round(dim * width / height)
         size = (w, dim)
     
-    associated_img = associated_img.resize(size)
-    associated_img = np.asarray(associated_img)[:, :, 0:3]
-    io.imsave(f"{s['outdir']}{os.sep}{s['filename']}_{key}.png", associated_img)
+    associated_img = transform.resize(associated_img, size)
+    ext = os.path.splitext(s['filename'])[1]
+    io.imsave(os.path.join(s["outdir"], f"{s['filename']}_{key}{ext}"), associated_img, dtype=np.uint8)
+
 
 def saveMacro(s, params):
     dim = params.get("small_dim", 500)
