@@ -36,6 +36,7 @@ def extract(s: BaseImage, params: Dict[PARAMS, Any]):
             overlay_export = os.path.join(s["outdir"], f"{s['filename']}_tile_bbox.png")
             bbox_overlay = s.bbox_overlay("img_thumb", tile_size_on_img=tile_size, tile_stride_on_img=tile_stride,
                                           tissue_thresh=tissue_thresh, force_rewrite=False, outline='green', width=2)
+
             bbox_overlay.save(overlay_export)
         return
 

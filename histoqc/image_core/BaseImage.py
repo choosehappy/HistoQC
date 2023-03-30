@@ -636,10 +636,13 @@ def validateSizeFactors(mag: Union[str, int, float]):
 # magnification if not present in open slide, and/or to confirm openslide base magnification
 def getMagOS(s: BaseImage, params, warning_str):
     osh: openslide.OpenSlide = s.image_handle
-    mag = osh.properties.get("openslide.objective-power", MAG_NA)
-    if mag == MAG_NA:  # openslide doesn't set objective-power for all SVS files:
-        # https://github.com/openslide/openslide/issues/247
-        mag = osh.properties.get("aperio.AppMag", MAG_NA)
+    # openslide doesn't set objective-power for all SVS files:
+    # https://github.com/openslide/openslide/issues/247
+    default_aperio_mag = osh.properties.get("aperio.AppMag", MAG_NA)
+    mag = osh.properties.get("openslide.objective-power", default_aperio_mag)
+    if mag == MAG_NA:
+        warning_str_predefined = f"{warning_str}: Predefined Tried"
+        mag = getMagPredefined(s, params, warning_str_predefined)
     mag = __validate_mag_values(s, mag, params, warning_str)
     return mag
 
