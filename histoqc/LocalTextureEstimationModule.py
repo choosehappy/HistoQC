@@ -2,7 +2,7 @@ import logging
 import numpy as np
 from skimage import  color
 from distutils.util import strtobool
-from skimage.feature import greycomatrix, greycoprops
+from skimage.feature import graycomatrix, graycoprops
 import matplotlib.pyplot as plt
 
 
@@ -33,10 +33,10 @@ def estimateGreyComatrixFeatures(s, params):
     for id in idx:
         r, c = maskidx[id, :]
         patch = img[r:r + patch_size, c:c + patch_size]
-        glcm = greycomatrix(np.digitize(patch,np.linspace(0,1,num=nlevels),right=True), distances=[5],
+        glcm = graycomatrix(np.digitize(patch,np.linspace(0,1,num=nlevels),right=True), distances=[5],
                             angles=[0], levels=nlevels, symmetric=True, normed=True)
 
-        results.append([greycoprops(glcm, prop=feat) for feat in feats])
+        results.append([graycoprops(glcm, prop=feat) for feat in feats])
 
     results = np.asarray(results).squeeze()
 
