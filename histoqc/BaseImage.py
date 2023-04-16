@@ -13,6 +13,7 @@ from histoqc._import_openslide import openslide
 # compatible with the previous definition of valid input: leading zero and leading decimals are supported
 _REGEX_MAG = r"^(\d?\.?\d*X?)"
 _PATTERN_MAG: re.Pattern = re.compile(_REGEX_MAG, flags=re.IGNORECASE)
+MAG_NA = None
 
 
 class BaseImage(dict):
@@ -110,15 +111,15 @@ class BaseImage(dict):
             return (osh.get_best_level_for_downsample(downsample_factor), False)
 
     @staticmethod
-    def __is_valid_size(size: str):
+    def is_valid_size(size: str):
         size = str(size)
         return _PATTERN_MAG.fullmatch(size) is not None
 
     @staticmethod
-    def __validate_slide_size(size: str, assertion: bool = False):
+    def validate_slide_size(size: str, assertion: bool = False):
         size = str(size)
         if assertion:
-            assert BaseImage.__is_valid_size(size), f"{size}: does not match pattern {_REGEX_MAG}"
+            assert BaseImage.is_valid_size(size), f"{size}: does not match pattern {_REGEX_MAG}"
         # for now just cast it to str
         return size
 
@@ -126,7 +127,7 @@ class BaseImage(dict):
         # note that while size is annotated as str, a bunch of functions in process Modules like SaveModule doesn't
         # really handle it that way, and trace of previous coding also suggest that there actually lack a params
         # type protocol in xxxModules. I think an extra layer of data sanitizing is necessary here.
-        size = BaseImage.__validate_slide_size(size, assertion=False)
+        size = BaseImage.validate_slide_size(size, assertion=False)
         # get img key with size
         key = "img_" + str(size)
         # return the img if it exists
@@ -143,7 +144,7 @@ class BaseImage(dict):
 
         # barricade the invalid input first
         # can't determine operation.
-        if not BaseImage.__is_valid_size(size):
+        if not BaseImage.is_valid_size(size):
             # print out error message
             err_msg = f"{self['filename']}: invalid arguments - {size}"
             logging.error(err_msg)
@@ -289,20 +290,45 @@ def printMaskHelper(type: str, prev_mask, curr_mask):
         return str(-1)
 
 
+def parsed_mag(mag: Union[str, int, float]) -> Union[None, float]:
+    """Parse magnification to float
+    Args:
+        mag:
+
+    Returns:
+        Validated size factor either as a float number or "NA" (MAG_NA)
+    """
+    if isinstance(mag, (int, float)):
+        return float(mag)
+    numeric_mag_str_flag = BaseImage.is_valid_size(mag)
+    invalid_flag = mag == MAG_NA or not numeric_mag_str_flag
+    if invalid_flag:
+        return MAG_NA
+    # regex determines X must either be abscent or at the end of the string
+    if "X" in mag.upper():
+        mag = mag[0:-1]
+    return float(mag)
+
+
 # this function is seperated out because in the future we hope to have automatic detection of
 # magnification if not present in open slide, and/or to confirm openslide base magnification
 def getMag(s: BaseImage, params) -> Union[float, None]:
     logging.info(f"{s['filename']} - \tgetMag")
     osh = s["os_handle"]
     mag = osh.properties.get("openslide.objective-power") or \
-            osh.properties.get("aperio.AppMag") or None
+            osh.properties.get("aperio.AppMag") or MAG_NA
     # if mag or strtobool(params.get("confirm_base_mag", "False")):
     #     # do analysis work here
     #     logging.warning(f"{s['filename']} - Unknown base magnification for file")
     #     s["warnings"].append(f"{s['filename']} - Unknown base magnification for file")
     #     return None
     # else:
-    return float(mag)
+    # workaround for unspecified mag -- with or without automatic detection it might be preferred to have
+    # mag predefined
+    mag = mag or parsed_mag(params.get("base_mag"))
+    # mag is santized after invoking getMag regarding whether it's None. Therefore, it should not raise
+    # the exception here.
+    return float(mag) if mag is not MAG_NA else MAG_NA
 
 
 def getDimensionsByOneDim(s: BaseImage, dim: int) -> Tuple[int, int]:
