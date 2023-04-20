@@ -571,7 +571,7 @@ def extract(s: BaseImage, params: Dict[PARAMS, Any]):
                                                        force_rewrite=False, outline=outline, width=width)
 
             bbox_overlay.save(overlay_export)
-            bbox_json_loc = os.path.join(slide_out, f'tiles_coords_nested.json')
+            bbox_json_loc = os.path.join(slide_out, f'{s["filename"]}_bbox.json')
             with open(bbox_json_loc, 'w') as root:
                 json.dump(window_list_of_regions, root, indent=4)
         return
