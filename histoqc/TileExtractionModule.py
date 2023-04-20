@@ -532,7 +532,7 @@ def extract(s: BaseImage, params: Dict[PARAMS, Any]):
         suffix: str = params.get('suffix', '.png')
         outline: str = params.get('outline', "green")
         width: int = int(params.get('width', 2))
-        save_image: bool = bool(strtobool(params.get("save_image", "True")))
+        save_image: bool = bool(strtobool(params.get("save_image", "False")))
 
         tile_size = int(params.get('tile_size', 256))
         tile_stride = int(params.get('tile_stride', 256))
