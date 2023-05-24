@@ -202,7 +202,12 @@ def byExampleWithFeatures(s, params):
     img = s.getImgThumb(s["image_work_size"])
     feats = compute_features(img, params)
     cal = clf.predict_proba(feats.reshape(-1, feats.shape[2]))
-    cal = cal.reshape(img.shape[0], img.shape[1], 2)
+
+    #account for difference in output array size
+    if name == "pen_markings":
+        cal = cal.reshape(img.shape[0], img.shape[1], 3)
+    else:
+        cal = cal.reshape(img.shape[0], img.shape[1], 2)
 
     mask = cal[:, :, 1] > thresh
 
