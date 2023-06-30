@@ -6,13 +6,7 @@ from distutils.util import strtobool
 from PIL import Image
 import re
 from typing import Union, Tuple
-#os.environ['PATH'] = 'C:\\research\\openslide\\bin' + ';' + os.environ['PATH'] #can either specify openslide bin path in PATH, or add it dynamically
-from histoqc._import_openslide import openslide
 from histoqc.wsihandles.WSIImageHandle import WSIImageHandle
-from histoqc.wsihandles.DicomHandle import DicomHandle
-from histoqc.wsihandles.OpenSlideHandle import OpenSlideHandle
-# there is no branch reset group in re
-# compatible with the previous definition of valid input: leading zero and leading decimals are supported
 _REGEX_MAG = r"^(\d?\.?\d*X?)"
 _PATTERN_MAG: re.Pattern = re.compile(_REGEX_MAG, flags=re.IGNORECASE)
 MAG_NA = None
@@ -37,7 +31,7 @@ class BaseImage(dict):
 
         
         # dynamically load wsi image handle
-        self["os_handle"]: WSIImageHandle = BaseImage.wsi_handle_create(fname)
+        self["os_handle"]: WSIImageHandle = WSIImageHandle.create_wsi_handle(fname)
         
         self["image_base_size"] = self["os_handle"].dimensions
         self["enable_bounding_box"] = strtobool(params.get("enable_bounding_box","False"))
@@ -109,15 +103,6 @@ class BaseImage(dict):
             return (level[0], True)
         else:
             return (osh.get_best_level_for_downsample(downsample_factor), False)
-
-
-    @staticmethod
-    def wsi_handle_create(fname: str):
-        if os.path.isdir(fname):
-            return DicomHandle(fname)
-        else:
-            return OpenSlideHandle(fname)
-
 
     @staticmethod
     def is_valid_size(size: str):

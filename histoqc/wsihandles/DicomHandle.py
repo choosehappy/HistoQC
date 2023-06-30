@@ -5,7 +5,6 @@ from typing import Union
 
 class DicomHandle(WSIImageHandle):
     def __init__(self, fname):
-        print("DicomHandle init")
         self.fname = fname
         self.osh = WsiDicom.open(fname)
 
@@ -93,7 +92,6 @@ class DicomHandle(WSIImageHandle):
     def get_thumbnail(self, new_dim):
         return self.osh.read_thumbnail(new_dim)
 
-    # TODO test needed
     def get_best_level_for_downsample(self, down_factor):
         return np.argmin(np.abs(np.asarray(self._level_downsamples) - down_factor))
         

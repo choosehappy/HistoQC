@@ -3,7 +3,6 @@ from histoqc._import_openslide import openslide
 from typing import Union
 class OpenSlideHandle(WSIImageHandle):
     def __init__(self, fname):
-        print("OpenSlideHandle init")
         self.fname = fname
         self.osh = openslide.OpenSlide(fname)
         self._has_bounding_box = True
