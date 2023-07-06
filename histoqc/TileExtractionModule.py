@@ -1,5 +1,9 @@
+"""
+A standalone tile extraction module to locate tile bounding boxes in usable tissue region obtained by previous steps.
+Coordinates are saved in the half-open 4-tuple convention of (left, top, right, bottom), where `right` and `bottom`
+are open.
+"""
 import os
-
 import openslide
 import json
 from histoqc.BaseImage import BaseImage
@@ -14,6 +18,17 @@ import importlib
 
 
 def __dynamic_import(module_name: str, attribute_name: str, surrogate: Union[str, None]):
+    """
+    Dynamically import the components from surrogate module if not available (e.g., `Literal` is only available in
+    typing from python3.8 but typing_extension provides the same functionality for python <=3.7.
+    Args:
+        module_name:
+        attribute_name:
+        surrogate:
+
+    Returns:
+
+    """
     module = importlib.import_module(module_name)
     attribute = getattr(module, attribute_name, None)
     if attribute is not None:
@@ -42,20 +57,27 @@ PARAMS = Literal[TYPE_TILE_SIZE, TYPE_TILE_STRIDE, TYPE_TISSUE_RATIO,
                  TYPE_LOCK, TYPE_OUTLINE, TYPE_WIDTH, TYPE_SAVE_FLAG]
 
 
+TYPE_BBOX_FLOAT = Tuple[float, float, float, float]
+TYPE_BBOX_INT = Tuple[int, int, int, int]
+
+
 def default_screen_identity(img: np.ndarray):
     return True
 
 
 class MaskTileWindows:
     """
-    Locate the window of tiles in the given downsampled mask. Output Convention: (left, top, right, bottom)
+    Locate the window of tiles in the given downsampled mask. Output Convention: (left, top, right, bottom).
+    Coordinates are half-open as [left, right) and [top, bottom).
     """
 
     __rp_list: List
     __mask: np.ndarray
     __mask_pil: Image.Image
     __tissue_thresh: float
-    __windows_on_mask: List[List[Tuple[int, int, int, int]]]
+    # note that the tile size on the corresponding downsampled masks may no longer be integer, therefore cause
+    # loss of precision when convert back to original tile size after working on mask
+    __windows_on_mask: List[List[TYPE_BBOX_FLOAT]]
     __windows_on_original_image: List[List[Tuple[int, int, int, int]]]
 
     @property
@@ -78,49 +100,6 @@ class MaskTileWindows:
             setattr(self, attr_name, regionprops(self.__mask))
         return getattr(self, attr_name)
 
-    def _tile_windows_on_mask(self) -> List[List[Tuple[int, int, int, int]]]:
-        """Helper function to locate the windows of each region in format of (left, top, right, bottom)
-        Returns:
-            List of List of (left, top, right, bottom), nested by connected regions in the mask
-        """
-        result_list: List[List[Tuple[int, int, int, int]]] = []
-        # loop the regionprop list
-        for region in self._rp_list:
-            # get bounding box of the individual region
-            rp_bbox = region.bbox
-            # get list of possible tile bounding boxes within the region bounding box, computed from
-            # tile size, stride, and tissue thresh
-            windows: List[Tuple[int, int, int, int]] = MaskTileWindows.rp_tile_windows_on_mask(self.mask_pil,
-                                                                                               rp_bbox,
-                                                                                               self.work_tile_size,
-                                                                                               self.work_stride,
-                                                                                               self.__tissue_thresh)
-            # result_list += windows
-            result_list.append(windows)
-        return result_list
-
-    @property
-    def windows_on_mask(self) -> List[List[Tuple[int, int, int, int]]]:
-        """
-        Returns:
-            Obtain the cached tile windows on the given mask. Results are cached.
-        """
-        if not hasattr(self, '__windows_on_mask') or self.__windows_on_mask is None:
-            self.__windows_on_mask = self._tile_windows_on_mask()
-        return self.__windows_on_mask
-
-    @property
-    def windows_on_original_image(self) -> List[List[Tuple[int, int, int, int]]]:
-        """Zoom the windows from the mask (which is often downsampled) to the original image, using the defined
-        size factor
-        Returns:
-            Zoomed windows on the original image (left, top, right, bottom)
-        """
-        if not hasattr(self, '__windows_on_original_image') or self.__windows_on_original_image is None:
-            self.__windows_on_original_image = MaskTileWindows.__window_list_resize(self.windows_on_mask,
-                                                                                    self.__size_factor)
-        return self.__windows_on_original_image
-
     def __init_mask(self, mask: np.ndarray):
         self.__mask = mask
 
@@ -141,88 +120,33 @@ class MaskTileWindows:
         self.__tissue_thresh = tissue_thresh
 
     @staticmethod
-    def max_tile_bbox_top_left_coord(rp_bbox: Tuple[int, int, int, int], work_tile_size: int, work_stride: int):
-        """ find the coords of the top/left corner of the most right / bottom tile ever possible given the current
-        size and stride
-        Args:
-            rp_bbox: [top, left, bottom, right]. Half-open -- [Left, Right) and [Top, Bottom). Note that this is the
-                convention of sklearn's region properties, which is different to the (left, top, right, bottom) used by
-                PIL or OpenSlide
-            work_tile_size: Tile size on the working mask, which might be downsampled.
-            work_stride: Stride size on the working mask, which might be downsampled.
-        Returns:
-            Tuple[int, int]
-        """
-        assert work_stride > 0
-        assert work_tile_size > 0
-
-        # not for skimage regionprops, the bbox is half-open at the bottom / right coordinates.
-        # [left, right) and [top, bottom). Hence, the "+1" operation below for coord computation
-        # is already priced-in
-        top_rp, left_rp, bottom_rp, right_rp = rp_bbox
-        # start + n_step * stride + tile_size = bottom/rightmost -->  (rp_limit - tile_size) // stride = max step
-        max_step_horiz = (right_rp - left_rp - work_tile_size) // work_stride
-        max_step_vert = (bottom_rp - top_rp - work_tile_size) // work_stride
-        tile_max_left = left_rp + max_step_horiz * work_stride
-        tile_max_top = top_rp + max_step_vert * work_stride
-
-        assert tile_max_left + work_tile_size - 1 <= right_rp
-        assert tile_max_top + work_tile_size - 1 <= bottom_rp
-        return tile_max_top, tile_max_left
-
-    @staticmethod
-    def region_tile_cand_pil_window_on_mask(rp_bbox: Tuple[int, int, int, int],
-                                            work_tile_size: int,
-                                            work_stride: int) -> List[Tuple[int, int, int, int]]:
-        """ Split the region given by the region property bounding box into a grid of tile windows. Support overlapping.
-        This computes the all possible window given by the rp regardless of the tissue condition. Refinement can be
-        performed in further steps.
-        Args:
-            rp_bbox: sklearn region property style: [top, left, bottom, right]. Half-open
-                -- [Left, Right) and [Top, Bottom)
-            work_tile_size:
-            work_stride:
-
-        Returns:
-            List of (left, top, right, bottom) tuples.
-        """
-        top_rp, left_rp, bottom_rp, right_rp = rp_bbox
-        # top/left of the right/bottom most tile
-        tile_max_top, tile_max_left = MaskTileWindows.max_tile_bbox_top_left_coord(rp_bbox,
-                                                                                   work_tile_size,
-                                                                                   work_stride)
-        # obtain the top/left coord of all tile bboxes
-        all_tops = np.arange(top_rp, tile_max_top + 1, work_stride, dtype=int)
-        all_lefts = np.arange(left_rp, tile_max_left + 1, work_stride, dtype=int)
-        def window(left, top, size): return int(left), int(top), int(left + size), int(top + size)
-        # get full tile bbox representation
-        all_tile_pil_window = [window(left, top, work_tile_size) for left in all_lefts for top in all_tops]
-        return all_tile_pil_window
-
-    @staticmethod
     def validate_tile_mask_area_thresh(mask_pil: Image.Image,
-                                       tile_window_on_mask: Tuple[int, int, int, int],
+                                       tile_window_on_mask: TYPE_BBOX_FLOAT,
                                        tissue_thresh: float) -> bool:
         """ Validate whether the given tile window (left, top, right, bottom) contains sufficient tissue. This is
         computed by calculating the tissue % in the corresponding mask region.
+        Note that if the coordinates are not int the actual area of region may be different
         Args:
             mask_pil:
-            tile_window_on_mask: List of (left, top, right, bottom)
+            tile_window_on_mask: List of (left, top, right, bottom). Open on right and bottom
             tissue_thresh: minimum requirement of tissue percentage
 
         Returns:
             True if the window has sufficient tissue.
         """
-        # left, top, right, bottom = tile_window
-        window_pil = mask_pil.crop(tile_window_on_mask)
+        left, top, right, bottom = tile_window_on_mask
+        # window_on_mask_work = tuple(round(x) for x in tile_window_on_mask)
+        window_on_mask_work = round(left), round(top), round(right), round(bottom)
+        window_pil = mask_pil.crop(window_on_mask_work)
+        # noinspection PyTypeChecker
         window_np = np.array(window_pil, copy=False)
         window_bool = window_np > 0
         return window_bool.mean() >= tissue_thresh
 
     @staticmethod
     def _valid_tile_windows_on_mask_helper(mask_pil: Image.Image,
-                                           tile_cand_pil_window_on_mask: List[Tuple[int, int, int, int]],
-                                           tissue_thresh: float) -> List[Tuple[int, int, int, int]]:
+                                           tile_cand_pil_window_on_mask: List[TYPE_BBOX_FLOAT],
+                                           tissue_thresh: float) -> List[TYPE_BBOX_FLOAT]:
         """ All tile windows with sufficient usable tissue from the grid of window candidates
         Args:
             mask_pil:
@@ -241,17 +165,49 @@ class MaskTileWindows:
                 if MaskTileWindows.validate_tile_mask_area_thresh(mask_pil, window, tissue_thresh)]
 
     @staticmethod
-    def rp_tile_windows_on_mask(mask_pil, rp_bbox: Tuple[int, int, int, int],
-                                work_tile_size: int,
-                                work_stride: int,
-                                tissue_thresh: float) -> List[Tuple[int, int, int, int]]:
+    def region_tile_cand_pil_window_on_mask(rp_bbox: TYPE_BBOX_INT,
+                                            work_tile_size: float,
+                                            work_stride: float) -> List[TYPE_BBOX_FLOAT]:
+        """ Split the region given by the region property bounding box into a grid of tile windows. Support overlapping.
+        This computes the all possible window given by the rp regardless of the tissue condition. Refinement can be
+        performed in further steps.
+        Args:
+            rp_bbox: sklearn region property style: [top, left, bottom, right]. Half-open
+                -- [Left, Right) and [Top, Bottom)
+            work_tile_size:
+            work_stride:
+
+        Returns:
+            List of (left, top, right, bottom) tuples. Half-open
+        """
+        top_rp, left_rp, bottom_rp, right_rp = rp_bbox
+        # top/left of the right/bottom most tile
+        tile_max_top, tile_max_left = MaskTileWindows.max_tile_bbox_top_left_coord(rp_bbox,
+                                                                                   work_tile_size,
+                                                                                   work_stride)
+        # obtain the top/left coord of all tile bboxes
+        all_tops = np.arange(top_rp, tile_max_top + 1, work_stride, dtype=int)
+        all_lefts = np.arange(left_rp, tile_max_left + 1, work_stride, dtype=int)
+        # since it's open on right and bottom, right = left + size and bottom = top + size, wherein the right-1
+        # is the actual right most pixel and likewise bottom-1 is the actual bottom-most pixel.
+        def window(left, top, size): return left, top, (left + size), (top + size)
+        # get full tile bbox representation
+        all_tile_pil_window = [window(left, top, work_tile_size) for left in all_lefts for top in all_tops]
+        return all_tile_pil_window
+
+    @staticmethod
+    def rp_tile_windows_on_mask(mask_pil,
+                                rp_bbox: TYPE_BBOX_INT,
+                                work_tile_size: float,
+                                work_stride: float,
+                                tissue_thresh: float) -> List[TYPE_BBOX_FLOAT]:
         """Wrapper. Obtain the valid window with sufficient tissue from a list of region property objects based on
         a given mask. For each individual region, a list of window in format (left, top, right, bottom) is obtained.
         Resulting lists of windows of all regions are nested into a list as the object.
         Args:
             mask_pil: PIL handle of the downsampled mask
             rp_bbox: bounding box of sklearn region properties. Note that its convention is [top, left, bottom, right],
-                which is different to the (left, top, right, bottom) in PIL and OpenSlide
+                which is different to the (left, top, right, bottom) in PIL and OpenSlide. Int coords.
             work_tile_size: Working tile size on the downsampled mask
             work_stride:    Working stride size on the downsampled mask
             tissue_thresh:  Minimum requirement of tissue % in each window
@@ -262,9 +218,88 @@ class MaskTileWindows:
         candidates = MaskTileWindows.region_tile_cand_pil_window_on_mask(rp_bbox, work_tile_size, work_stride)
         return MaskTileWindows._valid_tile_windows_on_mask_helper(mask_pil, candidates, tissue_thresh)
 
+    def _tile_windows_on_mask(self) -> List[List[TYPE_BBOX_FLOAT]]:
+        """Helper function to locate the windows of each region in format of (left, top, right, bottom)
+            Note that to retain the precision the coordinates are in the float form, rather than cast to int.
+            (Noticeably the right/bottom coords due to that size may not be integer)
+            THe actual validation of corresponding bbox regions on mask on the other hand should convert the coords
+            correspondingly.
+        Returns:
+            List of List of (left, top, right, bottom), nested by connected regions in the mask
+        """
+        result_list: List[List[TYPE_BBOX_FLOAT]] = []
+        # loop the regionprop list
+        for region in self._rp_list:
+            # get bounding box of the individual region
+            rp_bbox = region.bbox
+            # get list of possible tile bounding boxes within the region bounding box, computed from
+            # tile size, stride, and tissue thresh
+            windows: List[TYPE_BBOX_FLOAT] = MaskTileWindows.rp_tile_windows_on_mask(self.mask_pil,
+                                                                                     rp_bbox,
+                                                                                     self.work_tile_size,
+                                                                                     self.work_stride,
+                                                                                     self.__tissue_thresh)
+            # result_list += windows
+            result_list.append(windows)
+        return result_list
+
+    @property
+    def windows_on_mask(self) -> List[List[TYPE_BBOX_FLOAT]]:
+        """
+        Returns:
+            Obtain the cached tile windows on the given mask. Results are cached.
+        """
+        if not hasattr(self, '__windows_on_mask') or self.__windows_on_mask is None:
+            self.__windows_on_mask = self._tile_windows_on_mask()
+        return self.__windows_on_mask
+
+    @property
+    def windows_on_original_image(self) -> List[List[TYPE_BBOX_INT]]:
+        """Zoom the windows from the mask (which is often downsampled) to the original image, using the defined
+        size factor
+        Returns:
+            Zoomed windows on the original image (left, top, right, bottom)
+        """
+        if not hasattr(self, '__windows_on_original_image') or self.__windows_on_original_image is None:
+            self.__windows_on_original_image = MaskTileWindows.__window_list_resize(self.windows_on_mask,
+                                                                                    self.__size_factor)
+        return self.__windows_on_original_image
+
     @staticmethod
-    def __window_resize_helper(window_on_mask: Tuple[int, int, int, int], size_factor) -> Tuple[int, int, int, int]:
+    def max_tile_bbox_top_left_coord(rp_bbox: TYPE_BBOX_INT, work_tile_size: float, work_stride: float) \
+            -> Tuple[int, int]:
+        """ find the coords of the top/left corner of the most right / bottom tile ever possible given the current
+        size and stride.
+        Args:
+            rp_bbox: [top, left, bottom, right]. Half-open -- [Left, Right) and [Top, Bottom). Note that this is the
+                convention of sklearn's region properties, which is different to the (left, top, right, bottom) used by
+                PIL or OpenSlide. The bbox of connected tissue regions on mask. Int coords.
+            work_tile_size: Tile size on the working mask, which might be downsampled.
+            work_stride: Stride size on the working mask, which might be downsampled.
+        Returns:
+            Tuple[int, int]
+        """
+        assert work_stride > 0
+        assert work_tile_size > 0
+
+        # not for skimage regionprops, the bbox is half-open at the bottom / right coordinates.
+        # [left, right) and [top, bottom). Hence, the "+1" operation below for coord computation
+        # is already priced-in
+        top_rp, left_rp, bottom_rp, right_rp = rp_bbox
+        # start + n_step * stride + tile_size = bottom/rightmost -->  (rp_limit - tile_size) // stride = max step
+        max_step_horiz = (right_rp - left_rp - work_tile_size) / work_stride
+        max_step_vert = (bottom_rp - top_rp - work_tile_size) / work_stride
+        tile_max_left = left_rp + max_step_horiz * work_stride
+        tile_max_top = top_rp + max_step_vert * work_stride
+
+        assert tile_max_left + work_tile_size <= right_rp
+        assert tile_max_top + work_tile_size <= bottom_rp
+        return int(tile_max_top), int(tile_max_left)
+
+    @staticmethod
+    def __window_resize_helper(window_on_mask: Union[TYPE_BBOX_FLOAT, TYPE_BBOX_INT], size_factor) -> TYPE_BBOX_INT:
         """Helper function to zoom the window coordinates on downsampled mask to the original sized image.
+        Convert back to int.
         Args:
             window_on_mask:  (left, top, right, bottom)
             size_factor:  size_factor = img_size / mask_size
@@ -277,7 +312,7 @@ class MaskTileWindows:
         return left, top, right, bottom
 
     @staticmethod
-    def __window_list_resize(window_on_mask: List[List[Tuple[int, int, int, int]]],
+    def __window_list_resize(window_on_mask: Union[List[List[TYPE_BBOX_FLOAT]], List[List[TYPE_BBOX_INT]]],
                              size_factor: float) -> List[List[Tuple[int, int, int, int]]]:
         """
         Args:
@@ -390,7 +425,8 @@ class TileExtractor:
         root_dict.pop(key, None)
 
     @staticmethod
-    def __bbox_overlay_helper(img: np.ndarray, windows_grouped_by_region: List[List[Tuple[int, int, int, int]]],
+    def __bbox_overlay_helper(img: np.ndarray,
+                              windows_grouped_by_region: Union[List[List[TYPE_BBOX_INT]], List[List[TYPE_BBOX_FLOAT]]],
                               outline: str = 'green', width: int = 2) -> Image.Image:
         """
         Helper function to draw bbox and overlay to the img thumbnail
@@ -410,6 +446,7 @@ class TileExtractor:
         for window_list in windows_grouped_by_region:
             for window in window_list:
                 # ImageDraw accepts x0 y0 x1 y1
+                window = tuple(round(x) for x in window)
                 left, top, right, bottom = window
                 draw_context.rectangle((left, top, right, bottom), outline=outline, width=width)
 
@@ -428,8 +465,7 @@ class TileExtractor:
         tile_windows: MaskTileWindows = self.tile_windows(mask_use_for_tiles, img_w, img_h,
                                                           tile_size_on_img, tile_stride_on_img, tissue_thresh,
                                                           force_rewrite=force_rewrite)
-        windows_on_mask: List[List[Tuple[int, int, int, int]]] = tile_windows.windows_on_mask
-
+        windows_on_mask: List[List[TYPE_BBOX_FLOAT]] = tile_windows.windows_on_mask
         # all properties below are cached
         mapping: Dict[Literal[DRAW_TARGET_IMG_THUMB, DRAW_TARGET_MASK], np.ndarray] = {
             get_args(DRAW_TARGET_IMG_THUMB)[0]: img_use_for_tiles,
@@ -539,6 +575,7 @@ class TileExtractor:
 
 
 def extract(s: BaseImage, params: Dict[PARAMS, Any]):
+    logging.info(f"{s['filename']} - \textract")
     with params['lock']:
         slide_out = s['outdir']
         tile_output_dir = params.get('tile_output', os.path.join(slide_out, 'tiles'))
@@ -549,7 +586,6 @@ def extract(s: BaseImage, params: Dict[PARAMS, Any]):
         outline: str = params.get('outline', "green")
         width: int = int(params.get('width', 2))
         save_image: bool = bool(strtobool(params.get("save_image", "False")))
-
         tile_size = int(params.get('tile_size', 256))
         tile_stride = int(params.get('tile_stride', 256))
         tissue_thresh = float(params.get('tissue_ratio', 0.5))
