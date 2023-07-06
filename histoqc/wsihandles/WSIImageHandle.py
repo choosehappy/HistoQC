@@ -114,7 +114,7 @@ class WSIImageHandle(ABC):
             except ImportError:
                 msg = f"WSIImageHanlde: can't import wsi handle module - \"{handle_name}\" "
                 logging.warning(msg)
-                pass
+                continue
             
             # dynamically create the instance of wsi handle class
             try:
@@ -122,7 +122,7 @@ class WSIImageHandle(ABC):
             except AttributeError:
                 msg = f"WSIImageHanlde: can't get wsi handle class - \"{class_name}\" "
                 logging.warning(msg)
-                pass
+                continue
             
             # try to read the files by using seleted handle
             try:
@@ -131,7 +131,7 @@ class WSIImageHandle(ABC):
                 # current wsi handle class doesn't support this file
                 msg = f"WSIImageHanlde: \"{class_name}\" doesn't support {fname}"
                 logging.warning(msg)
-                pass
+                continue
         if osh == None:
             #error: no handles support this file 
             msg = f"WSIImageHanlde: can't find the support wsi handles - {fname}"
