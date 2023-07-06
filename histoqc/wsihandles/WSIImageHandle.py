@@ -1,17 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import Union
-from enum import Enum
-from pathlib import Path
-import os, logging
+from importlib import import_module
+import logging
 
-
-class WSIHandles(Enum):
-    OPENSLIDE = 'openslide'
-    WSIDICOM = 'dicom'
-
-class WSIFileExtension(Enum):
-    OPENSLIDE = ['.bif', '.mrxs', '.ndpi', '.scn', '.svs', '.svslide', '.tif', '.tiff', '.vms', '.vmu']
-    WSIDICOM = ['.dcm']
+WSI_HANDLES = {
+    "openslide" : "histoqc.wsihandles.OpenSlideHandle",
+    "dicom" : "histoqc.wsihandles.DicomHandle"
+}
 
 class WSIImageHandle(ABC):
 
@@ -107,49 +101,40 @@ class WSIImageHandle(ABC):
 
     
     @staticmethod
-    def create_wsi_handle(fname):
-        # determine the file type
-        if is_dicom(fname):
-            # 
-            # if WSIHandles.WSIDICOM.value not in handles:
-            #     raise ValueError(f"Please add \"{WSIHandles.WSIDICOM.value}\" into \"handles\" list  ")
-            # import and create
-            from .DicomHandle import DicomHandle
-            return DicomHandle(fname)    
-        elif is_openslide(fname):
-            # if WSIHandles.OPENSLIDE.value not in handles:
-            #     raise ValueError(f"Please add \"{WSIHandles.OPENSLIDE.value}\" into \"handles\" ")
-            # import and create 
-            from .OpenSlideHandle import OpenSlideHandle
-            return OpenSlideHandle(fname)
-        else:
-            # file type don't support
-            msg = f"WSIImageHanlde: Not Support - {fname}"
+    def create_wsi_handle(fname, handles):
+        osh = None
+        # get handles list
+        handle_list = handles.split(",")
+        for handle_type in handle_list:
+            handle_name = WSI_HANDLES.get(handle_type.strip())
+            class_name = handle_name.split(".")[-1]
+            # dynamically import module by using module name
+            try:
+                module = import_module(handle_name)
+            except ImportError:
+                msg = f"WSIImageHanlde: can't import wsi handle module - \"{handle_name}\" "
+                logging.warning(msg)
+                pass
+            
+            # dynamically create the instance of wsi handle class
+            try:
+                cls = getattr(module, class_name)
+            except AttributeError:
+                msg = f"WSIImageHanlde: can't get wsi handle class - \"{class_name}\" "
+                logging.warning(msg)
+                pass
+            
+            # try to read the files by using seleted handle
+            try:
+                osh = cls(fname)
+            except:
+                # current wsi handle class doesn't support this file
+                msg = f"WSIImageHanlde: \"{class_name}\" doesn't support {fname}"
+                logging.warning(msg)
+                pass
+        if osh == None:
+            #error: no handles support this file 
+            msg = f"WSIImageHanlde: can't find the support wsi handles - {fname}"
             logging.error(msg)
             raise NotImplementedError(msg)
-    
-def is_dicom(path: Union[str, Path]) -> bool:
-    # Return rrue if the file at `path` is a DICOM dir.
-
-    # is dicom file
-    def __is_dicom(f):
-        with open(f, 'rb') as fp:
-            fp.read(128)  # preamble
-            return fp.read(4) == b"DICM"
-        
-    # is dicom dir
-    if os.path.isdir(path):
-        files = os.listdir(path)
-        # has dicom file
-        for file in files:
-            return __is_dicom(os.path.join(path, file))
-        return False
-    # is dicom file
-    elif os.path.isfile(path) and __is_dicom(path):
-        return True
-    else:
-        return False
-
-def is_openslide(path: Union[str, Path]) -> bool:
-    return os.path.isfile(path) and \
-        Path(path).suffix.lower() in WSIFileExtension.OPENSLIDE.value
+        return osh

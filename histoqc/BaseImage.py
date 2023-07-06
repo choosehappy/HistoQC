@@ -30,9 +30,11 @@ class BaseImage(dict):
         self["dir"] = os.path.dirname(fname)
 
         
+        # get handles from config
+        handles = params.get("handles", "openslide,dicom")
         # dynamically load wsi image handle
-        self["os_handle"]: WSIImageHandle = WSIImageHandle.create_wsi_handle(fname)
-        
+        self["os_handle"]: WSIImageHandle = WSIImageHandle.create_wsi_handle(fname, handles)
+
         self["image_base_size"] = self["os_handle"].dimensions
         self["enable_bounding_box"] = strtobool(params.get("enable_bounding_box","False"))
         # check if the bbox if doesn't have bbox set enable_bounding_box to False
