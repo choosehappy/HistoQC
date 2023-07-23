@@ -7,41 +7,18 @@ import os
 import openslide
 import json
 from histoqc.BaseImage import BaseImage
-from typing import Callable, Dict, Any, List, Tuple, Union, TypeVar, Type
+from typing import Callable, Dict, Any, List, Tuple, Union
 import numpy as np
 from PIL import Image, ImageDraw
 from skimage.measure import regionprops
 from contextlib import contextmanager
 from distutils.util import strtobool
 import logging
-import importlib
-
-
-def __dynamic_import(module_name: str, attribute_name: str, surrogate: Union[str, None]):
-    """
-    Dynamically import the components from surrogate module if not available (e.g., `Literal` is only available in
-    typing from python3.8 but typing_extension provides the same functionality for python <=3.7.
-    Args:
-        module_name:
-        attribute_name:
-        surrogate:
-
-    Returns:
-
-    """
-    module = importlib.import_module(module_name)
-    attribute = getattr(module, attribute_name, None)
-    if attribute is not None:
-        return attribute
-    if surrogate is not None:
-        return __dynamic_import(surrogate, attribute_name, None)
-    raise ImportError(f"Cannot Import {attribute_name} from either {module_name} or {surrogate}")
-
-
-__TYPE_GET_ARGS = Callable[[Type, ], Tuple[Any, ...]]
-
-Literal: TypeVar = __dynamic_import("typing", "Literal", "typing_extensions")
-get_args: __TYPE_GET_ARGS = __dynamic_import("typing", "get_args", "typing_extensions")
+from histoqc.import_wrapper.typing import Literal, get_args
+# from histoqc.import_wrapper.helper import dynamic_import
+# __TYPE_GET_ARGS = Callable[[Type, ], Tuple[Any, ...]]
+# Literal: TypeVar = dynamic_import("typing", "Literal", "typing_extensions")
+# get_args: __TYPE_GET_ARGS = dynamic_import("typing", "get_args", "typing_extensions")
 
 TYPE_TILE_SIZE = Literal['tile_size']
 TYPE_TILE_STRIDE = Literal['tile_stride']
