@@ -16,9 +16,9 @@ class GEOJsonAnnotation(Annotation[Dict]):
     NAME: str = "name"
 
     """
-    Note the annotation is corresponding to a single element in the json list.
-    See https://github.com/choosehappy/HistoQC/blob/master/histoqc/AnnotationModule.py
-    
+    Parses a typical GeoJSON file containing one or more Polygon or MultiPolygon features.
+    These JSON files are the preferred way to serialize QuPath annotations, for example.
+    See https://qupath.readthedocs.io/en/latest/docs/scripting/overview.html#serialization-json
     """
 
     @staticmethod

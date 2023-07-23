@@ -17,6 +17,29 @@ class ImageScopeAnnotation(Annotation[Element]):
     CLASS_ATTR = "Name"
     _ann_data: Element
 
+    """
+    Parses the xml file to get those annotations as lists of verticies
+    xmlMask will create a mask that is true inside the annotated region described in the specified xml file. 
+    The xml file must follow the ImageScope format, the minimal components of which are:
+    ```
+        <?xml version="1.0" encoding="UTF-8"?>
+        <Annotations>
+        <Annotation>
+        <Regions>
+        <Region>
+        <Vertices>
+        <Vertex X="56657.4765625" Y="78147.3984375"/>
+        <Vertex X="56657.4765625" Y="78147.3984375"/>
+        <Vertex X="56664.46875" Y="78147.3984375"/>
+        </Region>
+        </Regions>
+        </Annotation>
+        </Annotations>
+    ```
+    With more <Annotation> or <Region> blocks as needed for additional annotations. There is no functional difference
+    between multiple <Annotation> blocks and one <Annotation> blocks with multiple <Region> blocks
+    """
+
     def label_from_annotation(self) -> TYPE_RAW_LABEL:
         """
         Read the label of the whole annotated region.
