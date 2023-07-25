@@ -1,8 +1,8 @@
 import os
 
-import openslide
 import json
 from histoqc.BaseImage import BaseImage
+from histoqc.wsihandles.WSIImageHandle import WSIImageHandle
 from typing import Callable, Dict, Any, List, Tuple, Union, TypeVar, Type
 import numpy as np
 from PIL import Image, ImageDraw
@@ -515,7 +515,7 @@ class TileExtractor:
         tw: MaskTileWindows = self.tile_windows(mask_use_for_tiles, img_w, img_h,
                                                 tile_size, tile_stride, tissue_thresh, force_rewrite=force_rewrite)
         window_list_of_regions = tw.windows_on_original_image
-        image_handle: openslide.OpenSlide = s["os_handle"]
+        image_handle: WSIImageHandle = s["os_handle"]
         valid_window_list_all_regions: List[List[Tuple[int, int, int, int]]] = []
         for region_windows in window_list_of_regions:
             region_windows: List[Tuple[int, int, int, int]]

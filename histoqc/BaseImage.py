@@ -6,11 +6,7 @@ from distutils.util import strtobool
 from PIL import Image
 import re
 from typing import Union, Tuple
-#os.environ['PATH'] = 'C:\\research\\openslide\\bin' + ';' + os.environ['PATH'] #can either specify openslide bin path in PATH, or add it dynamically
-from histoqc._import_openslide import openslide
-
-# there is no branch reset group in re
-# compatible with the previous definition of valid input: leading zero and leading decimals are supported
+from histoqc.wsihandles.WSIImageHandle import WSIImageHandle
 _REGEX_MAG = r"^(\d?\.?\d*X?)"
 _PATTERN_MAG: re.Pattern = re.compile(_REGEX_MAG, flags=re.IGNORECASE)
 MAG_NA = None
@@ -33,7 +29,12 @@ class BaseImage(dict):
         self["outdir"] = fname_outdir
         self["dir"] = os.path.dirname(fname)
 
-        self["os_handle"] = openslide.OpenSlide(fname)
+        
+        # get handles from config
+        handles = params.get("handles", "openslide,dicom")
+        # dynamically load wsi image handle
+        self["os_handle"]: WSIImageHandle = WSIImageHandle.create_wsi_handle(fname, handles)
+
         self["image_base_size"] = self["os_handle"].dimensions
         self["enable_bounding_box"] = strtobool(params.get("enable_bounding_box","False"))
         # check if the bbox if doesn't have bbox set enable_bounding_box to False
@@ -81,19 +82,14 @@ class BaseImage(dict):
         (dim_width, dim_height) = osh.dimensions
         self["img_bbox"] = (0, 0, dim_width, dim_height)
         # try to get bbox if bounding_box is ture
-        if self["enable_bounding_box"]:
-            # try get bbox from os handle properties
-            try:
-                x = int(osh.properties.get(openslide.PROPERTY_NAME_BOUNDS_X, 'NA'))
-                y = int(osh.properties.get(openslide.PROPERTY_NAME_BOUNDS_Y, 'NA'))
-                width = int(osh.properties.get(openslide.PROPERTY_NAME_BOUNDS_WIDTH, 'NA'))
-                height = int(osh.properties.get(openslide.PROPERTY_NAME_BOUNDS_HEIGHT, 'NA'))
-                self["img_bbox"] = (x, y, width, height)
-            except:
-                # no bbox info in slide set enable_bounding_box as Flase
-                self["enable_bounding_box"] = False
-                logging.warning(f"{self['filename']}: Bounding Box requested but could not read")
-                self["warnings"].append("Bounding Box requested but could not read")
+        
+        # Does WSI has bounding box
+        if self["enable_bounding_box"] and osh.has_bounding_box:
+            self["img_bbox"] = osh.bounding_box
+        elif self["enable_bounding_box"] and not osh.has_bounding_box:
+            self["enable_bounding_box"] = False
+            logging.warning(f"{self['filename']}: Bounding Box requested but could not read")
+            self["warnings"].append("Bounding Box requested but could not read")        
 
     def addToPrintList(self, name, val):
         self[name] = val
@@ -270,8 +266,7 @@ def resizeTileDownward(self, target_downsampling_factor, level):
 
 
 def rgba2rgb(s: BaseImage, img):
-    bg_color = "#" + s["os_handle"].properties.get(openslide.PROPERTY_NAME_BACKGROUND_COLOR, "ffffff")
-    thumb = Image.new("RGB", img.size, bg_color)
+    thumb = Image.new("RGB", img.size, s["os_handle"].background_color)
     thumb.paste(img, None, img)
     return thumb
 
@@ -313,22 +308,17 @@ def parsed_mag(mag: Union[str, int, float]) -> Union[None, float]:
 # this function is seperated out because in the future we hope to have automatic detection of
 # magnification if not present in open slide, and/or to confirm openslide base magnification
 def getMag(s: BaseImage, params) -> Union[float, None]:
-    logging.info(f"{s['filename']} - \tgetMag")
+    
     osh = s["os_handle"]
-    mag = osh.properties.get("openslide.objective-power") or \
-            osh.properties.get("aperio.AppMag") or MAG_NA
-    # if mag or strtobool(params.get("confirm_base_mag", "False")):
-    #     # do analysis work here
-    #     logging.warning(f"{s['filename']} - Unknown base magnification for file")
-    #     s["warnings"].append(f"{s['filename']} - Unknown base magnification for file")
-    #     return None
-    # else:
+    mag = osh.magnification or MAG_NA
     # workaround for unspecified mag -- with or without automatic detection it might be preferred to have
     # mag predefined
     mag = mag or parsed_mag(params.get("base_mag"))
     # mag is santized after invoking getMag regarding whether it's None. Therefore, it should not raise
     # the exception here.
-    return float(mag) if mag is not MAG_NA else MAG_NA
+    mag = float(mag) if mag is not MAG_NA else MAG_NA
+    logging.info(f"{s['filename']} - \tgetMag = {mag}")
+    return mag
 
 
 def getDimensionsByOneDim(s: BaseImage, dim: int) -> Tuple[int, int]:
