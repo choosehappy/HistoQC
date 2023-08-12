@@ -31,7 +31,7 @@ class BaseImage(dict):
 
         
         # get handles from config
-        handles = params.get("handles", "openslide,dicom")
+        handles = params.get("handles", "openslide,wsidicom")
         # dynamically load wsi image handle
         self["os_handle"]: WSIImageHandle = WSIImageHandle.create_wsi_handle(fname, handles)
 
