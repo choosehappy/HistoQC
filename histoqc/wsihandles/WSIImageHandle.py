@@ -106,13 +106,19 @@ class WSIImageHandle(ABC):
         # get handles list
         handle_list = handles.split(",")
         for handle_type in handle_list:
-            handle_name = WSI_HANDLES.get(handle_type.strip())
+            handle_type = handle_type.strip()
+            try:
+                handle_name = WSI_HANDLES.get(handle_type)
+            except:
+                msg = f"WSIImageHandle: \"{handle_type}\" is not a registered handle"
+                logging.warn(msg)
+                continue
             class_name = handle_name.split(".")[-1]
             # dynamically import module by using module name
             try:
                 module = import_module(handle_name)
             except ImportError:
-                msg = f"WSIImageHanlde: can't import wsi handle module - \"{handle_name}\" "
+                msg = f"WSIImageHandle: can't import wsi handle module - \"{handle_name}\" "
                 logging.warning(msg)
                 continue
             
@@ -120,7 +126,7 @@ class WSIImageHandle(ABC):
             try:
                 cls = getattr(module, class_name)
             except AttributeError:
-                msg = f"WSIImageHanlde: can't get wsi handle class - \"{class_name}\" "
+                msg = f"WSIImageHandle: can't get wsi handle class - \"{class_name}\" "
                 logging.warning(msg)
                 continue
             
@@ -129,12 +135,12 @@ class WSIImageHandle(ABC):
                 osh = cls(fname)
             except:
                 # current wsi handle class doesn't support this file
-                msg = f"WSIImageHanlde: \"{class_name}\" doesn't support {fname}"
+                msg = f"WSIImageHandle: \"{class_name}\" doesn't support {fname}"
                 logging.warning(msg)
                 continue
         if osh == None:
             #error: no handles support this file 
-            msg = f"WSIImageHanlde: can't find the support wsi handles - {fname}"
+            msg = f"WSIImageHandle: can't find the support wsi handles - {fname}"
             logging.error(msg)
             raise NotImplementedError(msg)
         return osh
