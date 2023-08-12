@@ -108,7 +108,7 @@ class WSIImageHandle(ABC):
         for handle_type in handle_list:
             handle_type = handle_type.strip()
             try:
-                handle_name = WSI_HANDLES.get(handle_type)
+                handle_name = WSI_HANDLES[handle_type]
             except:
                 msg = f"WSIImageHandle: \"{handle_type}\" is not a registered handle"
                 logging.warn(msg)
