@@ -54,8 +54,8 @@ def worker(idx, file_name, process_queue, config, outdir, num_files, force, shar
     logging.info(f"-----Working on:\t{file_name}\t\t{idx+1} of {num_files}")
 
     try:
+        breakpoint()
         s = BaseImage(file_name, fname_outdir, dict(config.items("BaseImage.BaseImage")))
-
         for process, process_params in process_queue:
             #process_params["lock"] = lock
             process_params["sharedStore_actor"] = sharedStore_actor
@@ -76,7 +76,7 @@ def worker(idx, file_name, process_queue, config, outdir, num_files, force, shar
             func_tb_obj = str(exc.__traceback__)
 
         exc.__histoqc_err__ = (file_name, err_str, func_tb_obj)
-        raise exc
+        # raise exc
 
     else:
         # TODO:
