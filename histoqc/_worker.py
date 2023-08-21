@@ -1,6 +1,13 @@
 """histoqc worker functions"""
 import os
 import shutil
+import numpy as np
+
+import ray
+
+import logging
+from histoqc._pipeline import setup_logging
+
 
 from histoqc.BaseImage import BaseImage
 from histoqc._pipeline import load_pipeline
@@ -8,22 +15,32 @@ from histoqc._pipeline import setup_plotting_backend
 
 
 # --- worker functions --------------------------------------------------------
+#
+# def worker_setup(c):
+#     """needed for multiprocessing worker setup"""
+#     setup_plotting_backend()
+#     load_pipeline(config=c)
+#
+def clean_s(s: dict):
+    out = {}
+    out['output'] = s['output']
+    out['warnings'] = s['warnings']
+    for field in s['output']:
+        out[field] = s[field]
 
-def worker_setup(c):
-    """needed for multiprocessing worker setup"""
-    setup_plotting_backend()
-    load_pipeline(config=c)
+    return out
 
-
-def worker(idx, file_name, *,
-           process_queue, config, outdir, log_manager, lock, shared_dict, num_files, force):
+@ray.remote
+def worker(idx, file_name, process_queue, config, outdir, num_files, force, sharedStore_actor): #log_manager, lock, shared_dict, ):
     """pipeline worker function"""
+    setup_logging(capture_warnings=True, filter_warnings='ignore')
+
 
     # --- output directory preparation --------------------------------
     fname_outdir = os.path.join(outdir, os.path.basename(file_name))
     if os.path.isdir(fname_outdir):  # directory exists
         if not force:
-            log_manager.logger.warning(
+            logging.warning(
                 f"{file_name} already seems to be processed (output directory exists),"
                 " skipping. To avoid this behavior use --force"
             )
@@ -34,14 +51,14 @@ def worker(idx, file_name, *,
     # create output dir
     os.makedirs(fname_outdir)
 
-    log_manager.logger.info(f"-----Working on:\t{file_name}\t\t{idx+1} of {num_files}")
+    logging.info(f"-----Working on:\t{file_name}\t\t{idx+1} of {num_files}")
 
     try:
         s = BaseImage(file_name, fname_outdir, dict(config.items("BaseImage.BaseImage")))
 
         for process, process_params in process_queue:
-            process_params["lock"] = lock
-            process_params["shared_dict"] = shared_dict
+            #process_params["lock"] = lock
+            process_params["sharedStore_actor"] = sharedStore_actor
             process(s, process_params)
             s["completed"].append(process.__name__)
 
@@ -50,7 +67,7 @@ def worker(idx, file_name, *,
         _oneline_doc_str = exc.__doc__.replace('\n', '')
         err_str = f"{exc.__class__} {_oneline_doc_str} {exc}"
 
-        log_manager.logger.error(
+        logging.error(
             f"{file_name} - Error analyzing file (skipping): \t {err_str}"
         )
         if exc.__traceback__.tb_next is not None:
@@ -69,6 +86,8 @@ def worker(idx, file_name, *,
         #   -> best solution would be to make BaseImage a contextmanager and close
         #      and cleanup the OpenSlide handle on __exit__
         s["os_handle"] = None  # need to get rid of handle because it can't be pickled
+
+        s = clean_s(s)
         return s
 
 

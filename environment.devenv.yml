@@ -32,7 +32,6 @@ dependencies:
   - scikit-learn
   - openslide-python
   - matplotlib
-  - typing-extensions
 
   - setuptools-scm
   - wheel

@@ -3,7 +3,13 @@ import configparser
 import datetime
 import glob
 import logging
-import multiprocessing
+import copy
+
+#import multiprocessing
+
+import ray
+from ray.util.multiprocessing import Pool
+
 import os
 import sys
 import time
@@ -17,11 +23,23 @@ from histoqc._pipeline import move_logging_file_handler
 from histoqc._pipeline import setup_logging
 from histoqc._pipeline import setup_plotting_backend
 from histoqc._worker import worker
-from histoqc._worker import worker_setup
+#from histoqc._worker import worker_setup
 from histoqc._worker import worker_success
 from histoqc._worker import worker_error
 from histoqc.config import read_config_template
 from histoqc.data import managed_pkg_data
+
+
+@ray.remote
+class SharedStore:
+    def __init__(self):
+        self.global_dict = {}
+
+    def set_global_var(self, key,var):
+        self.global_dict[key] = var
+
+    def get_global_var(self,key):
+        return self.global_dict.get(key)
 
 
 @managed_pkg_data
@@ -66,19 +84,19 @@ def main(argv=None):
     # --- multiprocessing and logging setup -----------------------------------
 
     setup_logging(capture_warnings=True, filter_warnings='ignore')
-    mpm = multiprocessing.Manager()
-    lm = MultiProcessingLogManager('histoqc', manager=mpm)
+    # mpm = multiprocessing.Manager()
+    # lm = MultiProcessingLogManager('histoqc', manager=mpm)
 
     # --- parse the pipeline configuration ------------------------------------
 
     config = configparser.ConfigParser()
     if not args.config:
-        lm.logger.warning(f"Configuration file not set (--config), using default")
+        logging.warning(f"Configuration file not set (--config), using default")
         config.read_string(read_config_template('default'))
     elif os.path.exists(args.config):
         config.read(args.config) #Will read the config file
     else:
-        lm.logger.warning(f"Configuration file {args.config} assuming to be a template...checking.")
+        logging.warning(f"Configuration file {args.config} assuming to be a template...checking.")
         config.read_string(read_config_template(args.config))
 
     # --- provide models, pen and templates as fallbacks from package data ----
@@ -87,14 +105,14 @@ def main(argv=None):
 
     # --- load the process queue (error early) --------------------------------
 
-    _steps = log_pipeline(config, log_manager=lm)
+    _steps = log_pipeline(config)
     process_queue = load_pipeline(config)
 
     # --- check symlink target ------------------------------------------------
 
     if args.symlink is not None:
         if not os.path.isdir(args.symlink):
-            lm.logger.error("error: --symlink {args.symlink} is not a directory")
+            logging.error("error: --symlink {args.symlink} is not a directory")
             return -1
 
     # --- create output directory and move log --------------------------------
@@ -104,14 +122,11 @@ def main(argv=None):
 
     if BatchedResultFile.results_in_path(args.outdir):
         if args.force:
-            lm.logger.info("Previous run detected....overwriting (--force set)")
+            logging.info("Previous run detected....overwriting (--force set)")
         else:
-            lm.logger.info("Previous run detected....skipping completed (--force not set)")
+            logging.info("Previous run detected....skipping completed (--force not set)")
 
-    results = BatchedResultFile(args.outdir,
-                                manager=mpm,
-                                batch_size=args.batch,
-                                force_overwrite=args.force)
+    results = BatchedResultFile(args.outdir, force_overwrite=args.force)
 
     # --- document configuration in results -----------------------------------
 
@@ -143,69 +158,74 @@ def main(argv=None):
         pth = os.path.join(args.basepath, args.input_pattern[0])
         files = glob.glob(pth, recursive=True)
 
-    lm.logger.info("-" * 80)
+    logging.info("-" * 80)
     num_files = len(files)
-    lm.logger.info(f"Number of files detected by pattern:\t{num_files}")
+    logging.info(f"Number of files detected by pattern:\t{num_files}")
 
     # --- start worker processes ----------------------------------------------
 
-    _shared_state = {
-        'process_queue': process_queue,
-        'config': config,
-        'outdir': args.outdir,
-        'log_manager': lm,
-        'lock': mpm.Lock(),
-        'shared_dict': mpm.dict(),
-        'num_files': num_files,
-        'force': args.force,
-    }
-    failed = mpm.list()
-    setup_plotting_backend(lm.logger)
+
+
+    failed = [] # mpm.list()
+    setup_plotting_backend(logging)
+
+    ray.init()
+    sharedStore_actor = SharedStore.remote()
+    ray.get(sharedStore_actor.set_global_var.remote('test','my-test-worked')) #need to call get so it executes
 
     try:
-        if args.nprocesses > 1:
+        '''MAX_NUMBER_PENDING_TASKS = 50
+        # To clarify the difference between result_refs, result_data, and results:
+        # result_refs is a list of references to the results of the tasks.
+        # result_data is a list of the actual results of the tasks.
+        # results is the BatchedResultsFile object that we use to store the results.
+        result_refs = []
+        # result_data = []
+        for idx, file_name in enumerate(files):
+            if len(result_refs) > MAX_NUMBER_PENDING_TASKS:
+                # update result_refs to only
+                # track the remaining tasks.
+                ready_refs, result_refs = ray.wait(result_refs, num_returns=10) # minimize overhead of ray.get() by increasing num_returns
 
-            with lm.logger_thread():
-                print(args.nprocesses)
-                with multiprocessing.Pool(processes=args.nprocesses,
-                                          initializer=worker_setup,
-                                          initargs=(config,)) as pool:
-                    try:
-                        for idx, file_name in enumerate(files):
-                            _ = pool.apply_async(
-                                func=worker,
-                                args=(idx, file_name),
-                                kwds=_shared_state,
-                                callback=partial(worker_success, result_file=results),
-                                error_callback=partial(worker_error, failed=failed),
-                            )
+                # get the results from the finished tasks
+                for r in ray.get(ready_refs):
+                    worker_success(r, results)
 
-                    finally:
-                        pool.close()
-                        pool.join()
+            result_refs.append(worker.remote(idx, file_name, process_queue=process_queue, config=config, outdir=args.outdir,
+                   num_files=num_files, force=args.force , sharedStore_actor=sharedStore_actor))
+        #breakpoint()
+        for r in ray.get(result_refs):
+            worker_success(r, results)'''
+        #breakpoint()
+        # for r in result_data:
+        #     worker_success(r, results)
 
-        else:
-            for idx, file_name in enumerate(files):
-                try:
-                    _success = worker(idx, file_name, **_shared_state)
-                except Exception as exc:
-                    worker_error(exc, failed)
-                    continue
-                else:
-                    worker_success(_success, results)
+        # del result_data # free up memory. Might be done automatically by python garbage collector.
+
+
+        futures = []
+        for idx, file_name in enumerate(files):
+            futures.append(worker.remote(idx, file_name, process_queue=process_queue, config=config, outdir=args.outdir,
+                   num_files=num_files, force=args.force , sharedStore_actor=sharedStore_actor))
+
+        for f in futures:
+            s = ray.get(f)
+            worker_success(s, results)  # figure out if success or failure, here i only deal with the success case
+
+
 
     except KeyboardInterrupt:
-        lm.logger.info("-----REQUESTED-ABORT-----\n")
+        logging.info("-----REQUESTED-ABORT-----\n")
 
     else:
-        lm.logger.info("----------Done-----------\n")
+        logging.info("----------Done-----------\n")
 
     finally:
-        lm.logger.info(f"There are {len(failed)} explicitly failed images (available also in error.log),"
+        logging.info(f"There are {len(failed)} explicitly failed images (available also in error.log),"
                        " warnings are listed in warnings column in output")
 
         for file_name, error, tb in failed:
-            lm.logger.info(f"{file_name}\t{error}\n{tb}")
+            logging.info(f"{file_name}\t{error}\n{tb}")
 
     if args.symlink is not None:
         origin = os.path.realpath(args.outdir)
@@ -215,9 +235,9 @@ def main(argv=None):
         )
         try:
             os.symlink(origin, target, target_is_directory=True)
-            lm.logger.info("Symlink to output directory created")
+            logging.info("Symlink to output directory created")
         except (FileExistsError, FileNotFoundError):
-            lm.logger.error(
+            logging.error(
                 f"Error creating symlink to output in '{args.symlink}', "
                 f"Please create manually: ln -s {origin} {target}"
             )

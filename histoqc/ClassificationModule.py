@@ -1,3 +1,5 @@
+import time
+import ray
 import logging
 import os
 import re
@@ -165,40 +167,49 @@ def byExampleWithFeatures(s, params):
         sys.exit(1)
         return
 
-    with params["lock"]:  # this lock is shared across all threads such that only one thread needs to train the model
-        # then it is shared with all other modules
-        if not params["shared_dict"].get("model_" + name, False):
-            logging.info(f"{s['filename']} - Training model ClassificationModule.byExample:{name}")
+    model_name = "model_" + name
 
-            model_vals = []
-            model_labels = np.empty([0, 1])
+    sharedStore_actor= params["sharedStore_actor"]
+    val = ray.get(sharedStore_actor.get_global_var.remote(model_name))
+    if not val:
+        ray.get(sharedStore_actor.set_global_var.remote(
+                model_name, "working"))
 
-            for ex in params["examples"].splitlines():
-                ex = re.split(r'(?<!\W[A-Za-z]):(?!\\)', ex)  # workaround for windows: don't split on i.e. C:\
-                img = io.imread(ex[0])
-                eximg = compute_features(img, params)
-                eximg = eximg.reshape(-1, eximg.shape[2])
+        logging.info(f"{s['filename']} - Training model ClassificationModule.byExample:{name}")
 
-                mask = io.imread(ex[1], as_gray=True).reshape(-1, 1)
+        model_vals = []
+        model_labels = np.empty([0, 1])
 
-                if nsamples_per_example != -1: #sub sambling required
-                    nitems = nsamples_per_example if nsamples_per_example > 1 else int(mask.shape[0]*nsamples_per_example)
-                    idxkeep = np.random.choice(mask.shape[0], size=int(nitems))
-                    eximg = eximg[idxkeep, :]
-                    mask = mask[idxkeep]
+        for ex in params["examples"].splitlines():
+            ex = re.split(r'(?<!\W[A-Za-z]):(?!\\)', ex)  # workaround for windows: don't split on i.e. C:\
+            img = io.imread(ex[0])
+            eximg = compute_features(img, params)
+            eximg = eximg.reshape(-1, eximg.shape[2])
+
+            mask = io.imread(ex[1], as_gray=True).reshape(-1, 1)
+
+            if nsamples_per_example != -1: #sub sambling required
+                nitems = nsamples_per_example if nsamples_per_example > 1 else int(mask.shape[0]*nsamples_per_example)
+                idxkeep = np.random.choice(mask.shape[0], size=int(nitems))
+                eximg = eximg[idxkeep, :]
+                mask = mask[idxkeep]
 
 
-                model_vals.append(eximg)
-                model_labels = np.vstack((model_labels, mask))
+            model_vals.append(eximg)
+            model_labels = np.vstack((model_labels, mask))
 
-            # do stuff here with model_vals
-            model_vals = np.vstack(model_vals)
-            clf = RandomForestClassifier(n_jobs=-1)
-            clf.fit(model_vals, model_labels.ravel())
-            params["shared_dict"]["model_" + name] = clf
-            logging.info(f"{s['filename']} - Training model ClassificationModule.byExample:{name}....done")
+        # do stuff here with model_vals
+        model_vals = np.vstack(model_vals)
+        clf = RandomForestClassifier(n_jobs=-1)
+        clf.fit(model_vals, model_labels.ravel())
+        val = ray.get(sharedStore_actor.set_global_var.remote(model_name,clf))
+        logging.info(f"{s['filename']} - Training model ClassificationModule.byExample:{name}....done")
 
-    clf = params["shared_dict"]["model_" + name]
+    clf = ray.get(sharedStore_actor.get_global_var.remote(model_name))
+    while type(clf) == str:
+        time.sleep(10)
+        clf = ray.get(sharedStore_actor.get_global_var.remote(model_name))
+
     img = s.getImgThumb(s["image_work_size"])
     feats = compute_features(img, params)
     cal = clf.predict_proba(feats.reshape(-1, feats.shape[2]))
