@@ -1,0 +1,100 @@
+body {
+  font-size: 14px;
+  font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+  margin: 24px;
+  background: #fcfcfc;
+  line-height: 1.45em;
+}
+a {
+  color: #555;
+}
+a:hover {
+  color: #000;
+}
+ul {
+  margin: 0 20px;
+  padding: 0;
+}
+.dark {
+  background: #222;
+}
+p {
+  width: 560px;
+}
+pre {
+  color: #444;
+  font-family: Ubuntu Mono, Monaco, monospace;
+  padding: 4px 8px;
+  background: #f2f2f2;
+  border: 1px solid #ccc;
+}
+h1 small {
+  font-weight: normal;
+  font-size: 0.5em;
+}
+h3 {
+  margin-top: 40px;
+}
+.float {
+  float: left;
+}
+.centered {
+  text-align: center;
+}
+.hide {
+  display: none;
+}
+input {
+  font-size: 16px;
+}
+
+/*SlickGrid */
+#grid {
+  width: 100% !important;  /* vs jquery resizable */
+  height: 260px;
+  margin-top: 4px;
+}
+.slick-header-column {
+  font-weight:bold;
+  cursor: move;
+  border-right: 1px solid #bbb !important;
+}
+.slick-cell {
+  border: none !important;
+}
+.slick-row.odd {
+  background: rgba(0,0,0,0.05);
+}
+.slick-row {
+  height: 24px !important;
+  line-height: 24px;
+}
+.slick-resizable-handle {
+  background: rgba(0,0,0,0.03);
+  width: 8px;
+}
+
+
+svg {
+  font: 10px sans-serif;
+}
+.axis text {
+  text-shadow: 0 1px 0 #fff, 1px 0 0 #fff, 0 -1px 0 #fff, -1px 0 0 #fff;
+  cursor: move;
+}
+
+/* jquery resizable */
+.ui-resizable {
+  padding-bottom: 10px;
+  position: relative;
+}
+.ui-resizable-handle {
+  background: rgba(0,0,0,0.05);
+}
+.ui-resizable-s {
+  height: 10px;
+  width: 100%;
+  cursor: s-resize;
+  position: absolute;
+  bottom: 0px;
+}
