@@ -1,0 +1,284 @@
+:root {
+	--selected-color: orangered;
+	--foreground-color: #007bff;
+	--background-color: #ddd;
+}
+
+html, body {
+	line-height: 1; /* same as bootstrap.css */
+}
+
+th {
+	font-weight: normal;
+}
+
+/* .px-md-4 {
+	padding-left: 30px!important;
+	padding-right: 30px!important;
+}
+
+.btn-outline-secondary {
+	border-width: 1.5px;
+}
+
+.m-container {
+	border-width: 1px;
+	border-radius: 5px;
+	border-color: #eee;
+}
+
+#dataset-tag {
+	display: none;
+	color: #aaa;
+}
+
+#view-mngmt-btn-group {
+	display: none;
+}
+
+#table-btn,
+#chart-btn,
+#image-btn {
+	width: 80px;
+}
+
+.view-enabled {
+	display: inline-block;
+	color: #212529;
+	background-color: #f8f9fa;
+	border-color: #f8f9fa;
+}
+
+.view-disabled {
+	display: inline-block;
+	color: #212529;
+	background-color: transparent;
+	border-color: #efefef;
+}
+
+#view-mngmt-btn-hidden {
+	display: none;
+}
+
+#upload-button {
+	margin-top: 15%;
+}
+
+#upload-input,
+#cf-input {
+	display: none;
+}
+
+#table-view {
+	display: none;
+	height: 230px;
+}
+
+#chart-view {
+	display: none;
+	height: 330px;
+} */
+
+#image-view {
+	display: none;
+}
+
+.base-view-outer {
+	margin: 0.5rem;
+}
+
+.base-view-inner {
+	padding: 0.5rem;
+	border: 1px solid #dfdfdf;
+	border-radius: 3px;
+	box-shadow: #ccc 1px 1px 4px;
+}
+
+#format-tester {
+	display: none;
+}
+
+#result-table_wrapper {
+	display: flex !important;
+	padding: 0px;
+}
+
+.table-control {
+	/*padding-right: 0px;*/
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+}
+
+.table-control > div.dt-buttons {
+	width: 100%;
+	height: 100%;
+}
+
+.control-group {
+	position: fixed;
+	padding-left: 0px;
+	padding-top: 0px;
+/*	padding-left: 0.5rem;
+	padding-top: 0.5rem;
+*/	/*width: 100%;*/
+	z-index: 1;
+	opacity: 0.9;
+}
+
+/* img view */
+/*#exit-image-select-view-btn,
+#img-select-button {
+	position: fixed;
+	padding-left: 15px;
+	padding-top: 15px;
+	z-index: 1;
+}
+*/
+#exit-image-select-view-btn {
+	display: none;
+}
+
+/*#img-select,
+#comparison-select,
+#chart-select,
+#chart-sort-btn,
+#vis-switch-btn {
+	border-width: 1.5px;
+	height: 40px;
+	color: #898f94;
+	border-color: #898f94;
+	text-shadow: 0.5px 0.5px 1px #000;
+	font-size: 18px;
+}
+*/
+/*#img-select:hover,
+#comparison-select:hover,
+#chart-select:hover,
+#chart-sort-btn:hover,
+#vis-switch-btn:hover {
+	background-color: #898f94;
+	color: #fff;
+}
+*/
+
+#overview-gallery {
+	height: 100%;
+	display: flex;
+	flex-wrap: wrap;
+ 	padding-left: 15px;
+	padding-top: 15px;
+	padding-bottom: 15px;
+	padding-right: 15px;
+	overflow-y: scroll;
+}
+
+.overview-image-block {
+	min-width: 120px;
+	height: 200px;
+	margin-right: 5px;
+	margin-bottom: 5px;
+	position: relative;
+	display: flex;
+	align-items: flex-end;
+	justify-content: center;
+	box-shadow: 1px 1px 2px #999;
+}
+
+.overview-image-block > img {
+	height: 200px;
+}
+
+.overview-image-block > img:nth-child(2) {
+	margin-left: 1px;
+}
+
+.overview-image-block > div {
+	position: absolute;
+}
+
+.overview-image-block > div > span {
+	font-size: 13px;
+	line-height: 1;
+	display: inherit;
+	color: white;
+	text-shadow: 1px 0px 2px #000;
+}
+
+#select-image-view {
+	height: 100%;
+	width: 100%;
+	align-items: center;
+	/*padding: 15px;*/
+	display: none;
+}
+
+
+#select-image-container {
+	order: 0;
+	height: 100%;
+	width: 30%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-shadow: 1px 0px 4px #ccc;
+	margin-right: 30px;
+}
+
+#select-image-container > img {
+	max-height: 100%;
+	max-width: 100%;
+}
+
+
+#select-image-container > div {
+	position: absolute;
+	height: 15px;
+	align-self: flex-end;
+	}
+
+#select-image-container > div > span {
+	font-size: 13px;
+	line-height: 1;
+	display: inherit;
+	color: white;
+	text-shadow: 1px 0px 2px #000;
+}
+
+
+#select-candidate-container {
+	order: 1;
+	height: 100%;
+	width: 70%;
+	display: flex;
+	flex-wrap: wrap;
+	overflow-y: scroll;
+}
+
+.candidate-image-block {
+	height: 150px;
+	margin-right: 5px;
+	margin-bottom: 5px;
+	position: relative;
+	display: flex;
+	align-items: flex-end;
+	justify-content: center;
+}
+
+.candidate-image-block > img {
+	height: 150px;
+}
+
+.candidate-image-block > div {
+	position: absolute;
+	height: 15px;
+	}
+
+.candidate-image-block > div > span {
+	font-size: 13px;
+	line-height: 1;
+	display: inherit;
+	color: white;
+	text-shadow: 1px 0px 2px #000;
+}
+

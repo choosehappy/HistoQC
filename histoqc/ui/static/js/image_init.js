@@ -52,7 +52,7 @@ function initialize_image_view (data) {
 	console.log(DATA_PATH);
 	//get the filenames from the data set.
 	var case_list = data.map(function (d) {
-		return d["filename"];
+		return d["case_name"];
 	});
 
 	var $div = $("#overview-gallery");
@@ -62,7 +62,7 @@ function initialize_image_view (data) {
 
 	for (var i = 0; i < case_list.length; i++) {
 		$div.append(
-			generate_img_block(
+			generate_img_block(data[i]["id"],
 				"overview-image-block", case_list[i], 
 				CURRENT_IMAGE_TYPE, CURRENT_COMPARE_TYPE, case_list[i]
 			)
@@ -90,7 +90,7 @@ function update_image_view (case_list) {
 
 	for (var i = 0; i < ORIGINAL_CASE_LIST.length; i++) {
 		$div.append(
-			generate_img_block(
+			generate_img_block(data, // data was not defined and will raise an error.
 				"overview-image-block", ORIGINAL_CASE_LIST[i], 
 				CURRENT_IMAGE_TYPE, CURRENT_COMPARE_TYPE, ORIGINAL_CASE_LIST[i]
 			)
@@ -194,8 +194,8 @@ function calculate_height ($div) {
 }
 
 
-function generate_img_block (blk_class, file_name, img_type, compare_type, img_label) {
-	var img_block = "<div id='" + ORIGINAL_CASE_DICT[file_name]["dom_id"] + 
+function generate_img_block (id, blk_class, file_name, img_type, compare_type, img_label) {
+	var img_block = "<div id='" + id + 
 		"' class='" + blk_class + "'>" +
 		"<img src='" + generate_img_src(
 			file_name, img_type, blk_class == "overview-image-block"
@@ -216,9 +216,9 @@ function generate_img_block (blk_class, file_name, img_type, compare_type, img_l
 
 function generate_img_src (file_name, img_type_index, use_small=false) {
 	var image_extension = DEFAULT_IMAGE_EXTENSIONS[img_type_index];
-	if (use_small && SMALL_IMAGE_EXTENSIONS.indexOf(image_extension) >= 0) {
-		image_extension = image_extension.split(".")[0] + "_small.png";
-	}
+	// if (use_small && SMALL_IMAGE_EXTENSIONS.indexOf(image_extension) >= 0) {
+	// 	image_extension = image_extension.split(".")[0] + "_small.png";
+	// }
 
 	// path calls the image endpoint.
 	return window.location.origin + "/image/" + file_name + image_extension;
