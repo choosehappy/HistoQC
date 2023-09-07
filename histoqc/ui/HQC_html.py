@@ -15,6 +15,12 @@ def slickgrid(fn):
 @html.route('/image/<path:fn>', methods=['GET'])
 def image(fn):
     # read image from file system and send over http
-    img_path = os.path.join(current_app.config['assets_path'], fn)
+    fn_base = fn.split('_')[0]  # remove image type suffix
+    img_path = os.path.join(current_app.config['data_directory'], fn_base, fn)
     # return send_from_directory(current_app.config['assets_path'], fn)
     return send_file(img_path)
+
+@html.route('/datadir', methods=['GET'])
+def datadir():
+    current_app.logger.info('data directory: %s', current_app.config['data_directory'])
+    return current_app.config['data_directory']

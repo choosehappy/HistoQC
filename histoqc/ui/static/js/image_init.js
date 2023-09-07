@@ -36,14 +36,20 @@ var DEFAULT_IMAGE_EXTENSIONS = [
 ];
 var DEFAULT_IMAGE_EXTENSION = "_thumb.png";
 
-
-
-
-
-
+// set the variable DATA_PATH by calling the /datadir endpoint	**************TO BE REMOVED
+var DATA_PATH = "";
+$.ajax({
+	url: "/datadir",
+	type: "GET",
+	async: false,
+	success: function (data) {
+		DATA_PATH = data;
+	}
+});
 
 
 function initialize_image_view (data) {
+	console.log(DATA_PATH);
 	//get the filenames from the data set.
 	var case_list = data.map(function (d) {
 		return d["filename"];
@@ -56,12 +62,12 @@ function initialize_image_view (data) {
 
 	for (var i = 0; i < case_list.length; i++) {
 		$div.append(
-			// generate_img_block(
-			// 	"overview-image-block", case_list[i], 
-			// 	CURRENT_IMAGE_TYPE, CURRENT_COMPARE_TYPE, case_list[i]
-			// )
+			generate_img_block(
+				"overview-image-block", case_list[i], 
+				CURRENT_IMAGE_TYPE, CURRENT_COMPARE_TYPE, case_list[i]
+			)
 
-			`<h1>Image ${i}</h1>`
+			// `<h1>Image ${i}</h1>`
 		);
 	}
  
@@ -196,7 +202,7 @@ function generate_img_block (blk_class, file_name, img_type, compare_type, img_l
 		) + "' file_name='" + file_name + 
 		"' img_type='" + img_type + 
 		"' onerror=\"this.style.display='none'\"/>";
-	if (compare_type != -1) {
+	if (compare_type != -1) {	// add on second image if we are in compare mode
 		img_block += "<img src='" + generate_img_src(
 				file_name, compare_type, blk_class == "overview-image-block"
 			) + "' file_name='" + file_name + 
@@ -213,8 +219,9 @@ function generate_img_src (file_name, img_type_index, use_small=false) {
 	if (use_small && SMALL_IMAGE_EXTENSIONS.indexOf(image_extension) >= 0) {
 		image_extension = image_extension.split(".")[0] + "_small.png";
 	}
-	return DATA_PATH + file_name + "/" + file_name + image_extension
 
+	// path calls the image endpoint.
+	return window.location.origin + "/image/" + file_name + image_extension;
 }
 
 
