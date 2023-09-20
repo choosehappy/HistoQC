@@ -39,6 +39,9 @@ def annotation_to_mask(width: int, height: int, annot_collection: AnnotCollectio
     all_regions: List[Region] = annot_collection.all_regions
     for region in all_regions:
         polygon: Polygon = region['polygon']
+        # skip if empty ring (e.g., misclick in qupath)
+        if polygon.is_empty or (not polygon.is_valid):
+            continue
         draw_pil = polygon_filled(draw_pil, polygon, offset_xy, resize_factor)
     # noinspection PyTypeChecker
     return np.array(mask)
@@ -89,6 +92,7 @@ def saveAnnotationMask(s, params):
     # todo better using the Py3.10 match statement - so it will be a Literal
     # noinspection PyTypeChecker
     annotation_type: TYPE_SUPPORTED_PARSER = ann_format.lower()
+    logging.info(f"{s['filename']} - \tusing {annotation_type}")
     # read points set
     if annotation_type in PARSER_BUILDER_MAP:  # xml
         annot_collection = AnnotCollection.build(parser_type=annotation_type, uri=f_path, label_map=None)
@@ -103,6 +107,7 @@ def saveAnnotationMask(s, params):
     resize_factor = np.shape(s["img_mask_use"])[1] / ncol
     height, width = s["img_mask_use"].shape
     annotationMask = annotation_to_mask(width, height, annot_collection, (off_x, off_y), resize_factor) > 0
+
     mask_file_name = f"{s['outdir']}{os.sep}{s['filename']}_annot_{ann_format.lower()}.png"
     io.imsave(mask_file_name, img_as_ubyte(annotationMask))
 
