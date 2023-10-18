@@ -81,6 +81,8 @@ function readFile() {
 			return false;
 		});
 
+		console.log(current_parallel_attributes)
+
 		var newLines = lines.map(function (d) {
 			attr_value_dict = {
 				case_name: d["filename"],

@@ -60,7 +60,7 @@ function initialize_image_view (data) {
 
 	CURRENT_IMAGE_TYPE = DEFAULT_IMAGE_EXTENSIONS.indexOf(DEFAULT_IMAGE_EXTENSION);
 
-	for (var i = 0; i < case_list.length; i++) {
+	for (var i = 0; i < 10; i++) {//i < case_list.length; i++) {
 		$div.append(
 			generate_img_block(data[i]["id"],
 				"overview-image-block", case_list[i], 
@@ -88,7 +88,7 @@ function update_image_view (case_list) {
 	var $div = $("#overview-gallery");
 	$div.empty();
 
-	for (var i = 0; i < ORIGINAL_CASE_LIST.length; i++) {
+	for (var i = 0; i < 10; i++) {//ORIGINAL_CASE_LIST.length; i++) {
 		$div.append(
 			generate_img_block(data, // data was not defined and will raise an error.
 				"overview-image-block", ORIGINAL_CASE_LIST[i], 
@@ -221,7 +221,7 @@ function generate_img_src (file_name, img_type_index, use_small=false) {
 	// }
 
 	// path calls the image endpoint.
-	return window.location.origin + "/image/" + file_name + image_extension;
+	return window.location.origin + "/image/" + file_name + '/' + image_extension;
 }
 
 

@@ -1,99 +1,154 @@
 <!doctype html>
-<title>HistoQC UI</title>
+<html>
+
+<head>
+  <title>HistoQC UI</title>
+  <link rel="stylesheet" href="{{url_for('static', filename='slickgrid_libs/slickgrid/slick.grid.css')}}"
+    type="text/css" />
+  <link rel="stylesheet" href="{{url_for('static', filename='slickgrid_libs/slickgrid/jquery-ui-1.8.16.custom.css')}}"
+    type="text/css" />
+  <link rel="stylesheet" href="{{url_for('static', filename='slickgrid_libs/slickgrid/examples.css')}}"
+    type="text/css" />
+  <link rel="stylesheet" href="{{url_for('static', filename='slickgrid_libs/slickgrid/slick.pager.css')}}"
+    type="text/css" />
+
+  <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='libs/bootstrap/bootstrap.css')}}" />
+  <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='libs/bootstrap/bootstrap.min.css')}}" />
+
+  <script src="{{url_for('static', filename='slickgrid_libs/slickgrid/jquery-1.7.min.js')}}"></script>
+  <script src="{{url_for('static', filename='slickgrid_libs/slickgrid/jquery.event.drag-2.0.min.js')}}"></script>
+  <script src="{{url_for('static', filename='slickgrid_libs/slickgrid/slick.core.js')}}"></script>
+  <script src="{{url_for('static', filename='slickgrid_libs/slickgrid/slick.grid.js')}}"></script>
+  <script src="{{url_for('static', filename='slickgrid_libs/slickgrid/slick.pager.js')}}"></script>
+  <script src="{{url_for('static', filename='slickgrid_libs/slickgrid/slick.dataview.js')}}"></script>
+  <!-- End SlickGrid -->
+
+  <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='slickgrid_libs/parcoords.css')}}">
+  <!-- <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='slickgrid_libs/index.css')}}">
+  <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='slickgrid_libs/style.css')}}"> -->
+  <!-- <style>
+    body,
+    html {
+      margin: 0;
+      height: 100%;
+      width: 100%;
+      overflow: scroll;
+      font-size: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      padding: 4px;
+      font-size: 40pt;
+    }
+
+    #example {
+      position: static;
+      top: 0px;
+      left: 0px;
+      width: 100%;
+      height: 40%;
+    }
+
+    #grid,
+    #pager {
+      position: static;
+      width: 100%;
+    }
+
+    #grid {
+      bottom: 0px;
+      height: 100%;
+    }
+
+    #pager {
+      height: 20px;
+    }
+
+    .slick-row:hover {
+      font-weight: bold;
+      color: #069;
+    }
+
+    #slick-container {
+      position: static;
+      left: 0px;
+      width: 100%;
+      height: 30%;
+    }
+
+    #banner {
+      position: static;
+      top: 0px;
+      left: 0px;
+      width: 100%;
+      height: 5%;
+      background-color: #eee;
+      border-bottom: 1px solid #ccc;
+      text-align: center;
+      line-height: 40px;
+      font-weight: bold;
+    }
+  </style> -->
+  <script src="{{url_for('static', filename='slickgrid_libs/d3.v5.min.js')}}"></script>
+  <script src="{{url_for('static', filename='slickgrid_libs/parcoords.standalone.js')}}"></script>
+  <script src="{{url_for('static', filename='slickgrid_libs/divgrid.js')}}"></script>
+  <script src="{{url_for('static', filename='js/image_init.js')}}"></script>
+</head>
+
+<body>
+  <div class="container">
+    <!-- Three rows-->
+    <!-- Row 1: | parallel coordinates plot | -->
+    <!-- Row 2: | data grid                 | -->
+    <!-- Row 3: | image gallery | scatter   | -->
+    <div class="row">
+      <div class="col">
+        1 of 3
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
+        1 of 3
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
+        1 of 3
+      </div>
+      <div class="col">
+        2 of 3 (wider)
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+
 
 <!-- SlickGrid -->
-<link rel="stylesheet" href="{{url_for('static', filename='slickgrid_libs/slickgrid/slick.grid.css')}}" type="text/css"/>
-<link rel="stylesheet" href="{{url_for('static', filename='slickgrid_libs/slickgrid/jquery-ui-1.8.16.custom.css')}}" type="text/css"/>
-<link rel="stylesheet" href="{{url_for('static', filename='slickgrid_libs/slickgrid/examples.css')}}" type="text/css"/>
-<link rel="stylesheet" href="{{url_for('static', filename='slickgrid_libs/slickgrid/slick.pager.css')}}" type="text/css"/>
-<script src="{{url_for('static', filename='slickgrid_libs/slickgrid/jquery-1.7.min.js')}}"></script>
-<script src="{{url_for('static', filename='slickgrid_libs/slickgrid/jquery.event.drag-2.0.min.js')}}"></script>
-<script src="{{url_for('static', filename='slickgrid_libs/slickgrid/slick.core.js')}}"></script>
-<script src="{{url_for('static', filename='slickgrid_libs/slickgrid/slick.grid.js')}}"></script>
-<script src="{{url_for('static', filename='slickgrid_libs/slickgrid/slick.pager.js')}}"></script>
-<script src="{{url_for('static', filename='slickgrid_libs/slickgrid/slick.dataview.js')}}"></script>
-<!-- End SlickGrid -->
 
-<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='slickgrid_libs/parcoords.css')}}">
-<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='slickgrid_libs/index.css')}}">
-<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='slickgrid_libs/style.css')}}">
-<style>
-body, html {
-  margin: 0;
-  height: 100%;
-  width: 100%;
-  overflow: scroll;
-  font-size: 12px;
-}
-h1 {
-  margin: 0;
-  padding: 4px;
-  font-size: 40pt;
-}
-#example {
-  position: static;
-  top: 0px;
-  left: 0px;
-  width: 100%;
-  height: 40%;
-}
-#grid, #pager {
-  position: static;
-  width: 100%;
-}
-#grid {
-  bottom: 0px;
-  height: 100%;
-}
-#pager {
-  height: 20px;
-}
-.slick-row:hover {
-  font-weight: bold;
-  color: #069;
-}
-#slick-container {
-  position: static;
-  left: 0px;
-  width: 100%;
-  height: 30%;
-}
-#banner {
-  position: static;
-  top: 0px;
-  left: 0px;
-  width: 100%;
-  height: 5%;
-  background-color: #eee;
-  border-bottom: 1px solid #ccc;
-  text-align: center;
-  line-height: 40px;
-  font-weight: bold;
-}
-</style>
-<script src="{{url_for('static', filename='slickgrid_libs/d3.v5.min.js')}}"></script>
-<script src="{{url_for('static', filename='slickgrid_libs/parcoords.standalone.js')}}"></script>
-<script src="{{url_for('static', filename='slickgrid_libs/divgrid.js')}}"></script>
-<script src="{{url_for('static', filename='js/image_init.js')}}"></script>
-<div id="upload-button" class="container pt-md-5 text-center" style="display:block;">
-    <label>
-        <span class="btn btn-primary btn-lg">
-            View Results <input id="upload-input" type="file" accept=".tsv" multiple>
-        </span>
-    </label>
+<!-- <div id="upload-button" class="container pt-md-5 text-center" style="display:block;">
+  <label>
+    <span class="btn btn-primary btn-lg">
+      View Results <input id="upload-input" type="file" accept=".tsv" multiple>
+    </span>
+  </label>
 </div>
+
 <div id="example" class="parcoords"></div>
 <div id="slick-container">
   <div id="pager"></div>
   <div id="grid"></div>
-</div>
+</div> -->
 
 <!-- All components pertaining to the image gallery. -->
-<div id="image-view" class="base-view-outer bg-light">
+<!-- <div id="image-view" class="base-view-outer bg-light">
   <div id="image-control-group" class="control-group btn-group btn-group-sm">
     <div id="img-select-button" class="btn-group btn-group-sm">
-      <select id="img-select" class="selectpicker show-tick" data-size="10" data-style="btn-dark btn-sm" data-width="150px"></select>
-      <select id="comparison-select" class="selectpicker" data-size="10" data-style="btn-dark btn-sm" data-width="150px"></select>
+      <select id="img-select" class="selectpicker show-tick" data-size="10" data-style="btn-dark btn-sm"
+        data-width="150px"></select>
+      <select id="comparison-select" class="selectpicker" data-size="10" data-style="btn-dark btn-sm"
+        data-width="150px"></select>
     </div>
     <button id="exit-image-select-view-btn" class="btn btn-dark btn-sm">back</button>
   </div>
@@ -104,6 +159,7 @@ h1 {
       <div id="select-candidate-container"></div>
     </div>
   </div>
-</div>
-<script src="{{url_for('static', filename='js/slickgrid.js')}}" id="brushing">
-</script>
+</div> -->
+
+
+<script src="{{url_for('static', filename='js/slickgrid.js')}}" id="brushing"></script>

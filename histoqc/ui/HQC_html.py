@@ -12,11 +12,11 @@ def slickgrid(fn):
     return "Blank Page"
     #return render_template('index.html', fn=fn)
 
-@html.route('/image/<path:fn>', methods=['GET'])
-def image(fn):
+@html.route('/image/<foldername>/<suffix>', methods=['GET'])
+def image(foldername, suffix):
     # read image from file system and send over http
-    fn_base = fn.split('_')[0]  # remove image type suffix
-    img_path = os.path.join(current_app.config['data_directory'], fn_base, fn)
+    img_name = foldername + suffix
+    img_path = os.path.join(current_app.config['data_directory'], foldername, img_name)
     # return send_from_directory(current_app.config['assets_path'], fn)
     return send_file(img_path)
 
