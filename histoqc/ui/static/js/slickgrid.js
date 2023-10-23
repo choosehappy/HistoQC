@@ -35,44 +35,6 @@ function readFile() {
 
 		original_features = Object.keys(lines[0])
 
-		var DEFAULT_PARAC_ATTRIBUTES = [
-			"levels",
-			"height",
-			"width",
-			"mpp_x",
-			"mpp_y",
-			"Magnification",
-			"pen_markings",
-			"coverslip_edge",
-			"bubble",
-			"nonwhite",
-			"dark",
-			"percent_small_tissue_removed",
-			"percent_small_tissue_filled",
-			"percent_blurry",
-			"spur_pixels",
-			"template1_MSE_hist",
-			"template2_MSE_hist",
-			"template3_MSE_hist",
-			"template4_MSE_hist",
-			"michelson_contrast",
-			"rms_contrast",
-			"grayscale_brightness",
-			"chan1_brightness",
-			"chan2_brightness",
-			"chan3_brightness",
-			"deconv_c0_mean",
-			"deconv_c1_mean",
-			"deconv_c2_mean",
-			"chuv1_brightness_YUV",
-			"chuv2_brightness_YUV",
-			"chuv3_brightness_YUV",
-			"chan1_brightness_YUV",
-			"chan2_brightness_YUV",
-			"chan3_brightness_YUV",
-			"pixels_to_use"
-		];
-
 		current_parallel_attributes = original_features.filter(function (d) {
 			// in DEFAULT_PARAC_ATTRIBUTES and is numeric
 			if (typeof (lines[0][d]) == "number" && DEFAULT_PARAC_ATTRIBUTES.indexOf(d) != -1) {
@@ -101,9 +63,7 @@ function readFile() {
 	reader.readAsText(fileObject)
 }
 
-
-
-function renderLines(lines) {
+function renderLines(data) {
 	///////////////////////////// PARCOORDS SETUP /////////////////////////////
 	const margin = visualViewport.height * 0.05;
 	const parcoords_card_height = visualViewport.height * 0.3 - margin;
@@ -113,7 +73,6 @@ function renderLines(lines) {
 		.mode("queue") // progressive rendering
 		.height(parcoords_card_height)
 
-	const data = lines;
 	// slickgrid needs each data element to have an id
 	data.forEach(function (d, i) { d.id = d.id || i; });
 	console.log(data)
@@ -146,17 +105,24 @@ function renderLines(lines) {
 	var dataView = new Slick.Data.DataView();
 	var grid = new Slick.Grid("#grid", dataView, columns, options);
 	var pager = new Slick.Controls.Pager(dataView, grid, $("#pager"));
+	var page_info = dataView.getPagingInfo();
 
 	// dataView subscriptions drive the grid
 	dataView.onRowCountChanged.subscribe(function (e, args) {
 		grid.updateRowCount();
 		grid.render();
+
+		// update the image pane when the paging changes
+		const page_info = dataView.getPagingInfo();
+		update_image_view(data, page_info["pageNum"], page_info["pageSize"])
+
 	});
 
 	dataView.onRowsChanged.subscribe(function (e, args) {
 		grid.invalidateRows(args.rows);
 		grid.render();
 	});
+
 
 	// column sorting
 	var sortcol = column_keys[0];
@@ -218,7 +184,7 @@ function renderLines(lines) {
 	};
 
 	///////////////////////////// IMAGE GALLERY SETUP /////////////////////////////
-	initialize_image_view(data);
-
+	initialize_image_view(data, page_info["pageNum"], page_info["pageSize"]);
+	
 
 }

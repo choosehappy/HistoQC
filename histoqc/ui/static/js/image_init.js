@@ -4,39 +4,8 @@
  * update log: Add id to image blocks. Add multi-select. Re-define the generate_img_block function.
  */ 
 
-var CURRENT_IMAGE_TYPE = 0, CURRENT_COMPARE_TYPE = -1;
-var DEFAULT_IMAGE_EXTENSIONS = [
-    "_thumb.png",
-    "_fuse.png",
-    "_equalized_thumb.png",
-    "_areathresh.png",
-    "_blurry.png",
-    "_bubble.png",
-    "_coverslip_edge.png",
-    "_dark.png",
-    "_deconv_c0.png",
-    "_deconv_c1.png",
-    "_deconv_c2.png",
-    "_edge.png",
-    "_flat.png",
-    "_fatlike.png",    
-    "_hist.png",
-    "_mask_use.png",
-    "_bright.png",
-    "_pen_markings.png",
-    "_small_fill.png",
-    "_small_remove.png",
-    "_spur.png",
-    "_otsu.png",
-    "_otsulocal.png",
-    "_macro.png",
-    "_annot_xml.png",
-    "_annot_json.png"
-
-];
-var DEFAULT_IMAGE_EXTENSION = "_thumb.png";
-
-// set the variable DATA_PATH by calling the /datadir endpoint	**************TO BE REMOVED
+// set the variable DATA_PATH by calling the /datadir endpoint
+// TODO: add argparse to the server to set the data path.
 var DATA_PATH = "";
 $.ajax({
 	url: "/datadir",
@@ -48,7 +17,7 @@ $.ajax({
 });
 
 
-function initialize_image_view (data) {
+function initialize_image_view (data, page_num, page_size) {
 	console.log(DATA_PATH);
 	//get the filenames from the data set.
 	var case_list = data.map(function (d) {
@@ -61,17 +30,18 @@ function initialize_image_view (data) {
 
 	CURRENT_IMAGE_TYPE = DEFAULT_IMAGE_EXTENSIONS.indexOf(DEFAULT_IMAGE_EXTENSION);
 
-	for (var i = 0; i < 10; i++) {//i < case_list.length; i++) {
+	page_start = page_num * page_size;
+	for (var i = page_start; i < page_start+page_size; i++) {//i < case_list.length; i++) {
 		$div.append(
 			generate_img_block(data[i]["id"],
 				"overview-image-block", case_list[i], 
 				CURRENT_IMAGE_TYPE, CURRENT_COMPARE_TYPE, case_list[i]
 			)
-
-			// `<h1>Image ${i}</h1>`
 		);
 	}
- 
+	
+	// IMAGE SELECT MODE FUNCTIONALITY
+
 	// $div.children("div").children("img").click(function(){
 	// 	src_list = this.src.split('/');
 	// 	enter_select_mode(src_list[src_list.length-2].replace("%20", " "));
@@ -81,7 +51,7 @@ function initialize_image_view (data) {
 }
 
 
-function update_image_view (case_list) {
+function update_image_view (data, page_num, page_size) {
 	// TODO: rewrite update function.
 
 	update_image_view_height();
@@ -89,7 +59,8 @@ function update_image_view (case_list) {
 	var $div = $("#overview-gallery");
 	$div.empty();
 
-	for (var i = 0; i < 10; i++) {//ORIGINAL_CASE_LIST.length; i++) {
+	page_start = page_num * page_size;
+	for (var i = page_start; i < page_start+page_size; i++) {//ORIGINAL_CASE_LIST.length; i++) {
 		$div.append(
 			generate_img_block(data, // data was not defined and will raise an error.
 				"overview-image-block", ORIGINAL_CASE_LIST[i], 
@@ -98,12 +69,12 @@ function update_image_view (case_list) {
 		);
 	}
  
-	$div.children("div").children("img").click(function(){
-		src_list = this.src.split('/');
-		enter_select_mode(src_list[src_list.length-2].replace("%20", " "));
-	});
+	// $div.children("div").children("img").click(function(){
+	// 	src_list = this.src.split('/');
+	// 	enter_select_mode(src_list[src_list.length-2].replace("%20", " "));
+	// });
 
-	update_multi_selected_image_view(case_list);
+	// update_multi_selected_image_view(case_list);
 }
 
 

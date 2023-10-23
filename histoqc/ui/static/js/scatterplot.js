@@ -9,10 +9,13 @@ $(document).ready(function () {
 
 function renderScatterPlot() {
     // constants
-    var numberPoints = 5000;
-    var subsetSize = 150;
-    var pointRadius = 6;
-    var zoomEndDelay = 250;
+    var numberPoints = 200000;
+
+    // will want to apply a more nuanced function here. When numberPoints is small, subsetSize should be 100%.
+    // when numberPoints is large, subsetSize should approach 0%
+    var subsetSize = numberPoints / 10; 
+    var pointRadius = 2;
+    var zoomEndDelay = 100;
 
     // timeout function
     var zoomEndTimeout;
@@ -43,6 +46,7 @@ function renderScatterPlot() {
     // create a quadtree for fast hit detection
     var quadTree = d3.quadtree(data);
 
+    // d3 only added randomInt in v6. However, we are using v5 https://stackoverflow.com/questions/61017839/d3-randomint-is-not-a-function
     d3.randomInt = d3.randomInt || (function sourceRandomInt(source) {
         function randomInt(min, max) {
             if (arguments.length < 2) max = min, min = 0;
@@ -95,22 +99,13 @@ function renderScatterPlot() {
         .domain([yRange[0] - 5, yRange[1] + 5])
         .range([height, 0]);
 
-    var xAxis = d3.axisBottom()
-        .scale(xScale)
-    // .innerTickSize(-height)
-    // .outerTickSize(0)
-    // .tickPadding(10)
-    // .orient('bottom');
+    var xAxis = d3.axisBottom(xScale).scale(xScale)
+    var yAxis = d3.axisLeft(yScale).scale(yScale)
 
-    var yAxis = d3.axisLeft()
-        .scale(yScale)
-    // .innerTickSize(-width)
-    // .outerTickSize(0)
-    // .orient('left');
 
     // create zoom behaviour
     var zoomBehaviour = d3.zoom()
-        .scaleExtent([1, 10])
+        .scaleExtent([1, 1000])
         .on("zoom", onZoom)
         .on("end", onZoomEnd);
 
@@ -127,20 +122,12 @@ function renderScatterPlot() {
     // on onclick handler
     canvas.on("click", onClick);
 
-    // add zoom behaviour
-    // canvas.call(zoomBehaviour);
-    var zoom = d3.zoom()
-        .scaleExtent([1, 8])
-        .on('zoom', function () {
-            g.selectAll('path')
-                .attr('transform', d3.event.transform);
-        });
 
-    canvas.call(zoom);
+    canvas.call(zoomBehaviour);
     // get the canvas drawing context
     var context = canvas.node().getContext('2d');
 
-    draw();
+    draw(null, xScale, yScale);
 
     function onClick() {
         var mouse = d3.mouse(this);
@@ -150,7 +137,7 @@ function renderScatterPlot() {
         var yClicked = yScale.invert(mouse[1]);
 
         // find the closest point in the dataset to the clicked point
-        var closest = quadTree.find([xClicked, yClicked]);
+        var closest = quadTree.find(xClicked, yClicked);
 
         // map the co-ordinates of the closest point to the canvas space
         var dX = xScale(closest.x);
@@ -173,29 +160,35 @@ function renderScatterPlot() {
 
     function onZoom() {
         clearTimeout(zoomEndTimeout);
-        draw(randomIndex);
-        xAxisSvg.call(xAxis);
-        yAxisSvg.call(yAxis);
 
+        var newX = d3.event.transform.rescaleX(xScale);
+        var newY = d3.event.transform.rescaleY(yScale);
+
+        xAxisSvg.call(xAxis.scale(newX));
+        yAxisSvg.call(yAxis.scale(newY));
+        draw(randomIndex, newX, newY);
     }
 
     function onZoomEnd() {
         // when zooming is stopped, create a delay before
         // redrawing the full plot
+        var newX = d3.event.transform.rescaleX(xScale);
+        var newY = d3.event.transform.rescaleY(yScale);
+
         zoomEndTimeout = setTimeout(function () {
-            draw();
+            draw(null, newX, newY);
         }, zoomEndDelay);
     }
 
     // the draw function draws the full dataset if no index
     // parameter supplied, otherwise it draws a subset according
     // to the indices in the index parameter
-    function draw(index) {
+    function draw(index, xScale, yScale) {
         var active;
 
         context.clearRect(0, 0, fullWidth, fullHeight);
         context.fillStyle = 'steelblue';
-        context.strokeWidth = 1;
+        context.lineWidth = 1;
         context.strokeStyle = 'white';
 
         // if an index parameter is supplied, we only want to draw points
@@ -204,7 +197,7 @@ function renderScatterPlot() {
             index.forEach(function (i) {
                 var point = data[i];
                 if (!point.selected) {
-                    drawPoint(point, pointRadius);
+                    drawPoint(point, pointRadius, xScale, yScale);
                 }
                 else {
                     active = point;
@@ -215,7 +208,7 @@ function renderScatterPlot() {
         else {
             data.forEach(function (point) {
                 if (!point.selected) {
-                    drawPoint(point, pointRadius);
+                    drawPoint(point, pointRadius, xScale, yScale);
                 }
                 else {
                     active = point;
@@ -227,12 +220,12 @@ function renderScatterPlot() {
         // so it appears at the top of the draw order
         if (active) {
             context.fillStyle = 'red';
-            drawPoint(active, pointRadius);
+            drawPoint(active, pointRadius, xScale, yScale);
             context.fillStyle = 'steelblue';
         }
     }
 
-    function drawPoint(point, r) {
+    function drawPoint(point, r, xScale, yScale) {
         var cx = xScale(point.x);
         var cy = yScale(point.y);
 
