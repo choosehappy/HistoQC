@@ -105,16 +105,13 @@ function readFile() {
 
 function renderLines(lines) {
 	///////////////////////////// PARCOORDS SETUP /////////////////////////////
+	const margin = visualViewport.height * 0.05;
+	const parcoords_card_height = visualViewport.height * 0.3 - margin;
+	// $("#parcoords-parent").height(parcoords_card_height)
 	var parcoords = ParCoords()("#example")
 		.alpha(0.4)
 		.mode("queue") // progressive rendering
-		// .height(d3.max([document.body.clientHeight / 2, 220]))
-		.margin({
-			top: 36,
-			left: 0,
-			right: 0,
-			bottom: 16
-		});
+		.height(parcoords_card_height)
 
 	const data = lines;
 	// slickgrid needs each data element to have an id

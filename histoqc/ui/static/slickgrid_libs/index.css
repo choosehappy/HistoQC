@@ -1,16 +1,16 @@
-:root {
+/* :root {
 	--selected-color: orangered;
 	--foreground-color: #007bff;
 	--background-color: #ddd;
 }
 
 html, body {
-	line-height: 1; /* same as bootstrap.css */
+	line-height: 1; 
 }
 
 th {
 	font-weight: normal;
-}
+} */
 
 /* .px-md-4 {
 	padding-left: 30px!important;

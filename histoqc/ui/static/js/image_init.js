@@ -54,7 +54,8 @@ function initialize_image_view (data) {
 	var case_list = data.map(function (d) {
 		return d["case_name"];
 	});
-
+	var $parent = $("#image-view");
+	$parent.css("display", "flex");
 	var $div = $("#overview-gallery");
 	$div.empty();
 
