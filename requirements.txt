@@ -14,4 +14,3 @@ Pillow~=9.4.0
 setuptools~=65.6.3
 shapely~=2.0.1
 zlib~=1.2.13
-openslide~=20171122
