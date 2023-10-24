@@ -7,7 +7,7 @@ from PIL import Image
 import re
 from typing import Union, Tuple
 #os.environ['PATH'] = 'C:\\research\\openslide\\bin' + ';' + os.environ['PATH'] #can either specify openslide bin path in PATH, or add it dynamically
-from histoqc._import_openslide import openslide
+from histoqc.import_wrapper.openslide import openslide
 
 # there is no branch reset group in re
 # compatible with the previous definition of valid input: leading zero and leading decimals are supported
