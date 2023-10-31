@@ -17,12 +17,11 @@ $.ajax({
 });
 
 
-function initialize_image_view (data, page_num, page_size) {
+function initialize_image_view (dataView) {
+	
 	console.log(DATA_PATH);
 	//get the filenames from the data set.
-	var case_list = data.map(function (d) {
-		return d["case_name"];
-	});
+	
 	var $parent = $("#image-view");
 	$parent.css("display", "flex");
 	var $div = $("#overview-gallery");
@@ -30,15 +29,26 @@ function initialize_image_view (data, page_num, page_size) {
 
 	CURRENT_IMAGE_TYPE = DEFAULT_IMAGE_EXTENSIONS.indexOf(DEFAULT_IMAGE_EXTENSION);
 
-	page_start = page_num * page_size;
-	for (var i = page_start; i < page_start+page_size; i++) {//i < case_list.length; i++) {
+	const case_ids = get_caseids_from_dataView(dataView);
+	case_ids.forEach(function (case_id) {
 		$div.append(
-			generate_img_block(data[i]["id"],
-				"overview-image-block", case_list[i], 
-				CURRENT_IMAGE_TYPE, CURRENT_COMPARE_TYPE, case_list[i]
+			generate_img_block(case_id,
+				"overview-image-block", ORIGINAL_CASE_LIST[i], 
+				CURRENT_IMAGE_TYPE, CURRENT_COMPARE_TYPE, ORIGINAL_CASE_LIST[i]
 			)
 		);
-	}
+	});
+
+
+	// const page_start = page_num * page_size;
+	// for (var i = page_start; i < page_start+page_size; i++) {//i < case_list.length; i++) {
+	// 	$div.append(
+	// 		generate_img_block(ORIGINAL_DATASET[i]["id"],
+	// 			"overview-image-block", ORIGINAL_CASE_LIST[i], 
+	// 			CURRENT_IMAGE_TYPE, CURRENT_COMPARE_TYPE, ORIGINAL_CASE_LIST[i]
+	// 		)
+	// 	);
+	// }
 	
 	// IMAGE SELECT MODE FUNCTIONALITY
 
@@ -46,12 +56,13 @@ function initialize_image_view (data, page_num, page_size) {
 	// 	src_list = this.src.split('/');
 	// 	enter_select_mode(src_list[src_list.length-2].replace("%20", " "));
 	// });
+	setPageSize(dataView, 25);
+	init_image_selector(dataView);
 
-	// init_image_selector();
 }
 
 
-function update_image_view (data, page_num, page_size) {
+function update_image_view (dataView) {
 	// TODO: rewrite update function.
 
 	update_image_view_height();
@@ -59,15 +70,25 @@ function update_image_view (data, page_num, page_size) {
 	var $div = $("#overview-gallery");
 	$div.empty();
 
-	page_start = page_num * page_size;
-	for (var i = page_start; i < page_start+page_size; i++) {//ORIGINAL_CASE_LIST.length; i++) {
+	const case_ids = get_caseids_from_dataView(dataView);
+	case_ids.forEach(function (i) {
 		$div.append(
-			generate_img_block(data, // data was not defined and will raise an error.
+			generate_img_block(ORIGINAL_DATASET[i]["id"],
 				"overview-image-block", ORIGINAL_CASE_LIST[i], 
 				CURRENT_IMAGE_TYPE, CURRENT_COMPARE_TYPE, ORIGINAL_CASE_LIST[i]
 			)
 		);
-	}
+	});
+
+	// const page_start = page_num * page_size;
+	// for (var i = page_start; i < page_start+page_size; i++) {//ORIGINAL_CASE_LIST.length; i++) {
+	// 	$div.append(
+	// 		generate_img_block(data, // data was not defined and will raise an error.
+	// 			"overview-image-block", ORIGINAL_CASE_LIST[i], 
+	// 			CURRENT_IMAGE_TYPE, CURRENT_COMPARE_TYPE, ORIGINAL_CASE_LIST[i]
+	// 		)
+	// 	);
+	// }
  
 	// $div.children("div").children("img").click(function(){
 	// 	src_list = this.src.split('/');
@@ -214,7 +235,7 @@ function enter_detail_image_view (file_name, img_type, src) {
 }
 
 
-function init_image_selector () {
+function init_image_selector (dataView) {
 
 	$img_selector = $("#img-select");
 	$cmp_selector = $("#comparison-select");
@@ -234,15 +255,15 @@ function init_image_selector () {
 	}
 	$cmp_selector.append(generate_option_html("-1", "compare ...", true));
 
-	$img_selector.selectpicker('refresh');
-	$img_selector.selectpicker('render');
+	// $img_selector.selectpicker('refresh');
+	// $img_selector.selectpicker('render');
 
-	$cmp_selector.selectpicker('refresh');
-	$cmp_selector.selectpicker('render');
+	// $cmp_selector.selectpicker('refresh');
+	// $cmp_selector.selectpicker('render');
 
 	$img_selector.change(function () {
 		CURRENT_IMAGE_TYPE = $(this).val();
-		update_image_view(CURRENT_CASE_LIST);
+		update_image_view(dataView);
 	});
 
 	$cmp_selector.change(function () {
@@ -252,7 +273,7 @@ function init_image_selector () {
 		} else {
 			$("#comparison-select > option").last().text("compare ...");
 		}
-		update_image_view(CURRENT_CASE_LIST);
+		update_image_view(dataView);
 	});
 
 	$("#exit-image-select-view-btn").click(function () {
@@ -273,3 +294,22 @@ function init_image_selector () {
 		}
 	}
 }
+
+function get_caseids_from_dataView(dataView) {
+	const paging_info = dataView.getPagingInfo();
+	const page_end = Math.min(dataView.getLength(), paging_info.pageSize);
+
+	var caseids = [];
+	for (var i = 0; i < page_end; i++) {
+		caseids.push(dataView.getItem(i)["id"]);
+	}
+
+	return caseids;
+}
+
+function setPageSize(dataView, n) {
+	dataView.setRefreshHints({
+	  isFilterUnchanged: true
+	});
+	dataView.setPagingOptions({pageSize: n});
+  }

@@ -3,7 +3,7 @@
  **********************************************/
 
 /***************** SYSTEM CONFIG **************/
-var DATA_PATH = "./Data/";
+// var DATA_PATH = "./Data/";
 var OPEN_WITH_TABLE = true,
 	OPEN_WITH_CHART = true,
 	OPEN_WITH_IMAGE = true;
@@ -91,6 +91,7 @@ var UMAP_SPREAD = 1;
 // full set of possible image format identifiers. 
 var DEFAULT_IMAGE_EXTENSIONS = [
     "_thumb.png",
+    "_thumb_small.png",
     "_fuse.png",
     "_equalized_thumb.png",
     "_areathresh.png",
@@ -124,4 +125,4 @@ var SMALL_IMAGE_EXTENSIONS = [
 	"_thumb.png"
 ];
 // Default image type
-var DEFAULT_IMAGE_EXTENSION = "_thumb.png";
+var DEFAULT_IMAGE_EXTENSION = "_thumb_small.png";

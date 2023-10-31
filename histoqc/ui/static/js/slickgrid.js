@@ -45,7 +45,7 @@ function readFile() {
 
 		console.log(current_parallel_attributes)
 
-		var newLines = lines.map(function (d) {
+		ORIGINAL_DATASET = lines.map(function (d) {
 			attr_value_dict = {
 				case_name: d["filename"],
 				gid: d["groupid"]
@@ -56,14 +56,19 @@ function readFile() {
 			}
 			return attr_value_dict;
 		});
+		
+		ORIGINAL_CASE_LIST = ORIGINAL_DATASET.map(function (d) {
+			return d["case_name"];
+		});
 
-		renderLines(newLines); // call renderLines whenever the underlying dataset changes. e.g, if the user changes the selected features
+
+		renderLines(); // call renderLines whenever the underlying dataset changes. e.g, if the user changes the selected features
 	}
 
 	reader.readAsText(fileObject)
 }
 
-function renderLines(data) {
+function renderLines() {
 	///////////////////////////// PARCOORDS SETUP /////////////////////////////
 	const margin = visualViewport.height * 0.05;
 	const parcoords_card_height = visualViewport.height * 0.3 - margin;
@@ -74,10 +79,9 @@ function renderLines(data) {
 		.height(parcoords_card_height)
 
 	// slickgrid needs each data element to have an id
-	data.forEach(function (d, i) { d.id = d.id || i; });
-	console.log(data)
+	ORIGINAL_DATASET.forEach(function (d, i) { d.id = d.id || i; });
 	parcoords
-		.data(data)
+		.data(ORIGINAL_DATASET)
 		.hideAxis(["case_name", "gid"])
 		.render()
 		.reorderable()
@@ -86,7 +90,7 @@ function renderLines(data) {
 
 
 	///////////////////////////// SLICK GRID SETUP /////////////////////////////
-	var column_keys = d3.keys(data[0]);
+	var column_keys = d3.keys(ORIGINAL_DATASET[0]);
 	var columns = column_keys.map(function (key, i) {
 		return {
 			id: key,
@@ -99,13 +103,12 @@ function renderLines(data) {
 	var options = {
 		enableCellNavigation: true,
 		enableColumnReorder: false,
-		multiColumnSort: false
+		multiColumnSort: false,
 	};
 
 	var dataView = new Slick.Data.DataView();
 	var grid = new Slick.Grid("#grid", dataView, columns, options);
 	var pager = new Slick.Controls.Pager(dataView, grid, $("#pager"));
-	var page_info = dataView.getPagingInfo();
 
 	// dataView subscriptions drive the grid
 	dataView.onRowCountChanged.subscribe(function (e, args) {
@@ -113,14 +116,15 @@ function renderLines(data) {
 		grid.render();
 
 		// update the image pane when the paging changes
-		const page_info = dataView.getPagingInfo();
-		update_image_view(data, page_info["pageNum"], page_info["pageSize"])
+		update_image_view(dataView);
 
 	});
 
 	dataView.onRowsChanged.subscribe(function (e, args) {
 		grid.invalidateRows(args.rows);
 		grid.render();
+
+		update_image_view(dataView);
 	});
 
 
@@ -152,7 +156,7 @@ function renderLines(data) {
 
 		// Get the id of the item referenced in grid_row
 		var item_id = grid.getDataItem(grid_row).id;
-		var d = parcoords.brushed() || data;
+		var d = parcoords.brushed() || ORIGINAL_DATASET;
 
 		// Get the element position of the id in the data object
 		elementPos = d.map(function (x) { return x.id; }).indexOf(item_id);
@@ -165,8 +169,9 @@ function renderLines(data) {
 		parcoords.unhighlight();
 	});
 
+
 	// fill grid with data
-	gridUpdate(data);
+	gridUpdate(ORIGINAL_DATASET);
 
 	// update grid on brush
 	parcoords.on("brush", function (d) {
@@ -176,7 +181,6 @@ function renderLines(data) {
 
 	});
 	
-
 	function gridUpdate(data) {
 		dataView.beginUpdate();
 		dataView.setItems(data);
@@ -184,7 +188,8 @@ function renderLines(data) {
 	};
 
 	///////////////////////////// IMAGE GALLERY SETUP /////////////////////////////
-	initialize_image_view(data, page_info["pageNum"], page_info["pageSize"]);
+	//set default page size to 25 or else pageSize will be 0.
+	initialize_image_view(dataView);
 	
 
 }

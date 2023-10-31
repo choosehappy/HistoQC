@@ -67,7 +67,7 @@
       $status = $("<span class='slick-pager-status' />").appendTo($container);
 
       $settings
-          .append("<span class='slick-pager-settings-expanded' style='display:none'>Show: <a data=0>All</a><a data='-1'>Auto</a><a data=25>25</a><a data=50>50</a><a data=100>100</a></span>");
+          .append("<span class='slick-pager-settings-expanded' style='display:none'>Show: <a data='-1'>Auto</a><a data=25>25</a><a data=50>50</a><a data=75>75</a><a data=100>100</a></span>");
 
       $settings.find("a[data]").click(function (e) {
         var pagesize = $(e.target).attr("data");

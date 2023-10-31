@@ -13,9 +13,9 @@ function renderScatterPlot() {
 
     // will want to apply a more nuanced function here. When numberPoints is small, subsetSize should be 100%.
     // when numberPoints is large, subsetSize should approach 0%
-    var subsetSize = numberPoints / 10; 
+    var subsetSize = 1000; 
     var pointRadius = 2;
-    var zoomEndDelay = 100;
+    var zoomEndDelay = 0;
 
     // timeout function
     var zoomEndTimeout;

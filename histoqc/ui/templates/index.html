@@ -54,6 +54,10 @@
       z-index: 1;
     }
 
+    #scatter-parent {
+      position: relative;
+    }
+
     .axis path,
     .axis line {
       fill: none;
@@ -89,8 +93,10 @@
       <div class="col-12">
         <div class="card" style="height: 30vh;">
           <!-- THE PARALLEL COORDINATES PLOT -->
-          <div id="parcoords-parent" class="card-body">
-            <div id="example" class="parcoords"></div>
+          <div class="card-body">
+            <div id="parcoords-parent">
+              <div id="example" class="parcoords"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -170,7 +176,8 @@
 
 <!-- All components pertaining to the image gallery. -->
 
-<script src="{{url_for('static', filename='js/global_vars.js')}}"></script>
+
 <script src="{{url_for('static', filename='js/global_config.js')}}"></script>
+<script src="{{url_for('static', filename='js/global_vars.js')}}"></script>
 <script src="{{url_for('static', filename='js/slickgrid.js')}}" id="brushing"></script>
 <script src="{{url_for('static', filename='js/scatterplot.js')}}"></script>
