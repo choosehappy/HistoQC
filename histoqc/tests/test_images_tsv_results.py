@@ -92,12 +92,10 @@ class TestTargetResultsModule(unittest.TestCase):
 
         # tsv 
         self.rs_name = "results.tsv"
-        # tsv_labels #### '#start_time:', '#outdir:', '#command_line_args:'
-        self.tsv_labels = ['#pipeline:',  '#config_file:', '#dataset:']
+        # tsv_labels #### '#start_time:', 
+        self.tsv_labels = ['#pipeline:', '#outdir:', '#command_line_args:', '#config_file:', '#dataset:']
         # tsv dataset fields
-        self.tsv_dataset_fields = ['filename','comments','image_bounding_box','base_mag','type','levels','height','width','mpp_x','mpp_y','comment','brightestPixels','dark','flat_areas','fatlike_tissue_removed_num_regions','fatlike_tissue_removed_mean_area','fatlike_tissue_removed_max_area','fatlike_tissue_removed_percent','small_tissue_filled_num_regions','small_tissue_filled_mean_area','small_tissue_filled_max_area','small_tissue_filled_percent','small_tissue_removed_num_regions','small_tissue_removed_mean_area','small_tissue_removed_max_area','small_tissue_removed_percent','background_contrast','background_contrast_std','background_dissimilarity','background_dissimilarity_std','background_homogeneity','background_homogeneity_std','background_ASM','background_ASM_std','background_energy','background_energy_std','background_correlation','background_correlation_std','background_tenenGrad_contrast','background_michelson_contrast','background_rms_contrast','background_grayscale_brightness','background_grayscale_brightness_std','background_chan1_brightness','background_chan1_brightness_std','background_chan2_brightness','background_chan2_brightness_std','background_chan3_brightness','background_chan3_brightness_std','blurry_removed_num_regions','blurry_removed_mean_area','blurry_removed_max_area','blurry_removed_percent','spur_pixels','areaThresh','template1_MSE_hist','template2_MSE_hist','template3_MSE_hist','template4_MSE_hist','final_contrast','final_contrast_std','final_dissimilarity','final_dissimilarity_std','final_homogeneity','final_homogeneity_std','final_ASM','final_ASM_std','final_energy','final_energy_std','final_correlation','final_correlation_std','tenenGrad_contrast','michelson_contrast','rms_contrast','grayscale_brightness','grayscale_brightness_std','chan1_brightness','chan1_brightness_std','chan2_brightness','chan2_brightness_std','chan3_brightness','chan3_brightness_std','chan1_brightness_YUV','chan1_brightness_std_YUV','chan2_brightness_YUV','chan2_brightness_std_YUV','chan3_brightness_YUV','chan3_brightness_std_YUV','deconv_c0_mean','deconv_c0_std','deconv_c1_mean','deconv_c1_std','deconv_c2_mean','deconv_c2_std','pixels_to_use','warnings']
-        print('Start')
-        
+        self.tsv_dataset_fields = ['filename','comments','image_bounding_box','base_mag','type','levels','height','width','mpp_x','mpp_y','comment','brightestPixels','dark','flat_areas','fatlike_tissue_removed_num_regions','fatlike_tissue_removed_mean_area','fatlike_tissue_removed_max_area','fatlike_tissue_removed_percent','small_tissue_filled_num_regions','small_tissue_filled_mean_area','small_tissue_filled_max_area','small_tissue_filled_percent','small_tissue_removed_num_regions','small_tissue_removed_mean_area','small_tissue_removed_max_area','small_tissue_removed_percent','background_contrast','background_contrast_std','background_dissimilarity','background_dissimilarity_std','background_homogeneity','background_homogeneity_std','background_ASM','background_ASM_std','background_energy','background_energy_std','background_correlation','background_correlation_std','background_tenenGrad_contrast','background_michelson_contrast','background_rms_contrast','background_grayscale_brightness','background_grayscale_brightness_std','background_chan1_brightness','background_chan1_brightness_std','background_chan2_brightness','background_chan2_brightness_std','background_chan3_brightness','background_chan3_brightness_std','blurry_removed_num_regions','blurry_removed_mean_area','blurry_removed_max_area','blurry_removed_percent','spur_pixels','areaThresh','template1_MSE_hist','template2_MSE_hist','template3_MSE_hist','template4_MSE_hist','final_contrast','final_contrast_std','final_dissimilarity','final_dissimilarity_std','final_homogeneity','final_homogeneity_std','final_ASM','final_ASM_std','final_energy','final_energy_std','final_correlation','final_correlation_std','tenenGrad_contrast','michelson_contrast','rms_contrast','grayscale_brightness','grayscale_brightness_std','chan1_brightness','chan1_brightness_std','chan2_brightness','chan2_brightness_std','chan3_brightness','chan3_brightness_std','chan1_brightness_YUV','chan1_brightness_std_YUV','chan2_brightness_YUV','chan2_brightness_std_YUV','chan3_brightness_YUV','chan3_brightness_std_YUV','deconv_c0_mean','deconv_c0_std','deconv_c1_mean','deconv_c1_std','deconv_c2_mean','deconv_c2_std','pixels_to_use','warnings']       
 
     def tearDown(self):
         del self.suffixes
@@ -138,12 +136,12 @@ class TestTargetResultsModule(unittest.TestCase):
             dataset_label = self.tsv_labels[-1]
             dataset1 = tu.parseDataset(dataset_label, content1)
             dataset2 = tu.parseDataset(dataset_label, content2)
-            for field_name in self.tsv_dataset_fields[:10]:
+            for field_name in self.tsv_dataset_fields:
                 
                 column1 = dataset1[field_name]
                 column2 = dataset2[field_name]
                 for idx in range(len(column1)):
-                    self.assertEqual(column1[idx],column2[idx])
+                    self.assertAlmostEqual(column1[idx],column2[idx])
                     print(f"datasets' {field_name} field in tsv results comparison pass")
 
 if __name__ == '__main__':

@@ -183,6 +183,13 @@ def byExampleWithFeatures(s, params):
 
                 if nsamples_per_example != -1: #sub sambling required
                     nitems = nsamples_per_example if nsamples_per_example > 1 else int(mask.shape[0]*nsamples_per_example)
+                    
+                    # get random seed from config variable
+                    seed = int(params.get("seed", 0))
+                    # set seed to random function if the 
+                    if seed:
+                        np.random.seed(seed)
+                    
                     idxkeep = np.random.choice(mask.shape[0], size=int(nitems))
                     eximg = eximg[idxkeep, :]
                     mask = mask[idxkeep]
