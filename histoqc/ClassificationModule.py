@@ -8,7 +8,7 @@ from ast import literal_eval as make_tuple
 from distutils.util import strtobool
 
 from histoqc.BaseImage import printMaskHelper
-from skimage import io, img_as_ubyte
+from skimage import io, img_as_ubyte, img_as_bool
 from skimage.filters import gabor_kernel, frangi, gaussian, median, laplace
 from skimage.color import rgb2gray
 from skimage.morphology import remove_small_objects, disk, dilation
@@ -179,7 +179,18 @@ def byExampleWithFeatures(s, params):
                 eximg = compute_features(img, params)
                 eximg = eximg.reshape(-1, eximg.shape[2])
 
-                mask = io.imread(ex[1], as_gray=True).reshape(-1, 1)
+                # read mask as grayscale images
+                mask = io.imread(ex[1], as_gray=True)
+                # convert grayscale images into binary images if images are not binary format 
+                if mask.dtype.kind != 'b':
+                    # warning log
+                    msg = f"Mask file '{ex[1]}' is not a binary image"
+                    logging.warning(s['filename'] + ' - ' + msg)
+                    s["warnings"].append(msg)
+                    # convert to binary
+                    mask = img_as_bool(mask)
+                
+                mask = mask.reshape(-1, 1)
 
                 if nsamples_per_example != -1: #sub sambling required
                     nitems = nsamples_per_example if nsamples_per_example > 1 else int(mask.shape[0]*nsamples_per_example)
