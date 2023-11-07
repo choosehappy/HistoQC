@@ -33,7 +33,8 @@ dependencies:
   - openslide-python
   - matplotlib
   - typing-extensions
-
+  - shapely
+  - lazy-property
   - setuptools-scm
   - wheel
 

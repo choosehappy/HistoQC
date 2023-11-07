@@ -116,7 +116,7 @@ def main(argv=None):
     # --- document configuration in results -----------------------------------
 
     results.add_header(f"start_time:\t{datetime.datetime.now()}")
-    results.add_header(f"pipeline: {' '.join(_steps)}")
+    results.add_header(f"pipeline:\t{' '.join(_steps)}")
     results.add_header(f"outdir:\t{os.path.realpath(args.outdir)}")
     results.add_header(f"config_file:\t{os.path.realpath(args.config) if args.config is not None else 'default'}")
     results.add_header(f"command_line_args:\t{' '.join(argv)}")
