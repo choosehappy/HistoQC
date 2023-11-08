@@ -8,3 +8,9 @@ Running the unit test is now done via a python module:
 ```
 python -m unittest histoqc/tests/test_suite.py
 ```
+
+Running the unit test with coverage report is now done via a python module:
+
+```
+python -m pytest --cov=histoqc histoqc/tests/
+```
