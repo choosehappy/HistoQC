@@ -7,41 +7,18 @@ import os
 import openslide
 import json
 from histoqc.BaseImage import BaseImage
-from typing import Callable, Dict, Any, List, Tuple, Union, TypeVar, Type
+from typing import Callable, Dict, Any, List, Tuple, Union
 import numpy as np
 from PIL import Image, ImageDraw
 from skimage.measure import regionprops
 from contextlib import contextmanager
 from distutils.util import strtobool
 import logging
-import importlib
-
-
-def __dynamic_import(module_name: str, attribute_name: str, surrogate: Union[str, None]):
-    """
-    Dynamically import the components from surrogate module if not available (e.g., `Literal` is only available in
-    typing from python3.8 but typing_extension provides the same functionality for python <=3.7.
-    Args:
-        module_name:
-        attribute_name:
-        surrogate:
-
-    Returns:
-
-    """
-    module = importlib.import_module(module_name)
-    attribute = getattr(module, attribute_name, None)
-    if attribute is not None:
-        return attribute
-    if surrogate is not None:
-        return __dynamic_import(surrogate, attribute_name, None)
-    raise ImportError(f"Cannot Import {attribute_name} from either {module_name} or {surrogate}")
-
-
-__TYPE_GET_ARGS = Callable[[Type, ], Tuple[Any, ...]]
-
-Literal: TypeVar = __dynamic_import("typing", "Literal", "typing_extensions")
-get_args: __TYPE_GET_ARGS = __dynamic_import("typing", "get_args", "typing_extensions")
+from histoqc.import_wrapper.typing import Literal, get_args
+# from histoqc.import_wrapper.helper import dynamic_import
+# __TYPE_GET_ARGS = Callable[[Type, ], Tuple[Any, ...]]
+# Literal: TypeVar = dynamic_import("typing", "Literal", "typing_extensions")
+# get_args: __TYPE_GET_ARGS = dynamic_import("typing", "get_args", "typing_extensions")
 
 TYPE_TILE_SIZE = Literal['tile_size']
 TYPE_TILE_STRIDE = Literal['tile_stride']
@@ -279,8 +256,8 @@ class MaskTileWindows:
         Returns:
             Tuple[int, int]
         """
-        assert work_stride > 0
-        assert work_tile_size > 0
+        assert work_stride > 0, f"work stride must be greater than 0 - got {work_stride}"
+        assert work_tile_size > 0, f"work tile size must be greater than 0 - got {work_tile_size}"
 
         # not for skimage regionprops, the bbox is half-open at the bottom / right coordinates.
         # [left, right) and [top, bottom). Hence, the "+1" operation below for coord computation
@@ -292,8 +269,12 @@ class MaskTileWindows:
         tile_max_left = left_rp + max_step_horiz * work_stride
         tile_max_top = top_rp + max_step_vert * work_stride
 
-        assert tile_max_left + work_tile_size <= right_rp
-        assert tile_max_top + work_tile_size <= bottom_rp
+        assert round(tile_max_left + work_tile_size) <= right_rp,\
+            f"left + size check" \
+            f" {tile_max_left + work_tile_size} = {tile_max_left} + {work_tile_size} <= {right_rp} fail"
+        assert round(tile_max_top + work_tile_size) <= bottom_rp,\
+            f"top + size check" \
+            f" {tile_max_top + work_tile_size} = {tile_max_top} + {work_tile_size} <= {bottom_rp} fail"
         return int(tile_max_top), int(tile_max_left)
 
     @staticmethod
@@ -373,7 +354,7 @@ class TileExtractor:
         mask_w, mask_h = mask.shape[1], mask.shape[0]
         size_factor = img_w / mask_w
         size_factor_ref = img_h / mask_h
-        assert size_factor > 0
+        assert size_factor > 0, f"{size_factor} negative"
         if round(size_factor) != round(size_factor_ref):
             logging.warning(f"{filename}: Aspect Ratio Mismatch: {img_w, img_h} vs. "
                             f"{mask_w, mask_h}")

@@ -5,8 +5,14 @@ import zlib, dill
 from distutils.util import strtobool
 from PIL import Image
 from typing import Union, Tuple
-# os.add_dll_directory('C:\\research\\openslide\\bin')# + ';' + os.environ['PATH'] #can either specify openslide bin path in PATH, or add it dynamically
-import openslide
+#os.environ['PATH'] = 'C:\\research\\openslide\\bin' + ';' + os.environ['PATH'] #can either specify openslide bin path in PATH, or add it dynamically
+from histoqc.import_wrapper.openslide import openslide
+
+# there is no branch reset group in re
+# compatible with the previous definition of valid input: leading zero and leading decimals are supported
+_REGEX_MAG = r"^(\d?\.?\d*X?)"
+_PATTERN_MAG: re.Pattern = re.compile(_REGEX_MAG, flags=re.IGNORECASE)
+MAG_NA = None
 
 
 class BaseImage(dict):
