@@ -4,23 +4,7 @@
  * update log: Add id to image blocks. Add multi-select. Re-define the generate_img_block function.
  */ 
 
-// set the variable DATA_PATH by calling the /datadir endpoint
-// TODO: add argparse to the server to set the data path.
-var DATA_PATH = "";
-$.ajax({
-	url: "/datadir",
-	type: "GET",
-	async: false,
-	success: function (data) {
-		DATA_PATH = data;
-	}
-});
-
-
-function initialize_image_view (dataView) {
-	
-	console.log(DATA_PATH);
-	//get the filenames from the data set.
+function initializeImageView(dataView) {
 	
 	var $parent = $("#image-view");
 	$parent.css("display", "flex");
@@ -29,12 +13,12 @@ function initialize_image_view (dataView) {
 
 	CURRENT_IMAGE_TYPE = DEFAULT_IMAGE_EXTENSIONS.indexOf(DEFAULT_IMAGE_EXTENSION);
 
-	const case_ids = get_caseids_from_dataView(dataView);
+	const case_ids = getCaseidsFromDataView(dataView);
 	case_ids.forEach(function (case_id) {
 		$div.append(
-			generate_img_block(case_id,
-				"overview-image-block", ORIGINAL_CASE_LIST[i], 
-				CURRENT_IMAGE_TYPE, CURRENT_COMPARE_TYPE, ORIGINAL_CASE_LIST[i]
+			generateImgBlock(case_id,
+				"overview-image-block", ORIGINAL_CASE_LIST[case_id], 
+				CURRENT_IMAGE_TYPE, CURRENT_COMPARE_TYPE, ORIGINAL_CASE_LIST[case_id]
 			)
 		);
 	});
@@ -57,25 +41,25 @@ function initialize_image_view (dataView) {
 	// 	enter_select_mode(src_list[src_list.length-2].replace("%20", " "));
 	// });
 	setPageSize(dataView, 25);
-	init_image_selector(dataView);
+	initImageSelector(dataView);
 
 }
 
 
-function update_image_view (dataView) {
+function updateImageView (dataView) {
 	// TODO: rewrite update function.
 
-	update_image_view_height();
+	updateImageViewHeight();
 
 	var $div = $("#overview-gallery");
 	$div.empty();
 
-	const case_ids = get_caseids_from_dataView(dataView);
-	case_ids.forEach(function (i) {
+	const case_ids = getCaseidsFromDataView(dataView);
+	case_ids.forEach(function (case_id) {
 		$div.append(
-			generate_img_block(ORIGINAL_DATASET[i]["id"],
-				"overview-image-block", ORIGINAL_CASE_LIST[i], 
-				CURRENT_IMAGE_TYPE, CURRENT_COMPARE_TYPE, ORIGINAL_CASE_LIST[i]
+			generateImgBlock(ORIGINAL_DATASET[case_id]["id"],
+				"overview-image-block", ORIGINAL_CASE_LIST[case_id], 
+				CURRENT_IMAGE_TYPE, CURRENT_COMPARE_TYPE, ORIGINAL_CASE_LIST[case_id]
 			)
 		);
 	});
@@ -99,7 +83,7 @@ function update_image_view (dataView) {
 }
 
 
-function update_image_view_height () {
+function updateImageViewHeight () {
 	$("#image-view").outerHeight(
 			$(window).height() - 
 			$("header").outerHeight(includeMargin=true) - 
@@ -109,7 +93,7 @@ function update_image_view_height () {
 }
 
 
-function enter_select_image_view (dir) {
+function enterSelectImageView (dir) {
 	$("#overview-gallery").css("display", "none");
 	$("#img-select-button").css("display", "none");
 	$("#exit-image-select-view-btn").css("display", "block");
@@ -121,7 +105,7 @@ function enter_select_image_view (dir) {
 	var $div = $("#select-image-container");
 	$div.append(
 		"<img id='exibit-img' src='" + 
-		generate_img_src(dir, CURRENT_IMAGE_TYPE, false) + 
+		generateImgSrc(dir, CURRENT_IMAGE_TYPE, false) + 
 		"' file_name='" + dir + 
 		"' img_type='" + CURRENT_IMAGE_TYPE + "'/>"
 	);
@@ -133,7 +117,7 @@ function enter_select_image_view (dir) {
 			continue;
 		}
 		$div.append(
-			generate_img_block(
+			generateImgBlock(
 				"candidate-image-block", dir, 
 				i, -1, DEFAULT_IMAGE_EXTENSIONS[i]
 			)
@@ -141,7 +125,7 @@ function enter_select_image_view (dir) {
 	}
 
 	$("#select-candidate-container > div > img").dblclick(function(){
-		enter_detail_image_view($(this).attr("file_name"), $(this).attr("img_type"), this.src);
+		enterDetailImageView($(this).attr("file_name"), $(this).attr("img_type"), this.src);
 	});
 
 	$("#select-candidate-container > div > img").click(function(){
@@ -150,12 +134,12 @@ function enter_select_image_view (dir) {
 	});
 
 	$("#exibit-img").click(function(){
-		enter_detail_image_view($(this).attr("file_name"), $(this).attr("img_type"), this.src);
+		enterDetailImageView($(this).attr("file_name"), $(this).attr("img_type"), this.src);
 	});
 }
 
 
-function exit_select_image_view () {
+function exitSelectImageView () {
 	$("#select-candidate-container > *").remove();
 	$("#select-image-container > *").remove();
 	$("#select-image-view").css("display", "none");
@@ -166,7 +150,7 @@ function exit_select_image_view () {
 }
 
 
-function update_multi_selected_image_view (file_names) {
+function updateMultiSelectedImageView (file_names) {
 	ORIGINAL_CASE_LIST.forEach(function (d) {
 		if (file_names.indexOf(d) == -1) {
 			$("#" + ORIGINAL_CASE_DICT[d]["dom_id"]).css("display", "none");
@@ -177,7 +161,7 @@ function update_multi_selected_image_view (file_names) {
 }
 
 
-function calculate_height ($div) {
+function calculateHeight ($div) {
 	var num_thumbs = DEFAULT_IMAGE_EXTENSIONS.length;
 	var max_width = Math.floor($div.width() / Math.ceil(num_thumbs / 2)) - 5;
 	var cor_height = Math.floor(max_width / $("#exibit-img").width() * $("#exibit-img").height());
@@ -187,16 +171,16 @@ function calculate_height ($div) {
 }
 
 
-function generate_img_block (id, blk_class, file_name, img_type, compare_type, img_label) {
+function generateImgBlock (id, blk_class, file_name, img_type, compare_type, img_label) {
 	var img_block = "<div id='" + id + 
 		"' class='" + blk_class + "'>" +
-		"<img src='" + generate_img_src(
+		"<img src='" + generateImgSrc(
 			file_name, img_type, blk_class == "overview-image-block"
 		) + "' file_name='" + file_name + 
 		"' img_type='" + img_type + 
 		"' onerror=\"this.style.display='none'\"/>";
 	if (compare_type != -1) {	// add on second image if we are in compare mode
-		img_block += "<img src='" + generate_img_src(
+		img_block += "<img src='" + generateImgSrc(
 				file_name, compare_type, blk_class == "overview-image-block"
 			) + "' file_name='" + file_name + 
 			"' img_type='" + compare_type + 
@@ -207,7 +191,7 @@ function generate_img_block (id, blk_class, file_name, img_type, compare_type, i
 }
 
 
-function generate_img_src (file_name, img_type_index, use_small=false) {
+function generateImgSrc (file_name, img_type_index, use_small=false) {
 	var image_extension = DEFAULT_IMAGE_EXTENSIONS[img_type_index];
 	// if (use_small && SMALL_IMAGE_EXTENSIONS.indexOf(image_extension) >= 0) {
 	// 	image_extension = image_extension.split(".")[0] + "_small.png";
@@ -218,7 +202,7 @@ function generate_img_src (file_name, img_type_index, use_small=false) {
 }
 
 
-function enter_detail_image_view (file_name, img_type, src) {
+function enterDetailImageView (file_name, img_type, src) {
 	$("#detail-image-name > span").text(file_name);
 	$("#overlay-image > figure").css("width", "auto")
 		.css("background-image", "url(" + src + ")");
@@ -235,7 +219,7 @@ function enter_detail_image_view (file_name, img_type, src) {
 }
 
 
-function init_image_selector (dataView) {
+function initImageSelector (dataView) {
 
 	$img_selector = $("#img-select");
 	$cmp_selector = $("#comparison-select");
@@ -247,13 +231,13 @@ function init_image_selector (dataView) {
 		var key = DEFAULT_IMAGE_EXTENSIONS[index];
 
 		if (key == DEFAULT_IMAGE_EXTENSION) {
-			$img_selector.append(generate_option_html(index, key, true));
+			$img_selector.append(generateOptionHtml(index, key, true));
 		} else {
-			$img_selector.append(generate_option_html(index, key));
+			$img_selector.append(generateOptionHtml(index, key));
 		}
-		$cmp_selector.append(generate_option_html(index, key));
+		$cmp_selector.append(generateOptionHtml(index, key));
 	}
-	$cmp_selector.append(generate_option_html("-1", "compare ...", true));
+	$cmp_selector.append(generateOptionHtml("-1", "compare ...", true));
 
 	// $img_selector.selectpicker('refresh');
 	// $img_selector.selectpicker('render');
@@ -263,7 +247,7 @@ function init_image_selector (dataView) {
 
 	$img_selector.change(function () {
 		CURRENT_IMAGE_TYPE = $(this).val();
-		update_image_view(dataView);
+		updateImageView(dataView);
 	});
 
 	$cmp_selector.change(function () {
@@ -273,7 +257,7 @@ function init_image_selector (dataView) {
 		} else {
 			$("#comparison-select > option").last().text("compare ...");
 		}
-		update_image_view(dataView);
+		updateImageView(dataView);
 	});
 
 	$("#exit-image-select-view-btn").click(function () {
@@ -286,7 +270,7 @@ function init_image_selector (dataView) {
 	});
 
 	
-	function generate_option_html (value, key, selected = false) {
+	function generateOptionHtml (value, key, selected = false) {
 		if (selected) {
 			return "<option value='" + value + "' selected>" + key + "</option>";
 		} else {
@@ -295,7 +279,7 @@ function init_image_selector (dataView) {
 	}
 }
 
-function get_caseids_from_dataView(dataView) {
+function getCaseidsFromDataView(dataView) {
 	const paging_info = dataView.getPagingInfo();
 	const page_end = Math.min(dataView.getLength(), paging_info.pageSize);
 

@@ -1,12 +1,3 @@
-$(document).ready(function () {
-    console.log("[LOG] Document ready.")
-    // console.log($("#brushing").attr("fn"))
-
-
-    $("#upload-input").change(renderScatterPlot);
-
-});
-
 function renderScatterPlot() {
     // constants
     var numberPoints = 200000;
