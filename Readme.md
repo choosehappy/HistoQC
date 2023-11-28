@@ -186,6 +186,22 @@ Information from HistoQC users appears below:
 
 1.1. When converted to svs by CaseViewer, the MPP entry in ImageDescription meta-parameter give the average of the x and y mpp. Both values are slightly different for the new P1000 and can be found in meta-parameters of svs as tiff.XResolution and YResolution (inverse values, so have to be converted, also respecting ResolutionUnit as centimeter or inch
 
+# Troubleshooting
+While running histoqc.ui in windows, some users have reported missing thumbnails due to files not found. IF you experience this problem, try moving the histoqc output into the UserInterface/Data directory to produce the following file structure. Then re-launch histoqc.ui.
+
+```
+UserInterface
+  Data
+    Image1
+      thumbnail1.png
+      thumbnail2.png
+      ...
+    Image2
+    ...
+    results.tsv
+```
+
+
 # Citation
 ---
 If you find this software useful, please drop me a line and/or consider citing it:
