@@ -51,7 +51,7 @@ input {
 /*SlickGrid */
 #grid {
   width: 100% !important;  /* vs jquery resizable */
-  height: 260px;
+  height: 437px;
   margin-top: 4px;
 }
 .slick-header-column {

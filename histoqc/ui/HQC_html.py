@@ -3,6 +3,9 @@ import os
 from argparse import Namespace
 from cohortfinder_choosehappy.cohortfinder_colormod_original import runCohortFinder
 
+# constants 
+cf_results_filename = 'results_cohortfinder.tsv'
+
 
 html = Blueprint('html', __name__, template_folder='templates')
 
@@ -43,7 +46,12 @@ def get_hqc_results():
 
 @html.route('/run_cohort_finder', methods=['GET'])
 def run_cohort_finder():
-    request.args.get('')
+    # check if cohortFinder has already been run (with output saved)
+    fp = os.path.join(current_app.config['data_directory'], '**', cf_results_filename)[0]
+    if os.path.isfile(fp):
+        pass
+
+
     current_app.logger.info('running cohort finder')
     cf_args = Namespace()
 
@@ -61,10 +69,17 @@ def run_cohort_finder():
     
     
     # ---------------- user input ----------------
-    cf_args.testpercent = 0.2#request.args.get('testpercent')
-    cf_args.nclusters = 3#request.args.get('nclusters')
+    cf_args.nclusters = int(request.args.get('numClusters'))
+    cf_args.testpercent = float(request.args.get('testSetPercent'))
+    # cf_args.featuresSelected = request.args.get('featuresSelected')    
 
     # add line to check if cohortFinder has already been run (with output saved). If so, load the results.tsv file and return.
     output, preds = runCohortFinder(cf_args)
-    
-    return preds.tolist()
+
+    out_dict = {
+        'embed_x': output['embed_x'].tolist(),
+        'embed_y': output['embed_y'].tolist(),
+        'groupid': output['groupid'].tolist(),
+        'testind': output['testind'].tolist()
+    }
+    return out_dict

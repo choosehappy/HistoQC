@@ -46,13 +46,22 @@
       position: absolute;
     }
 
+    #scatter-card {
+      height: 500px;
+    }
+
     #plot-canvas {
-      z-index: 2;
+      z-index: 0;
+    }
+
+    #lasso-canvas {
+      z-index: 1;
     }
 
     #axis-svg {
-      z-index: 1;
+      z-index: 0;
     }
+    
 
     #scatter-parent {
       position: relative;
@@ -73,6 +82,7 @@
   <script src="{{url_for('static', filename='slickgrid_libs/parcoords.standalone.js')}}"></script>
   <script src="{{url_for('static', filename='slickgrid_libs/divgrid.js')}}"></script>
   <script src="{{url_for('static', filename='js/image_init.js')}}"></script>
+  <script src="{{url_for('static', filename='libs/bootstrap/js/bootstrap.min.js')}}"></script>
 </head>
 
 <body>
@@ -87,14 +97,13 @@
         </label>
       </span>
       <span>
-        <button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#myModal">Open
-          Form</button>
+        <button type="button" id="modal-toggle" class="btn btn-primary btn-lg">CohortFinder</button>
       </span>
     </div>
   </nav>
   <div class="container-fluid">
     <!-- Modal -->
-    <div class="modal" id="myModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal" id="cf-params-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
       <div class="modal-dialog" role="document">
         <div class="modal-content">
           <!-- Modal Header -->
@@ -110,18 +119,18 @@
             <form>
               <div class="form-group">
                 <label for="exampleFormControlInput1"># of clusters</label>
-                <input type="text" class="form-control" id="exampleFormControlInput1" placeholder="3">
+                <input type="text" class="form-control" id="exampleFormControlInput1" placeholder="3" name="numClusters">
               </div>
               <!-- Add more form fields as needed -->
               <!-- Add a slider from 0 to 100 -->
               <div class="form-group">
                 <label for="slider">Test set percent</label>
-                <input type="range" class="form-control-range" id="slider" min="0" max="100" value="20">
+                <input type="range" class="form-control-range" id="slider" min="0" max="100" value="20" name="testSetPercent">
               </div>
               <!-- Add this code inside the form element in the modal body -->
               <div class="form-group">
                 <label for="features-select">Select Features:</label>
-                <select multiple class="form-control" id="features-select">
+                <select multiple class="form-control" id="features-select" name="featuresSelected">
                   <option value="feature1">Feature 1</option>
                   <option value="feature2">Feature 2</option>
                   <option value="feature3">Feature 3</option>
@@ -164,10 +173,11 @@
         </div>
       </div>
       <div class="col-6">
-        <div class="card">
+        <div class="card" id="scatter-card">
           <div class="card-body">
             <!-- THE SCATTER PLOT -->
             <div id="scatter-parent">
+              <canvas id="lasso-canvas" class="plot"></canvas>
               <svg id="axis-svg" class="plot"></svg>
               <canvas id="plot-canvas" class="plot"></canvas>
             </div>
@@ -232,3 +242,4 @@
 <script src="{{url_for('static', filename='js/slickgrid.js')}}" id="brushing"></script>
 <script src="{{url_for('static', filename='js/scatterplot.js')}}"></script>
 <script src="{{url_for('static', filename='js/histoqc.js')}}"></script>
+<script src="{{url_for('static', filename='js/cohortfinder.js')}}"></script>

@@ -10,7 +10,7 @@ $(document).ready(function () {
     $.ajax({
 		url: "/get_hqc_results",
 		type: "GET",
-		async: false,
+		async: true,
 		success: handleSuccess
 		}
 	);
@@ -79,5 +79,6 @@ function loadResultsTsv(data) {
 function renderComponents() {
     var dataView = renderLines();
     initializeImageView(dataView);
-    renderScatterPlot();
+    // renderScatterPlot();
+	initializeCF();
 }
