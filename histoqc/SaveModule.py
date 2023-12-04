@@ -41,7 +41,7 @@ def saveAssociatedImage(s, key:str, dim:int):
     osh = s["os_handle"]
 
     if not key in osh.associated_images:
-        message = f"{s['filename']}- \tsave{key.capitalize()} Can't Read '{key}' Image from Slide's Associated Images"
+        message = f"{s['filename']}- save{key.capitalize()} Can't Read '{key}' Image from Slide's Associated Images"
         logging.warning(message)
         s["warnings"].append(message)
         return
