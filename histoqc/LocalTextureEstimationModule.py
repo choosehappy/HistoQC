@@ -20,11 +20,9 @@ def estimateGreyComatrixFeatures(s, params):
     invert = strtobool(params.get("invert", "False"))
     mask_name = params.get("mask_name","img_mask_use")
 
-    # get random seed from config variable
-    seed = int(params.get("seed", 0))
-    # set seed to random function if the 
-    if seed:
-        np.random.seed(seed)
+    # set seed to random function if seed is not None
+    if s["seed"] is not None:
+        np.random.seed(int(s["seed"]))
 
     img = s.getImgThumb(s["image_work_size"])
     img = color.rgb2gray(img)
