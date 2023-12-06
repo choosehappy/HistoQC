@@ -4,7 +4,7 @@ from histoqc.BasicModule import getBasicStats, finalComputations
 
 file_name = './histoqc/tests/data/TCGA-EJ-5509-01A-01-BS1_ROI.svs'
 fname_outdir = './histoqc/tests/new'
-
+seed = 123
 
 
 
@@ -13,7 +13,7 @@ class TestBaseImageModule(unittest.TestCase):
 
     def setUp(self):
         self.base_image = BaseImage(
-            file_name, fname_outdir, 
+            file_name, fname_outdir, seed,
             dict(
                 image_work_size='1.25x',
                 in_memory_compression='True',

@@ -33,18 +33,18 @@ def setUpModule():
     
     # Execute the Python module using the subprocess module
     try:
-        subprocess.run(['python3.8', '-m', module_name, "-c",
-            config_file_path,
-            "-o",
-            new_dir_full_path,
+        subprocess.run(['python3.8',
+            '-m', module_name,
+            '-c', config_file_path,
+            '-o', new_dir_full_path,
+            '-s', "123",
             wsi_full_path], check=True)
     except subprocess.CalledProcessError as e:
         print(f"Error running the {module_name} module: {e}")
 
 
 def tearDownModule():
-    # remove the new result dir.
-    # new_dir_path = os.path.join(test_dir, new_result_dir_path)
+    print("tearDownModule")
 
     # Check if the dir exists
     if os.path.exists(new_dir_full_path):
@@ -53,9 +53,6 @@ def tearDownModule():
         print(f"Remove {new_dir_full_path} directory")
     else:
         print(f"The directory {new_dir_full_path} does not exist.")
-    
-
-
 
 class TestTargetResultsModule(unittest.TestCase):
     # @classmethod
