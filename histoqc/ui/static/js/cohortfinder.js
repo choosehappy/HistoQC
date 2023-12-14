@@ -1,6 +1,6 @@
 function initializeCF() {
     $('#modal-toggle').on('click', handleCohortFinderClick);
-    $('#cf-params-modal form').on('submit', handleCohortFinderSubmitTEST);
+    $('#cf-params-modal form').on('submit', handleCohortFinderSubmit);
 }
 
 function handleCohortFinderClick(event) {
@@ -43,7 +43,6 @@ function handleCohortFinderSubmit(event) {
 function handleCohortFinderResponse(data) {
     console.log("received cohort finder results:")
     console.log(data)
-    renderToolSelection();
     renderScatterPlot(data);
 }
 

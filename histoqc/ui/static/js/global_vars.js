@@ -103,3 +103,6 @@ var CHECK_IMAGE_EXTENSIONS = DEFAULT_IMAGE_EXTENSIONS.map(function () {return fa
 var CURRENT_IMAGE_TYPE = 0,
 	CURRENT_COMPARE_TYPE = -1;
 var DETAIL_MODE_FLAG = false;
+
+/****************** SLICK GRID ****************/
+DATA_VIEW = new Slick.Data.DataView();

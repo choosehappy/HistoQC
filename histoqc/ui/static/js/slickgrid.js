@@ -36,25 +36,25 @@ function renderLines() {
 		multiColumnSort: false,
 	};
 
-	var dataView = new Slick.Data.DataView();
-	var grid = new Slick.Grid("#grid", dataView, columns, options);
-	var pager = new Slick.Controls.Pager(dataView, grid, $("#pager"));
+	// var dataView = new Slick.Data.DataView();
+	var grid = new Slick.Grid("#grid", DATA_VIEW, columns, options);
+	var pager = new Slick.Controls.Pager(DATA_VIEW, grid, $("#pager"));
 
-	// dataView subscriptions drive the grid
-	dataView.onRowCountChanged.subscribe(function (e, args) {
+	// DATA_VIEW subscriptions drive the grid
+	DATA_VIEW.onRowCountChanged.subscribe(function (e, args) {
 		grid.updateRowCount();
 		grid.render();
 
 		// update the image pane when the paging changes
-		updateImageView(dataView);
+		updateImageView(DATA_VIEW);
 
 	});
 
-	dataView.onRowsChanged.subscribe(function (e, args) {
+	DATA_VIEW.onRowsChanged.subscribe(function (e, args) {
 		grid.invalidateRows(args.rows);
 		grid.render();
 
-		updateImageView(dataView);
+		updateImageView(DATA_VIEW);
 	});
 
 
@@ -73,9 +73,9 @@ function renderLines() {
 		sortcol = args.sortCol.field;
 
 		if ($.browser.msie && $.browser.version <= 8) {
-			dataView.fastSort(sortcol, args.sortAsc);
+			DATA_VIEW.fastSort(sortcol, args.sortAsc);
 		} else {
-			dataView.sort(comparer, args.sortAsc);
+			DATA_VIEW.sort(comparer, args.sortAsc);
 		}
 	});
 
@@ -101,25 +101,21 @@ function renderLines() {
 
 
 	// fill grid with data
-	gridUpdate(ORIGINAL_DATASET);
+	gridUpdate(ORIGINAL_DATASET, DATA_VIEW);
 
 	// update grid on brush
 	parcoords.on("brush", function (d) {
-		gridUpdate(d);
+		gridUpdate(d, DATA_VIEW);
 		
 		// TODO image gallary update
-
+``
 	});
 	
-	function gridUpdate(data) {
-		dataView.beginUpdate();
-		dataView.setItems(data);
-		dataView.endUpdate();
-	};
-
-	///////////////////////////// IMAGE GALLERY SETUP /////////////////////////////
-	//set default page size to 25 or else pageSize will be 0.
-	initializeImageView(dataView);
-	
-	return dataView;
+	return DATA_VIEW;
 }
+
+function gridUpdate(data, dataView) {
+	dataView.beginUpdate();
+	dataView.setItems(data);
+	dataView.endUpdate();
+};

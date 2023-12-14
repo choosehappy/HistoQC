@@ -1,4 +1,5 @@
 function renderScatterPlot(data) {
+    renderToolSelection();
     // constants
     var subsetSize = 1000;
     var pointRadius = 2;
@@ -6,9 +7,6 @@ function renderScatterPlot(data) {
 
     // timeout function
     var zoomEndTimeout;
-
-    // save the index of the currently selected point
-    var selectedPoint;
 
     // define all size variables
     var fullWidth = 500;
@@ -20,13 +18,15 @@ function renderScatterPlot(data) {
     // produce array of N false values
     var numberPoints = data["embed_x"].length;
 
+    var polygon = [];
+    var scaled_polygon1 = [];
 
     var plotData = d3.range(numberPoints).map(function (i) {
         return {
             x: data.embed_x[i],
             y: data.embed_y[i],
             i: i, // save the index of the point as a property, this is useful
-            selected: false
+            color: "steelblue"
         };
     });
 
@@ -89,6 +89,14 @@ function renderScatterPlot(data) {
         .domain([yRange[0] - 5, yRange[1] + 5])
         .range([height, 0]);
 
+    var newX = d3.scaleLinear()
+        .domain([xRange[0] - 5, xRange[1] + 5])
+        .range([0, width]);
+
+    var newY = d3.scaleLinear()
+        .domain([yRange[0] - 5, yRange[1] + 5])
+        .range([height, 0]);
+
 
     var xAxis = d3.axisBottom(xScale).scale(xScale)
     var yAxis = d3.axisLeft(yScale).scale(yScale)
@@ -121,46 +129,20 @@ function renderScatterPlot(data) {
 
     draw(null, xScale, yScale, []);
 
-    function onClick() {
-        var mouse = d3.mouse(this);
-
-        // map the clicked point to the data space
-        var xClicked = xScale.invert(mouse[0]);
-        var yClicked = yScale.invert(mouse[1]);
-
-        // find the closest point in the dataset to the clicked point
-        var closest = quadTree.find(xClicked, yClicked);
-
-        // map the co-ordinates of the closest point to the canvas space
-        var dX = xScale(closest.x);
-        var dY = yScale(closest.y);
-
-        // register the click if the clicked point is in the radius of the point
-        var distance = euclideanDistance(mouse[0], mouse[1], dX, dY);
-
-        if (distance < pointRadius) {
-            if (selectedPoint) {
-                plotData[selectedPoint].selected = false;
-            }
-            closest.selected = true;
-            selectedPoint = closest.i;
-
-            // redraw the points
-            draw();
-        }
-    }
 
     function onZoom() {
         clearTimeout(zoomEndTimeout);
-
-        var newX = d3.event.transform.rescaleX(xScale);
-        var newY = d3.event.transform.rescaleY(yScale);
-        
+        console.log("polygon: " + polygon[0])
+        scaled_polygon1 = polygon.map(p => [xScale.invert(p[0]), yScale.invert(p[1])]); // scale polygon to data space
+        console.log("scaled_polygon1 before rescale: " + scaled_polygon1[0])
+        newX = d3.event.transform.rescaleX(xScale);
+        newY = d3.event.transform.rescaleY(yScale);
+        scaled_polygon1 = scaled_polygon1.map(p => [newX(p[0]), newY(p[1])]);   // scale polygon to canvas space
+        console.log("scaled_polygon1 after rescale: " + scaled_polygon1[0])
 
         xAxisSvg.call(xAxis.scale(newX));
         yAxisSvg.call(yAxis.scale(newY));
         draw(randomIndex, newX, newY, []);
-
 
 
     }
@@ -168,8 +150,8 @@ function renderScatterPlot(data) {
     function onZoomEnd() {
         // when zooming is stopped, create a delay before
         // redrawing the full plot
-        var newX = d3.event.transform.rescaleX(xScale);
-        var newY = d3.event.transform.rescaleY(yScale);
+        newX = d3.event.transform.rescaleX(xScale);
+        newY = d3.event.transform.rescaleY(yScale);
 
         zoomEndTimeout = setTimeout(function () {
             draw(null, newX, newY, []);
@@ -179,11 +161,13 @@ function renderScatterPlot(data) {
     lassoCanvas.call(lasso().on("start lasso end", drawLasso))
     canvas.call(zoomBehaviour);
 
+
     // the draw function draws the full dataset if no index
     // parameter supplied, otherwise it draws a subset according
     // to the indices in the index parameter
     function draw(index, xScale, yScale, polygon) {
         var scaled_polygon;
+        var selected_indices = [];
         if (polygon.length > 0) {
             scaled_polygon = polygon.map(p => [xScale.invert(p[0]), yScale.invert(p[1])]);
         } else {
@@ -200,9 +184,7 @@ function renderScatterPlot(data) {
         if (index) {
             index.forEach(function (i) {
                 var point = plotData[i];
-                if (!point.selected) {
-                    drawPoint(point, pointRadius, xScale, yScale);
-                }
+                drawPoint(point, pointRadius, xScale, yScale);
             });
         }
         // draw the full dataset otherwise
@@ -210,13 +192,14 @@ function renderScatterPlot(data) {
             plotData.forEach(function (point) {
                 if (scaled_polygon.length == 0 || d3.polygonContains(scaled_polygon, [point.x, point.y])) {
                     drawPoint(point, pointRadius, xScale, yScale);
+                    selected_indices.push(point);
                 }
             });
-            if (scaled_polygon.length > 0) {
-                // scale polygon to canvas space
-                const zoomed_polygon = scaled_polygon.map(p => [xScale(p[0]), yScale(p[1])]);
-                drawLasso(zoomed_polygon);
-            }
+            //TODO update dataview with selected indices
+            // Filter the dataView items by the selected indices
+
+            // const items = DATA_VIEW.getItems()
+            // const filteredItems = items.filter(item => selected_indices.includes(item))
         }
     }
 
@@ -235,49 +218,43 @@ function renderScatterPlot(data) {
         context.stroke();
     }
 
-    function euclideanDistance(x1, y1, x2, y2) {
-        return Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
-    }
-    
     function trackMouse(e, { start, move, out, end }) {
         const tracker = {},
             target = e.target;
         tracker.point = d3.mouse(target); // Use d3.mouse with the target element
-    
+
         // Listen for mouse events on the target
         d3.select(target)
-            .on(`mouseup`, function() { // Use function() to access this
+            .on(`mouseup`, function () { // Use function() to access this
                 tracker.sourceEvent = d3.event; // Use d3.event to access the event
                 tracker.point = d3.mouse(this); // Use this to refer to the target element
                 d3.select(this).on(`mousemove mouseout`, null); // Remove event listeners
                 end && end(tracker);
             })
-            .on(`mousemove`, function() { // Use function() to access this
+            .on(`mousemove`, function () { // Use function() to access this
                 tracker.sourceEvent = d3.event; // Use d3.event to access the event
                 tracker.prev = tracker.point;
                 tracker.point = d3.mouse(this); // Use this to refer to the target element
                 move && move(tracker);
             })
-            .on(`mouseout`, function() { // Use function() to access this
+            .on(`mouseout`, function () { // Use function() to access this
                 tracker.sourceEvent = d3.event; // Use d3.event to access the event
                 tracker.point = null;
                 out && out(tracker);
             });
-    
+
         start && start(tracker);
     }
-    
-    
+
+
     function lasso() {
         const dispatch = d3.dispatch("start", "lasso", "end");
         const lasso = function (selection) {
             const node = selection.node();
-            const polygon = [];
-    
+
             selection
                 // .on("touchmove", e => e.preventDefault()) // prevent scrolling
                 .on("mousedown", function () {
-                    draw(null, xScale, yScale, polygon);
 
                     trackMouse(d3.event, {
                         start: p => {
@@ -290,7 +267,7 @@ function renderScatterPlot(data) {
                         },
                         end: p => {
                             dispatch.call("end", node, polygon);
-                            draw(null, xScale, yScale, polygon);
+                            draw(null, newX, newY, polygon);
                         }
                     });
                 });
@@ -298,10 +275,10 @@ function renderScatterPlot(data) {
         lasso.on = function (type, _) {
             return _ ? (dispatch.on(...arguments), lasso) : dispatch.on(...arguments);
         };
-    
+
         return lasso;
     }
-    
+
     function drawLasso(polygon) {
         console.log("drawLasso")
         lassoContext.clearRect(0, 0, width, height);
@@ -314,49 +291,31 @@ function renderScatterPlot(data) {
         lassoContext.fill("evenodd");
         lassoContext.lineWidth = 1.5;
         lassoContext.stroke();
-    
-        // const selected = polygon.length > 2 ? [] : data;
-    
-        // for (const d of data) {
-        //     const contains =
-        //         polygon.length > 2 &&
-        //         d3.polygonContains(polygon, d) &&
-        //         selected.push(d);
-        // }
-    
-        // context.beginPath();
-        // path.pointRadius(1.5)({ type: "MultiPoint", coordinates: data });
-        // context.fillStyle = "#000";
-        // context.fill();
-    
-        // if (polygon.length > 2) {
-        //     context.beginPath();
-        //     path.pointRadius(2.5)({ type: "MultiPoint", coordinates: selected });
-        //     context.fillStyle = "red";
-        //     context.fill();
-        // }
-    
-        lassoContext.canvas.value = { polygon,}; //selected };
+
+        lassoContext.canvas.value = { polygon, }; //selected };
         lassoContext.canvas.dispatchEvent(new CustomEvent('input'));
     }
+
+    function renderToolSelection() {
+        const $container = $("#scatter-card");
+        const $lassoCanvas = $("#lasso-canvas");
+    
+        const $slickPager = $("<div class='slick-pager' />").prependTo($container);
+        const $mode = $("<span class='slick-pager-mode' />").appendTo($slickPager);
+        var $settings = $("<span class='slick-pager-settings' />").appendTo($slickPager);
+    
+        var icon_prefix = "<span class='ui-state-default ui-corner-all ui-icon-container'><span class='ui-icon ";
+        var icon_suffix = "' /></span>";
+    
+        $(icon_prefix + "ui-icon-lightbulb" + icon_suffix)
+            .click(function () {
+                $lassoCanvas.toggle();
+                drawLasso(scaled_polygon1);
+                $mode.text($lassoCanvas.is(":visible") ? "Mode: Lasso" : "Mode: Zoom & Pan");
+            })
+            .appendTo($settings);
+    }
+    
 }
 
-function renderToolSelection() {
-    const $container = $("#scatter-card");
-    const $lassoCanvas = $("#lasso-canvas");
-
-    const $slickPager = $("<div class='slick-pager' />").prependTo($container);
-    const $mode = $("<span class='slick-pager-mode' />").appendTo($slickPager);
-    var $settings = $("<span class='slick-pager-settings' />").appendTo($slickPager);
-
-    var icon_prefix = "<span class='ui-state-default ui-corner-all ui-icon-container'><span class='ui-icon ";
-    var icon_suffix = "' /></span>";
-
-    $(icon_prefix + "ui-icon-lightbulb" + icon_suffix)
-        .click(function () {
-            $lassoCanvas.toggle();
-            $mode.text($lassoCanvas.is(":visible") ? "Mode: Lasso" : "Mode: Zoom & Pan");
-        })
-        .appendTo($settings);
-  }
 
