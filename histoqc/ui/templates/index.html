@@ -4,29 +4,31 @@
 <head>
   <title>HistoQC UI</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="{{url_for('static', filename='slickgrid_libs/slickgrid/slick.grid.css')}}"
+  <!-- SlickGrid -->
+  <link rel="stylesheet" href="{{url_for('static', filename='libs/slickgrid/css/slick.grid.css')}}" type="text/css" />
+  <link rel="stylesheet" href="{{url_for('static', filename='libs/slickgrid/css/slick.pager.css')}}" type="text/css" />
+  <link rel="stylesheet" href="{{url_for('static', filename='libs/slickgrid/css/slick-icons.css')}}" type="text/css" />
+  <link rel="stylesheet" href="{{url_for('static', filename='libs/slickgrid/css/example-demo.css')}}" type="text/css" />
+  <link rel="stylesheet" href="{{url_for('static', filename='libs/slickgrid/css/slick-alpine-theme.css')}}"
     type="text/css" />
-  <link rel="stylesheet" href="{{url_for('static', filename='slickgrid_libs/slickgrid/jquery-ui-1.8.16.custom.css')}}"
-    type="text/css" />
-  <link rel="stylesheet" href="{{url_for('static', filename='slickgrid_libs/slickgrid/examples.css')}}"
-    type="text/css" />
-  <link rel="stylesheet" href="{{url_for('static', filename='slickgrid_libs/slickgrid/slick.pager.css')}}"
-    type="text/css" />
+  <!-- <link rel="stylesheet" href="{{url_for('static', filename='libs/slickgrid/css/columnpicker.css')}}" type="text/css"/> -->
 
-  <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='libs/bootstrap/css/bootstrap.css')}}" />
-  <!-- <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='libs/bootstrap/bootstrap.min.css')}}" /> -->
+  <script src="{{url_for('static', filename='libs/jquery/js/jquery-1.7.min.js')}}"></script>
+  <script src="{{url_for('static', filename='libs/jquery/js/jquery.event.drag-2.0.min.js')}}"></script>
 
-  <script src="{{url_for('static', filename='slickgrid_libs/slickgrid/jquery-1.7.min.js')}}"></script>
-  <script src="{{url_for('static', filename='slickgrid_libs/slickgrid/jquery.event.drag-2.0.min.js')}}"></script>
-  <script src="{{url_for('static', filename='slickgrid_libs/slickgrid/slick.core.js')}}"></script>
-  <script src="{{url_for('static', filename='slickgrid_libs/slickgrid/slick.grid.js')}}"></script>
-  <script src="{{url_for('static', filename='slickgrid_libs/slickgrid/slick.pager.js')}}"></script>
-  <script src="{{url_for('static', filename='slickgrid_libs/slickgrid/slick.dataview.js')}}"></script>
-  <!-- End SlickGrid -->
+  <script src="{{url_for('static', filename='libs/slickgrid/js/slick.core.js')}}"></script>
+  <script src="{{url_for('static', filename='libs/slickgrid/js/slick.interactions.js')}}"></script>
+  <script src="{{url_for('static', filename='libs/slickgrid/js/slick.grid.js')}}"></script>
+  <script src="{{url_for('static', filename='libs/slickgrid/js/slick.dataview.js')}}"></script>
 
-  <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='slickgrid_libs/parcoords.css')}}">
-  <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='slickgrid_libs/index.css')}}">
-  <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='slickgrid_libs/style.css')}}">
+  <script src="{{url_for('static', filename='libs/slickgrid/js/controls/slick.pager.js')}}"></script>
+  <script src="{{url_for('static', filename='libs/slickgrid/js/controls/slick.columnpicker.js')}}"></script>
+
+  <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='libs/parcoords/css/parcoords.css')}}">
+  <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/style.css')}}">
+  <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/index.css')}}">
+  <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='libs/bootstrap/css/bootstrap.css')}}">
+  
   <style>
     body,
     html {
@@ -78,11 +80,17 @@
       opacity: 0.2;
     }
   </style>
-  <script src="{{url_for('static', filename='slickgrid_libs/d3.v5.min.js')}}"></script>
-  <script src="{{url_for('static', filename='slickgrid_libs/parcoords.standalone.js')}}"></script>
-  <script src="{{url_for('static', filename='slickgrid_libs/divgrid.js')}}"></script>
+  <script src="{{url_for('static', filename='libs/d3/js/d3.v5.min.js')}}"></script>
+  <script src="{{url_for('static', filename='libs/parcoords/js/parcoords.standalone.js')}}"></script>
   <script src="{{url_for('static', filename='js/image_init.js')}}"></script>
   <script src="{{url_for('static', filename='libs/bootstrap/js/bootstrap.min.js')}}"></script>
+
+  <script src="{{url_for('static', filename='js/global_config.js')}}"></script>
+  <script src="{{url_for('static', filename='js/global_vars.js')}}"></script>
+  <script src="{{url_for('static', filename='js/slickgrid.js')}}" id="brushing"></script>
+  <script src="{{url_for('static', filename='js/scatterplot.js')}}"></script>
+  <script src="{{url_for('static', filename='js/histoqc.js')}}"></script>
+  <script src="{{url_for('static', filename='js/cohortfinder.js')}}"></script>
 </head>
 
 <body>
@@ -177,9 +185,6 @@
           <div class="card-body">
             <!-- THE SCATTER PLOT -->
             <div id="scatter-parent">
-              <canvas id="lasso-canvas" class="plot"></canvas>
-              <svg id="axis-svg" class="plot"></svg>
-              <canvas id="plot-canvas" class="plot"></canvas>
             </div>
           </div>
         </div>
@@ -188,24 +193,23 @@
     <div class="row mb-4">
       <div class="col-12">
         <div class="card">
+          <div class="card-header">
+            <div id="image-control-group" class="control-group btn-group btn-group-sm">
+              <div id="img-select-button" class="btn-group btn-group-sm">
+                <select id="img-select" class="selectpicker show-tick" data-size="10" data-style="btn-dark btn-sm"
+                  data-width="150px"></select>
+                <select id="comparison-select" class="selectpicker" data-size="10" data-style="btn-dark btn-sm"
+                  data-width="150px"></select>
+              </div>
+              <button id="exit-image-select-view-btn" class="btn btn-dark btn-sm">back</button>
+            </div>
+          </div>
           <div class="card-body">
             <!-- THE IMAGE PANE -->
             <div id="image-view" class="base-view-outer bg-light">
-              <div id="image-control-group" class="control-group btn-group btn-group-sm">
-                <div id="img-select-button" class="btn-group btn-group-sm">
-                  <select id="img-select" class="selectpicker show-tick" data-size="10" data-style="btn-dark btn-sm"
-                    data-width="150px"></select>
-                  <select id="comparison-select" class="selectpicker" data-size="10" data-style="btn-dark btn-sm"
-                    data-width="150px"></select>
-                </div>
-                <button id="exit-image-select-view-btn" class="btn btn-dark btn-sm">back</button>
-              </div>
-              <div id="image-container" class="base-view-inner">
-                <div id="overview-gallery"></div>
-                <div id="select-image-view">
-                  <div id="select-image-container"></div>
-                  <div id="select-candidate-container"></div>
-                </div>
+              
+              <div id="overview-gallery" class="base-view-inner">
+                <!-- <div id="overview-gallery"></div> -->
               </div>
             </div>
           </div>
@@ -237,9 +241,3 @@
 <!-- All components pertaining to the image gallery. -->
 
 
-<script src="{{url_for('static', filename='js/global_config.js')}}"></script>
-<script src="{{url_for('static', filename='js/global_vars.js')}}"></script>
-<script src="{{url_for('static', filename='js/slickgrid.js')}}" id="brushing"></script>
-<script src="{{url_for('static', filename='js/scatterplot.js')}}"></script>
-<script src="{{url_for('static', filename='js/histoqc.js')}}"></script>
-<script src="{{url_for('static', filename='js/cohortfinder.js')}}"></script>

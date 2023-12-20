@@ -3,14 +3,14 @@ function renderLines() {
 	const margin = visualViewport.height * 0.05;
 	const parcoords_card_height = visualViewport.height * 0.3 - margin;
 	// $("#parcoords-parent").height(parcoords_card_height)
-	var parcoords = ParCoords()("#example")
+	PARCOORDS = ParCoords()("#example")
 		.alpha(0.4)
 		.mode("queue") // progressive rendering
 		.height(parcoords_card_height)
 
 	// slickgrid needs each data element to have an id
 	ORIGINAL_DATASET.forEach(function (d, i) { d.id = d.id || i; });
-	parcoords
+	PARCOORDS
 		.data(ORIGINAL_DATASET)
 		.hideAxis(["case_name", "gid"])
 		.render()
@@ -36,7 +36,7 @@ function renderLines() {
 		multiColumnSort: false,
 	};
 
-	// var dataView = new Slick.Data.DataView();
+	DATA_VIEW = new Slick.Data.DataView();
 	var grid = new Slick.Grid("#grid", DATA_VIEW, columns, options);
 	var pager = new Slick.Controls.Pager(DATA_VIEW, grid, $("#pager"));
 
@@ -86,36 +86,43 @@ function renderLines() {
 
 		// Get the id of the item referenced in grid_row
 		var item_id = grid.getDataItem(grid_row).id;
-		var d = parcoords.brushed() || ORIGINAL_DATASET;
+		var d = PARCOORDS.brushed() || ORIGINAL_DATASET;
 
 		// Get the element position of the id in the data object
 		elementPos = d.map(function (x) { return x.id; }).indexOf(item_id);
 
 		// Highlight that element in the parallel coordinates graph
-		parcoords.highlight([d[elementPos]]);
+		PARCOORDS.highlight([d[elementPos]]);
 	});
 
 	grid.onMouseLeave.subscribe(function (e, args) {
-		parcoords.unhighlight();
+		PARCOORDS.unhighlight();
 	});
 
 
 	// fill grid with data
-	gridUpdate(ORIGINAL_DATASET, DATA_VIEW);
+	gridUpdate(ORIGINAL_DATASET);
 
 	// update grid on brush
-	parcoords.on("brush", function (d) {
-		gridUpdate(d, DATA_VIEW);
+	PARCOORDS.on("brush", function (d) {
+		gridUpdate(d);
 		
 		// TODO image gallary update
-``
 	});
 	
 	return DATA_VIEW;
 }
 
-function gridUpdate(data, dataView) {
-	dataView.beginUpdate();
-	dataView.setItems(data);
-	dataView.endUpdate();
+function gridUpdate(data) {
+	DATA_VIEW.beginUpdate();
+	DATA_VIEW.setItems(data);
+	DATA_VIEW.endUpdate();
 };
+
+function updateParcoords(data) {
+	// PARCOORDS.brushReset();
+	// PARCOORDS.brushed(false)
+	PARCOORDS
+		.data(data)
+		.render();
+}

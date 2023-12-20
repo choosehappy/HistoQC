@@ -41,9 +41,10 @@ function handleCohortFinderSubmit(event) {
 }
 
 function handleCohortFinderResponse(data) {
+    COHORT_FINDER_RESULTS = data
     console.log("received cohort finder results:")
-    console.log(data)
-    renderScatterPlot(data);
+    console.log(COHORT_FINDER_RESULTS)
+    renderScatterPlot(COHORT_FINDER_RESULTS);
 }
 
 function handleCohortFinderSubmitTEST(event) {

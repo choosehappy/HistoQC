@@ -1,4 +1,13 @@
 function renderScatterPlot(data) {
+    // Create the new elements
+    var lassoCanvas = $('<canvas id="lasso-canvas" class="plot"></canvas>');
+    var axisSvg = $('<svg id="axis-svg" class="plot"></svg>');
+    var plotCanvas = $('<canvas id="plot-canvas" class="plot"></canvas>');
+
+    // Append the new elements to the 'scatter-parent' element
+    $('#scatter-parent').append(lassoCanvas, axisSvg, plotCanvas);
+
+
     renderToolSelection();
     // constants
     var subsetSize = 1000;
@@ -20,13 +29,30 @@ function renderScatterPlot(data) {
 
     var polygon = [];
     var scaled_polygon1 = [];
-
+    var selected_indices = [];
+    const colors = [
+        "#FF5733",  // Reddish Orange
+        "#3498DB",  // Soft Blue
+        "#2ECC71",  // Green
+        "#F1C40F",  // Yellow
+        "#9B59B6",  // Purple
+        "#34495E",  // Dark Blue
+        "#E74C3C",  // Red
+        "#16A085",  // Sea Green
+        "#2980B9",  // Medium Blue
+        "#8E44AD",  // Dark Purple
+        "#2C3E50",  // Navy Blue
+        "#F39C12",  // Orange
+        "#D35400",  // Pumpkin
+        "#C0392B",  // Dark Red
+        "#7F8C8D"   // Grey
+    ]
     var plotData = d3.range(numberPoints).map(function (i) {
         return {
             x: data.embed_x[i],
             y: data.embed_y[i],
             i: i, // save the index of the point as a property, this is useful
-            color: "steelblue"
+            color: colors[data.groupid[i]]
         };
     });
 
@@ -59,18 +85,21 @@ function renderScatterPlot(data) {
     // the canvas is shifted by 1px to prevent any artefacts
     // when the svg axis and the canvas overlap
     var canvas = d3.select("#plot-canvas")
+        .html("")
         .attr("width", width - 1)
         .attr("height", height - 1)
         .style("transform", "translate(" + (margin.left + 1) +
             "px" + "," + (margin.top + 1) + "px" + ")");
 
     var lassoCanvas = d3.select("#lasso-canvas")
+        .html("")
         .attr("width", width - 1)
         .attr("height", height - 1)
         .style("transform", "translate(" + (margin.left + 1) +
             "px" + "," + (margin.top + 1) + "px" + ")");
 
     var svg = d3.select("#axis-svg")
+        .html("")
         .attr("width", fullWidth)
         .attr("height", fullHeight)
         .append("g")
@@ -167,7 +196,7 @@ function renderScatterPlot(data) {
     // to the indices in the index parameter
     function draw(index, xScale, yScale, polygon) {
         var scaled_polygon;
-        var selected_indices = [];
+
         if (polygon.length > 0) {
             scaled_polygon = polygon.map(p => [xScale.invert(p[0]), yScale.invert(p[1])]);
         } else {
@@ -189,23 +218,33 @@ function renderScatterPlot(data) {
         }
         // draw the full dataset otherwise
         else {
+            selected_indices = [];
             plotData.forEach(function (point) {
                 if (scaled_polygon.length == 0 || d3.polygonContains(scaled_polygon, [point.x, point.y])) {
                     drawPoint(point, pointRadius, xScale, yScale);
-                    selected_indices.push(point);
+                    selected_indices.push(point.i);
                 }
             });
             //TODO update dataview with selected indices
             // Filter the dataView items by the selected indices
+            if (selected_indices.length < ORIGINAL_DATASET.length && polygon.length > 0) {
+                const filteredItems = ORIGINAL_DATASET.filter(item => selected_indices.includes(item.id))
+                gridUpdate(filteredItems)
+                updateParcoords(filteredItems)  // TODO prevent update when zooming.
 
-            // const items = DATA_VIEW.getItems()
-            // const filteredItems = items.filter(item => selected_indices.includes(item))
+            } else {
+                gridUpdate(ORIGINAL_DATASET)
+                updateParcoords(ORIGINAL_DATASET)
+            }
+
         }
     }
 
     function drawPoint(point, r, xScale, yScale) {
         var cx = xScale(point.x);
         var cy = yScale(point.y);
+
+        context.fillStyle = point.color;
 
         // NOTE; each point needs to be drawn as its own path
         // as every point needs its own stroke. you can get an insane
@@ -260,6 +299,7 @@ function renderScatterPlot(data) {
                         start: p => {
                             polygon.length = 0;
                             dispatch.call("start", node, polygon);
+                            selected_indices = [];
                         },
                         move: p => {
                             polygon.push(p.point);
@@ -299,23 +339,22 @@ function renderScatterPlot(data) {
     function renderToolSelection() {
         const $container = $("#scatter-card");
         const $lassoCanvas = $("#lasso-canvas");
-    
+
         const $slickPager = $("<div class='slick-pager' />").prependTo($container);
-        const $mode = $("<span class='slick-pager-mode' />").appendTo($slickPager);
         var $settings = $("<span class='slick-pager-settings' />").appendTo($slickPager);
-    
-        var icon_prefix = "<span class='ui-state-default ui-corner-all ui-icon-container'><span class='ui-icon ";
-        var icon_suffix = "' /></span>";
-    
-        $(icon_prefix + "ui-icon-lightbulb" + icon_suffix)
+
+        var $toggleButton = $("<button class='btn btn-primary slick-pager-button slick-pager-button-toggle' title='Toggle Lasso Mode'>" +
+            "</button>");
+
+        $toggleButton
+            .text($lassoCanvas.is(":visible") ? "Toggle Lasso" : "Toggle Zoom & Pan")
             .click(function () {
                 $lassoCanvas.toggle();
                 drawLasso(scaled_polygon1);
-                $mode.text($lassoCanvas.is(":visible") ? "Mode: Lasso" : "Mode: Zoom & Pan");
+                $toggleButton.text($lassoCanvas.is(":visible") ? "Mode: Lasso" : "Mode: Zoom & Pan");
             })
             .appendTo($settings);
     }
-    
-}
 
+}
 
