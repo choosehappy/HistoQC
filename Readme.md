@@ -1,12 +1,11 @@
 # HistoQC
----
+
 
 HistoQC is an open-source quality control tool for digital pathology slides
 
 ![screenshot](https://user-images.githubusercontent.com/9681868/40330248-a39603a2-5d4c-11e8-9d16-cc13fd9e21d4.png)
 
 # Requirements
----
 
 Tested with Python 3.7 and 3.8
 Note: the  DockerFile installs Python 3.8, so if your goal is reproducibility you may want to take this into account
@@ -36,8 +35,22 @@ Openslide binaries will have to be installed separately as per individual o/s in
 
 The most basic docker image can be created with the included (7-line) Dockerfile. 
 
+
+# Installation
+
+You can install HistoQC into your system by using 
+
+```
+git clone https://github.com/choosehappy/HistoQC.git
+cd HistoQC
+python -m pip install --upgrade pip  # (optional) upgrade pip to newest version
+pip install -r requirements.txt      # install pinned versions of packages
+pip install .
+```
+
 # Basic Usage
----
+
+## histoqc CLI
 
 Running the pipeline is now done via a python module:
 
@@ -70,6 +83,45 @@ optional arguments:
 
 ```
 
+Installed or simply git-cloned, a typical command line for running the tool thus looks like:
+
+```
+python -m histoqc -c v2.1 -n 3 "*.svs"
+```
+
+which will use 3 process to operate on all svs files using the named configuration file config_v2.1.ini from the config directory.
+
+In case of errors, HistoQC can be run with the same output directory and will begin where it left off, identifying completed images by the presence of an existing directory.
+
+## histoqc.config CLI
+Supplied configuration files can be viewed and modified like so:
+
+```
+
+C:\Research\code\HistoQC>python -m histoqc.config --help
+usage: __main__.py [-h] [--list] [--show NAME]
+
+show example config
+
+optional arguments:
+  -h, --help   show this help message and exit
+  --list       list available configs
+  --show NAME  show named example config
+  
+  
+```
+
+
+
+Alternatively one can specify their own modified config file using an absolute or relative filename:
+
+```
+python -m histoqc.config --show light > mylight.ini
+python -m histoqc -c ./mylight.ini -n 3 "*.svs"
+```
+
+## histoqc.ui CLI
+
 HistoQC now has a httpd server which allows for improved result viewing, it can be accessed like so:
 
 ```
@@ -90,54 +142,15 @@ optional arguments:
 
 ```
 
-Lastly, supplied configuration files can be viewed and modified like so:
+After completion of slide processing, view results in your web-browser simply by running the following command *from within the output directory* (saved in the **histoqc_output_YYMMDD-hhmmss** format by default. See histoqc CLI -o option)
 
 ```
-
-C:\Research\code\HistoQC>python -m histoqc.config --help
-usage: __main__.py [-h] [--list] [--show NAME]
-
-show example config
-
-optional arguments:
-  -h, --help   show this help message and exit
-  --list       list available configs
-  --show NAME  show named example config
-  
-  
+python -m histoqc.ui 
 ```
 
-
-If you would like, you can install HistoQC into your system by using 
-
+... OR set data_directory to the output directory explicitly:
 ```
-git clone https://github.com/choosehappy/HistoQC.git
-cd HistoQC
-python -m pip install --upgrade pip  # (optional) upgrade pip to newest version
-pip install -r requirements.txt      # install pinned versions of packages
-pip install .
-```
-
-Installed or simply git-cloned, a typical command line for running the tool thus looks like:
-
-```
-python -m histoqc -c v2.1 -n 3 "*.svs"
-```
-
-which will use 3 process to operate on all svs files using the named configuration file config_v2.1.ini from the config directory.
-
-Alternatively one can specify their own modified config file using an absolute or relative filename:
-
-```
-python -m histoqc.config --show light > mylight.ini
-python -m histoqc -c ./mylight.ini -n 3 "*.svs"
-```
-
-
-Afterward completion of slide processing you can view the results in your web-browser simply by following the directions after typing:
-
-```
-python -m histoqc.ui
+python -m histoqc.ui ./histoqc_output_YYMMDD-hhmmss
 ```
 
 Which will likely say something like:
@@ -147,13 +160,11 @@ Serving HistoQC UI on 0.0.0.0 port 8000 (http://0.0.0.0:8000/) ...
 ```
 
 Allowing you to browse to http://localhost:8000/ to select your results.tsv file.
-
-In case of errors, HistoQC can be run with the same output directory and will begin where it left off, identifying completed images by the presence of an existing directory.
                             
 This can also be done remotely, but is a bit more complex, see advanced usage.
 
 # Configuration modifications
----
+
 
 HistoQC's performance is significantly improved if you select an appropriate configuration file as a starting point and modify it to suit your specific use case.
 
@@ -172,7 +183,7 @@ python -m histoqc.config --show ihc > myconfig_ihc.ini
 
 
 # Advanced Usage
----
+
 
 
 See [wiki](https://github.com/choosehappy/HistoQC/wiki)
@@ -184,26 +195,12 @@ Information from HistoQC users appears below:
 
 1. the new Pannoramic 1000 scanner, objective-magnification is given as 20, when a 20x objective lense and a 2x aperture boost is used, i.e. image magnification is actually 40x. While their own CaseViewer somehow determines that a boost exists and ends up with 40x when objective-magnification in Slidedat.ini is at 20, openslide and bioformats give 20x.
 
-1.1. When converted to svs by CaseViewer, the MPP entry in ImageDescription meta-parameter give the average of the x and y mpp. Both values are slightly different for the new P1000 and can be found in meta-parameters of svs as tiff.XResolution and YResolution (inverse values, so have to be converted, also respecting ResolutionUnit as centimeter or inch
+1.1. When converted to svs by CaseViewer, the MPP entry in ImageDescription meta-parameter give the average of the x and y mpp. Both values are slightly different for the new P1000 and can be found in meta-parameters of svs as tiff.XResolution and YResolution inverse values, so have to be converted, also respecting ResolutionUnit as centimeter or inch
 
-# Troubleshooting
-While running histoqc.ui in windows, some users have reported missing thumbnails due to files not found. IF you experience this problem, try moving the histoqc output into the UserInterface/Data directory to produce the following file structure. Then re-launch histoqc.ui.
-
-```
-UserInterface
-  Data
-    Image1
-      thumbnail1.png
-      thumbnail2.png
-      ...
-    Image2
-    ...
-    results.tsv
-```
 
 
 # Citation
----
+
 If you find this software useful, please drop me a line and/or consider citing it:
 
 "HistoQC: An Open-Source Quality Control Tool for Digital Pathology Slides", Janowczyk A., Zuo R., Gilmore H., Feldman M., Madabhushi A., JCO Clinical Cancer Informatics, 2019
