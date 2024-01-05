@@ -24,24 +24,29 @@ def estimateGreyComatrixFeatures(s, params):
     img = color.rgb2gray(img)
 
     mask = s[mask_name] if not invert else ~s[mask_name]
-    maskidx = mask.nonzero()
-    maskidx = np.asarray(maskidx).transpose()
-    idx = np.random.choice(maskidx.shape[0], npatches)
+    if len(mask.nonzero()[0]) == 0:  # add warning in case the no tissus detected in mask
+        msg = f"LocalTextureEstimationModule.estimateGreyComatrixFeatures:{prefix} Can not estimate the empty mask since NO tissue remains detectable in mask"
+        logging.warning(f"{s['filename']} - {msg}")
+        s["warnings"].append(msg)  
+    else:
+        maskidx = mask.nonzero()
+        maskidx = np.asarray(maskidx).transpose()
+        idx = np.random.choice(maskidx.shape[0], npatches)
 
-    results = []
+        results = []
 
-    for id in idx:
-        r, c = maskidx[id, :]
-        patch = img[r:r + patch_size, c:c + patch_size]
-        glcm = graycomatrix(np.digitize(patch,np.linspace(0,1,num=nlevels),right=True), distances=[5],
-                            angles=[0], levels=nlevels, symmetric=True, normed=True)
+        for id in idx:
+            r, c = maskidx[id, :]
+            patch = img[r:r + patch_size, c:c + patch_size]
+            glcm = graycomatrix(np.digitize(patch,np.linspace(0,1,num=nlevels),right=True), distances=[5],
+                                angles=[0], levels=nlevels, symmetric=True, normed=True)
 
-        results.append([graycoprops(glcm, prop=feat) for feat in feats])
+            results.append([graycoprops(glcm, prop=feat) for feat in feats])
 
-    results = np.asarray(results).squeeze()
+        results = np.asarray(results).squeeze()
 
-    for vals, feat in zip(results.transpose(), feats):
-        s.addToPrintList(f"{prefix}{feat}", str(vals.mean()))
-        s.addToPrintList(f"{prefix}{feat}_std", str(vals.std()))
+        for vals, feat in zip(results.transpose(), feats):
+            s.addToPrintList(f"{prefix}{feat}", str(vals.mean()))
+            s.addToPrintList(f"{prefix}{feat}_std", str(vals.std()))
 
     return
