@@ -27,26 +27,27 @@ def estimateGreyComatrixFeatures(s, params):
     if len(mask.nonzero()[0]) == 0:  # add warning in case the no tissus detected in mask
         msg = f"LocalTextureEstimationModule.estimateGreyComatrixFeatures:{prefix} Can not estimate the empty mask since NO tissue remains detectable in mask"
         logging.warning(f"{s['filename']} - {msg}")
-        s["warnings"].append(msg)  
-    else:
-        maskidx = mask.nonzero()
-        maskidx = np.asarray(maskidx).transpose()
-        idx = np.random.choice(maskidx.shape[0], npatches)
+        s["warnings"].append(msg)
+        return
 
-        results = []
+    maskidx = mask.nonzero()
+    maskidx = np.asarray(maskidx).transpose()
+    idx = np.random.choice(maskidx.shape[0], npatches)
 
-        for id in idx:
-            r, c = maskidx[id, :]
-            patch = img[r:r + patch_size, c:c + patch_size]
-            glcm = graycomatrix(np.digitize(patch,np.linspace(0,1,num=nlevels),right=True), distances=[5],
-                                angles=[0], levels=nlevels, symmetric=True, normed=True)
+    results = []
 
-            results.append([graycoprops(glcm, prop=feat) for feat in feats])
+    for id in idx:
+        r, c = maskidx[id, :]
+        patch = img[r:r + patch_size, c:c + patch_size]
+        glcm = graycomatrix(np.digitize(patch,np.linspace(0,1,num=nlevels),right=True), distances=[5],
+                            angles=[0], levels=nlevels, symmetric=True, normed=True)
 
-        results = np.asarray(results).squeeze()
+        results.append([graycoprops(glcm, prop=feat) for feat in feats])
 
-        for vals, feat in zip(results.transpose(), feats):
-            s.addToPrintList(f"{prefix}{feat}", str(vals.mean()))
-            s.addToPrintList(f"{prefix}{feat}_std", str(vals.std()))
+    results = np.asarray(results).squeeze()
+
+    for vals, feat in zip(results.transpose(), feats):
+        s.addToPrintList(f"{prefix}{feat}", str(vals.mean()))
+        s.addToPrintList(f"{prefix}{feat}_std", str(vals.std()))
 
     return
