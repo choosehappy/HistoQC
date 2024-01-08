@@ -40,13 +40,14 @@ The most basic docker image can be created with the included (7-line) Dockerfile
 
 You can install HistoQC into your system by using 
 
-```
+```bash
 git clone https://github.com/choosehappy/HistoQC.git
 cd HistoQC
 python -m pip install --upgrade pip  # (optional) upgrade pip to newest version
-pip install -r requirements.txt      # install pinned versions of packages
-pip install .
+pip install -r requirements.txt      # (required) install pinned versions of packages
+pip install .                        # (recommended) install HistoQC as a package
 ```
+Note that `pip install .` will install HistoQC as a python package in your environment. If you do not want to install HistoQC as a package, you will only be able to run HistoQC from the `HistoQC` directory.
 
 # Basic Usage
 
@@ -54,7 +55,7 @@ pip install .
 
 Running the pipeline is now done via a python module:
 
-```  
+```
 C:\Research\code\HistoQC>python -m histoqc --help
 usage: __main__.py [-h] [-o OUTDIR] [-p BASEPATH] [-c CONFIG] [-f] [-b BATCH]
                    [-n NPROCESSES] [--symlink TARGET_DIR]
@@ -85,7 +86,7 @@ optional arguments:
 
 Installed or simply git-cloned, a typical command line for running the tool thus looks like:
 
-```
+```bash
 python -m histoqc -c v2.1 -n 3 "*.svs"
 ```
 
@@ -115,7 +116,7 @@ optional arguments:
 
 Alternatively one can specify their own modified config file using an absolute or relative filename:
 
-```
+```bash
 python -m histoqc.config --show light > mylight.ini
 python -m histoqc -c ./mylight.ini -n 3 "*.svs"
 ```
@@ -144,12 +145,13 @@ optional arguments:
 
 After completion of slide processing, view results in your web-browser simply by running the following command *from within the output directory* (saved in the **histoqc_output_YYMMDD-hhmmss** format by default. See histoqc CLI -o option)
 
-```
+```bash
+cd histoqc_output_YYMMDD-hhmmss
 python -m histoqc.ui 
 ```
 
 ... OR set data_directory to the output directory explicitly:
-```
+```bash
 python -m histoqc.ui ./histoqc_output_YYMMDD-hhmmss
 ```
 
@@ -170,15 +172,15 @@ HistoQC's performance is significantly improved if you select an appropriate con
 
 If you would like to see a list of provided config files to start you off, you can type
 
-```
+```bash
 python -m histoqc.config --list
 ```
 
 and then you can select one and write it to file like so for your modification and tuning:
 
-```
+```bash
 python -m histoqc.config --show ihc > myconfig_ihc.ini
-````
+```
 
 
 
