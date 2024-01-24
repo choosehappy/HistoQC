@@ -28,7 +28,7 @@
   <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/style.css')}}">
   <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/index.css')}}">
   <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='libs/bootstrap/css/bootstrap.css')}}">
-  
+
   <style>
     body,
     html {
@@ -63,7 +63,7 @@
     #axis-svg {
       z-index: 0;
     }
-    
+
 
     #scatter-parent {
       position: relative;
@@ -78,6 +78,23 @@
 
     .tick line {
       opacity: 0.2;
+    }
+
+    .tooltip {
+      box-sizing: border-box;
+      position: absolute;
+      display: none;
+      top: 0;
+      left: -100000000px;
+      padding: 8px 12px;
+      font-family: sans-serif;
+      font-size: 12px;
+      color: #333;
+      background-color: #fff;
+      border: 1px solid #333;
+      border-radius: 4px;
+      pointer-events: none;
+      z-index: 1;
     }
   </style>
   <script src="{{url_for('static', filename='libs/d3/js/d3.v5.min.js')}}"></script>
@@ -100,18 +117,14 @@
         <h1>HistoQC</h1>
       </span>
       <span>
-        <label>
-          <input class="btn btn-primary btn-lg" id="upload-input" type="file" accept=".tsv" multiple>
-        </label>
-      </span>
-      <span>
         <button type="button" id="modal-toggle" class="btn btn-primary btn-lg">CohortFinder</button>
       </span>
     </div>
   </nav>
   <div class="container-fluid">
     <!-- Modal -->
-    <div class="modal" id="cf-params-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal" id="cf-params-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+      aria-hidden="true">
       <div class="modal-dialog" role="document">
         <div class="modal-content">
           <!-- Modal Header -->
@@ -127,13 +140,15 @@
             <form>
               <div class="form-group">
                 <label for="exampleFormControlInput1"># of clusters</label>
-                <input type="text" class="form-control" id="exampleFormControlInput1" placeholder="3" name="numClusters">
+                <input type="text" class="form-control" id="exampleFormControlInput1" placeholder="3"
+                  name="numClusters">
               </div>
               <!-- Add more form fields as needed -->
               <!-- Add a slider from 0 to 100 -->
               <div class="form-group">
                 <label for="slider">Test set percent</label>
-                <input type="range" class="form-control-range" id="slider" min="0" max="100" value="20" name="testSetPercent">
+                <input type="range" class="form-control-range" id="slider" min="0" max="100" value="20"
+                  name="testSetPercent">
               </div>
               <!-- Add this code inside the form element in the modal body -->
               <div class="form-group">
@@ -156,13 +171,60 @@
         </div>
       </div>
     </div>
+    <div class="modal" id="select-image-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+      aria-hidden="true">
+      <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+          <!-- Modal Header -->
+          <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLabel">Select Image Pane</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <!-- Modal Body -->
+          <div class="modal-body">
+            <!-- Your form elements go here -->
+            <div id="select-image-view">
+              <div id="select-image-container"></div>
+              <div id="select-candidate-container"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="row mb-4">
       <div class="col-12">
-        <div class="card" style="height: 30vh;">
+        <div class="card" style="height: 47vh;">
           <!-- THE PARALLEL COORDINATES PLOT -->
           <div class="card-body">
             <div id="parcoords-parent">
               <div id="example" class="parcoords"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row mb-4" style="height: 50vh; overflow: scroll;">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header">
+            <div id="image-control-group" class="control-group btn-group btn-group-sm">
+              <div id="img-select-button" class="btn-group btn-group-sm">
+                <select id="img-select" class="selectpicker show-tick" data-size="10" data-style="btn-dark btn-sm"
+                  data-width="150px"></select>
+                <select id="comparison-select" class="selectpicker" data-size="10" data-style="btn-dark btn-sm"
+                  data-width="150px"></select>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <!-- THE IMAGE PANE -->
+            <div id="image-view" class="base-view-outer bg-light">
+
+              <div id="overview-gallery" class="base-view-inner">
+                <!-- <div id="overview-gallery"></div> -->
+              </div>
             </div>
           </div>
         </div>
@@ -190,32 +252,7 @@
         </div>
       </div>
     </div>
-    <div class="row mb-4">
-      <div class="col-12">
-        <div class="card">
-          <div class="card-header">
-            <div id="image-control-group" class="control-group btn-group btn-group-sm">
-              <div id="img-select-button" class="btn-group btn-group-sm">
-                <select id="img-select" class="selectpicker show-tick" data-size="10" data-style="btn-dark btn-sm"
-                  data-width="150px"></select>
-                <select id="comparison-select" class="selectpicker" data-size="10" data-style="btn-dark btn-sm"
-                  data-width="150px"></select>
-              </div>
-              <button id="exit-image-select-view-btn" class="btn btn-dark btn-sm">back</button>
-            </div>
-          </div>
-          <div class="card-body">
-            <!-- THE IMAGE PANE -->
-            <div id="image-view" class="base-view-outer bg-light">
-              
-              <div id="overview-gallery" class="base-view-inner">
-                <!-- <div id="overview-gallery"></div> -->
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+
   </div>
 </body>
 
@@ -239,5 +276,3 @@
 </div> -->
 
 <!-- All components pertaining to the image gallery. -->
-
-

@@ -25,18 +25,18 @@ function handleCohortFinderSubmit(event) {
 
     // call the run_cohort_finder endpoint with the form data
     $.ajax({
-		url: "/run_cohort_finder",
-		type: "GET",
-		async: true,
+        url: "/run_cohort_finder",
+        type: "GET",
+        async: true,
         data: params,
-        beforeSend: function() {
+        beforeSend: function () {
             $('#cf-params-modal').modal('toggle');
             console.log("waiting for cohort finder results...")
             // $('#cf-progress-modal').modal('toggle');
         },
-		success: handleCohortFinderResponse
-		}
-	);
+        success: handleCohortFinderResponse
+    }
+    );
 
 }
 
@@ -50,10 +50,10 @@ function handleCohortFinderResponse(data) {
 function handleCohortFinderSubmitTEST(event) {
     event.preventDefault();
     const data = {
-        'embed_x': [1,2,3,4,5],
-        'embed_y': [1,2,3,4,5],
-        'groupid': [1,1,2,3,3],
-        'testind': [0,0,0,0,1]
+        'embed_x': [1, 2, 3, 4, 5],
+        'embed_y': [1, 2, 3, 4, 5],
+        'groupid': [1, 1, 2, 3, 3],
+        'testind': [0, 0, 0, 0, 1]
     };
 
     handleCohortFinderResponse(data);

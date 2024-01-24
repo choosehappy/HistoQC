@@ -186,7 +186,13 @@ th {
 }
 
 .overview-image-block > img {
+	border: solid 3px transparent;
+
 	height: 200px;
+}
+
+.overview-image-block > img:hover {
+	border-color: rgb(131, 161, 186);
 }
 
 .overview-image-block > img:nth-child(2) {

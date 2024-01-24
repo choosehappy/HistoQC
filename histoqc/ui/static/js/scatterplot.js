@@ -229,12 +229,14 @@ function renderScatterPlot(data) {
             // Filter the dataView items by the selected indices
             if (selected_indices.length < ORIGINAL_DATASET.length && polygon.length > 0) {
                 const filteredItems = ORIGINAL_DATASET.filter(item => selected_indices.includes(item.id))
-                gridUpdate(filteredItems)
+                
                 updateParcoords(filteredItems)  // TODO prevent update when zooming.
+                gridUpdate(filteredItems)
 
             } else {
-                gridUpdate(ORIGINAL_DATASET)
+
                 updateParcoords(ORIGINAL_DATASET)
+                gridUpdate(ORIGINAL_DATASET)
             }
 
         }

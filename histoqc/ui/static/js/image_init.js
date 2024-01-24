@@ -94,10 +94,10 @@ function updateImageViewHeight () {
 
 
 function enterSelectImageView (dir) {
-	$("#overview-gallery").css("display", "none");
-	$("#img-select-button").css("display", "none");
-	$("#exit-image-select-view-btn").css("display", "block");
-
+	// $("#overview-gallery").css("display", "none");
+	// $("#img-select-button").css("display", "none");
+	// $("#exit-image-select-view-btn").css("display", "block");
+	$('#select-image-modal').modal('show');
 	$("#select-candidate-container > *").remove();
 	$("#select-image-container > *").remove();
 	$("#select-image-view").css("display", "flex");
@@ -117,7 +117,7 @@ function enterSelectImageView (dir) {
 			continue;
 		}
 		$div.append(
-			generateImgBlock(
+			generateImgBlock(dir,
 				"candidate-image-block", dir, 
 				i, -1, DEFAULT_IMAGE_EXTENSIONS[i]
 			)
@@ -172,13 +172,14 @@ function calculateHeight ($div) {
 
 
 function generateImgBlock (id, blk_class, file_name, img_type, compare_type, img_label) {
+	// TODO: rewrite using JQuery to generate html.
 	var img_block = "<div id='" + id + 
 		"' class='" + blk_class + "'>" +
 		"<img src='" + generateImgSrc(
 			file_name, img_type, blk_class == "overview-image-block"
 		) + "' file_name='" + file_name + 
 		"' img_type='" + img_type + 
-		"' onerror=\"this.style.display='none'\"/>";
+		"' onerror=\"this.style.display='none'\" onclick='enterSelectImageView(\"" + file_name + "\")'/>";
 	if (compare_type != -1) {	// add on second image if we are in compare mode
 		img_block += "<img src='" + generateImgSrc(
 				file_name, compare_type, blk_class == "overview-image-block"
