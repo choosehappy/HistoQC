@@ -8,6 +8,10 @@ app = Flask(__name__)
 app.register_blueprint(html)
 app.logger_name = 'flask'
 
+# resultsfilepath = "/data/jjaco34/histoqc_results/tsv_run_no_exceptions/results_clean.tsv"
+# app.config['data_directory'] = os.path.dirname(resultsfilepath)
+# app.config['results_filename'] = os.path.basename(resultsfilepath)
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog="histoqc.ui",description="launch server for result viewing in user interface")
     parser.add_argument('--port', '-p', type=int, default=5000, help='Specify the port [default:5000]')
@@ -20,6 +24,6 @@ if __name__ == '__main__':
     app.config['results_filename'] = os.path.basename(args.resultsfilepath)
 
     app.logger.info('Starting Flask app')
-    app.run(host='0.0.0.0', port=args.port, debug=False, threaded=True)
+    app.run(host='0.0.0.0', port=args.port, debug=True, threaded=True)
 
 
