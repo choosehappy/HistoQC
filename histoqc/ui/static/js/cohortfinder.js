@@ -4,6 +4,15 @@ function initializeCF() {
 }
 
 function handleCohortFinderClick(event) {
+    const formElement = d3.select('#features-select')
+    formElement.html('')
+    const keys = d3.keys(ORIGINAL_DATASET[0])
+    keys.forEach(key => {
+        if (key == 'case_name' || key == 'id' || key == 'gid') {
+            return
+        }
+        formElement.append('option').attr('value', key).text(key)
+    })
     $('#cf-params-modal').modal('toggle');
 }
 
@@ -20,7 +29,7 @@ function handleCohortFinderSubmit(event) {
     var params = {
         'numClusters': formData.get('numClusters'),
         'testSetPercent': formData.get('testSetPercent'),
-        'featuresSelected': formData.getAll('featuresSelected')
+        'featuresSelected': formData.getAll('featuresSelected').join(','),
     };
 
     // call the run_cohort_finder endpoint with the form data
@@ -31,8 +40,8 @@ function handleCohortFinderSubmit(event) {
         data: params,
         beforeSend: function () {
             $('#cf-params-modal').modal('toggle');
-            console.log("waiting for cohort finder results...")
-            // $('#cf-progress-modal').modal('toggle');
+            console.log("Running cohort finder with parameters:")
+            console.log(params)
         },
         success: handleCohortFinderResponse
     }

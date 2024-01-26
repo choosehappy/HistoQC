@@ -6,8 +6,10 @@ function renderLines() {
 	const parcoordsCardHeight = visualViewport.height * 0.45 + max_key_length * 3;
 	// $("#parcoords-parent").height(parcoordsCardHeight)
 	PARCOORDS = ParCoords()("#example")
-		.alpha(0.2)
-		// .alphaOnBrushed(0.3)
+		.alpha(0.3)
+		.color("#426fbd")
+		.alphaOnBrushed(0.5)
+		.brushedColor("#a13f57")
 		.mode("queue") // progressive rendering
 		.height(parcoordsCardHeight)
 		.width(100 * num_columns)
@@ -179,8 +181,14 @@ function tooltip(selectionGroup, tooltipDiv) {
 	function handleMouseover(id) {
 		// show/reveal the tooltip, set its contents,
 		// style the element being hovered on
+		var color;
+		if (Object.keys(PARCOORDS.brushExtents()).length > 0) {
+			color = "#a13f57";
+		} else {
+			color = "#426fbd";
+		}
 		showTooltip();
-		renderViolinPlotHist(tooltipDiv, DATA_VIEW.items, id, [`${id}_distribution`], tooltip_width, tooltip_height - 50);
+		renderViolinPlotHist(tooltipDiv, DATA_VIEW.items, id, [`${id}_distribution`], tooltip_width, tooltip_height - 50, color);
 		renderAxisMetrics(tooltipDiv, DATA_VIEW.items, id);
 	}
 
@@ -205,16 +213,16 @@ function tooltip(selectionGroup, tooltipDiv) {
 
 	function setPosition(mouseX, mouseY) {
 		const thresh = 2 * window.innerWidth / 3;
-		const xOffset = mouseX > thresh ? -1 * mousePosOffset - tooltip_width : mousePosOffset;
+		// const xOffset = mouseX > thresh ? -1 * mousePosOffset - tooltip_width : mousePosOffset;
 
 		tooltipDiv
 			.style("top", `${mouseY + mousePosOffset}px`)
-			.style("left", `${mouseX + xOffset}px`)
+			.style("left", `${mouseX + mousePosOffset}px`)
 			.style("height", `${tooltip_height}px`)
 			.style("width", `${tooltip_width}px`);
 	}
 
-	function renderViolinPlotHist(selectedContainer, data, yDomainLabel, xDomainLabels, width, height) {
+	function renderViolinPlotHist(selectedContainer, data, yDomainLabel, xDomainLabels, width, height, color="#a13f57") {
 		
 		/** Render the violin plot using the histogram method.
 		 * https://d3-graph-gallery.com/graph/violin_basicHist.html
@@ -298,7 +306,7 @@ function tooltip(selectionGroup, tooltipDiv) {
 			.append("path")
 			.datum(function (d) { return (d.value) })     // So now we are working bin per bin
 			.style("stroke", "black")
-			.style("fill", "#85b4ff")
+			.style("fill", color)
 			.attr("d", d3.area()
 				.x0(function (d) { return (xNum(-d.length)) })
 				.x1(function (d) { return (xNum(d.length)) })

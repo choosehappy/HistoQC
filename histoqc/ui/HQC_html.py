@@ -2,7 +2,7 @@ from flask import render_template, Blueprint, request, current_app, send_file
 import os
 from argparse import Namespace
 from cohortfinder_choosehappy.cohortfinder_colormod_original import runCohortFinder
-
+import json
 # constants 
 cf_results_filename = 'results_cohortfinder.tsv'
 
@@ -56,8 +56,7 @@ def run_cohort_finder():
     cf_args = Namespace()
 
     # ---------------- default values ----------------
-    cf_args.cols = "mpp_x,mpp_y,michelson_contrast,rms_contrast,grayscale_brightness,chan1_brightness,chan2_brightness,chan3_brightness,chan1_brightness_YUV,chan2_brightness_YUV,chan3_brightness_YUV"
-    cf_args.cols = "mpp_x,mpp_y,nonwhite,flat_areas,dark,small_tissue_filled_num_regions,small_tissue_filled_mean_area,small_tissue_filled_max_area,small_tissue_filled_percent,small_tissue_removed_num_regions,small_tissue_removed_mean_area,small_tissue_removed_max_area,small_tissue_removed_percent,blurry_removed_num_regions,blurry_removed_mean_area,blurry_removed_max_area,blurry_removed_percent,spur_pixels,areaThresh"
+
     cf_args.labelcolumn = None
     cf_args.sitecolumn = None
     cf_args.patientidcolumn = None
@@ -69,10 +68,12 @@ def run_cohort_finder():
     
     
     # ---------------- user input ----------------
+    
+    cf_args.cols = request.args.get('featuresSelected')
     cf_args.nclusters = int(request.args.get('numClusters'))
     cf_args.testpercent = float(request.args.get('testSetPercent'))
     # cf_args.featuresSelected = request.args.get('featuresSelected')    
-
+    breakpoint()
     # add line to check if cohortFinder has already been run (with output saved). If so, load the results.tsv file and return.
     output, preds = runCohortFinder(cf_args)
 
