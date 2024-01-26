@@ -1,13 +1,24 @@
 function renderLines() {
 	///////////////////////////// PARCOORDS SETUP /////////////////////////////
-	const margin = visualViewport.height * 0.05;
-	const parcoordsCardHeight = visualViewport.height * 0.5 - margin;
+	// const margin = visualViewport.height * 0.05;
+	const max_key_length = d3.max(d3.keys(ORIGINAL_DATASET[0]).map(function (d) { return d.length; }));
+	const num_columns = d3.keys(ORIGINAL_DATASET[0]).length;
+	const parcoordsCardHeight = visualViewport.height * 0.45 + max_key_length * 3;
 	// $("#parcoords-parent").height(parcoordsCardHeight)
 	PARCOORDS = ParCoords()("#example")
 		.alpha(0.2)
 		// .alphaOnBrushed(0.3)
 		.mode("queue") // progressive rendering
 		.height(parcoordsCardHeight)
+		.width(100 * num_columns)
+		.margin({
+			top: max_key_length * 3,
+			left: 15,
+			right: 15,
+			bottom: 16
+		});
+	
+	
 
 	// slickgrid needs each data element to have an id
 	ORIGINAL_DATASET.forEach(function (d, i) { d.id = d.id || i; });
@@ -18,6 +29,7 @@ function renderLines() {
 		.reorderable()
 		.brushMode("1D-axes");
 
+	rotateLabels(PARCOORDS);
 
 	///////////////////////////// TOOLTIP SETUP /////////////////////////////
 	const parcoordsDimKeys = Object.keys(PARCOORDS.dimensions())
@@ -68,6 +80,9 @@ function renderLines() {
 	DATA_VIEW.onRowsChanged.subscribe(function (e, args) {
 		grid.invalidateRows(args.rows);
 		grid.render();
+
+		// update the image pane when the paging changes
+		updateImageView(DATA_VIEW);
 	});
 
 
@@ -116,14 +131,9 @@ function renderLines() {
 	// fill grid with data
 	gridUpdate(ORIGINAL_DATASET);
 
-	// update grid on brush
-	PARCOORDS.on("brush", function (d) {
-		gridUpdate(d);
-
-	});
-
 	PARCOORDS.on("brushend", function (d) {
 		updateImageView(DATA_VIEW);
+		gridUpdate(d);
 	});
 
 	return DATA_VIEW;
@@ -141,6 +151,16 @@ function updateParcoords(data) {
 	PARCOORDS
 		.data(data)
 		.render();
+}
+
+function rotateLabels(parcoords) {
+	parcoords.svg
+    .selectAll('text.label')
+    .attr(
+      'transform',
+      'translate(0,-10) rotate(-15)'
+    )
+	.attr("text-anchor", "start");
 }
 
 function tooltip(selectionGroup, tooltipDiv) {

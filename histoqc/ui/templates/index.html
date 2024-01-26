@@ -56,6 +56,10 @@
       z-index: 0;
     }
 
+    #grid {
+      height: 250px;
+    }
+
     #lasso-canvas {
       z-index: 1;
     }
@@ -94,7 +98,7 @@
       border: 1px solid #333;
       border-radius: 4px;
       pointer-events: none;
-      z-index: 1;
+      z-index: 2;
       opacity: unset;
     }
   </style>
@@ -195,50 +199,24 @@
       </div>
     </div>
     <div class="row mb-4">
-      <div class="col-12">
-        <div class="card" style="height: 47vh;">
-          <!-- THE PARALLEL COORDINATES PLOT -->
-          <div class="card-body">
-            <div id="parcoords-parent">
-              <div id="example" class="parcoords"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="row mb-4" style="height: 50vh; overflow: scroll;">
-      <div class="col-12">
+      <div class="col overflow-auto">
         <div class="card">
-          <div class="card-header">
-            <div id="image-control-group" class="control-group btn-group btn-group-sm">
-              <div id="img-select-button" class="btn-group btn-group-sm">
-                <select id="img-select" class="selectpicker show-tick" data-size="10" data-style="btn-dark btn-sm"
-                  data-width="150px"></select>
-                <select id="comparison-select" class="selectpicker" data-size="10" data-style="btn-dark btn-sm"
-                  data-width="150px"></select>
-              </div>
-            </div>
-          </div>
           <div class="card-body">
-            <!-- THE IMAGE PANE -->
-            <div id="image-view" class="base-view-outer bg-light">
-
-              <div id="overview-gallery" class="base-view-inner">
-                <!-- <div id="overview-gallery"></div> -->
-              </div>
+            <!-- THE SLICK GRID -->
+            <div id="slick-parent">
+              <div id="grid"></div>
             </div>
           </div>
         </div>
       </div>
     </div>
     <div class="row mb-4">
-      <div class="col-6 overflow-auto">
-        <div class="card">
+      <div class="col-6">
+        <div class="card" style="height: 50vh;">
+          <!-- THE PARALLEL COORDINATES PLOT -->
           <div class="card-body">
-            <!-- THE SLICK GRID -->
-            <div id="slick-parent">
-              <div id="pager"></div>
-              <div id="grid"></div>
+            <div id="parcoords-parent">
+              <div id="example" class="parcoords"></div>
             </div>
           </div>
         </div>
@@ -253,27 +231,33 @@
         </div>
       </div>
     </div>
+    <div class="row mb-4" >
+      <div class="col-12">
+        <div class="card" style="height: 50vh;">
+          <div class="card-header">
+            <div id="image-control-group" class="control-group btn-group btn-group-sm">
+              <span id="img-select-button" class="btn-group btn-group-sm">
+                <select id="img-select" class="selectpicker show-tick" data-size="10" data-style="btn-dark btn-sm"
+                  data-width="150px"></select>
+                <select id="comparison-select" class="selectpicker" data-size="10" data-style="btn-dark btn-sm"
+                  data-width="150px"></select>
+              </span>
+              <span id="pager"></span>
+              <span id="slider">
+                <label for="zoom-range" class="form-label">Image zoom</label>
+                <input type="range" class="form-range" id="zoom-range" min="0.2" max="2.0" step="0.05">
+              </span>
+            </div>
+          </div>
+          <div class="card-body" id="overview-gallery" style="overflow: scroll;">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
 
   </div>
 </body>
 
 </html>
-
-
-<!-- SlickGrid -->
-
-<!-- <div id="upload-button" class="container pt-md-5 text-center" style="display:block;">
-  <label>
-    <span class="btn btn-primary btn-lg">
-      View Results <input id="upload-input" type="file" accept=".tsv" multiple>
-    </span>
-  </label>
-</div>
-
-<div id="example" class="parcoords"></div>
-<div id="slick-container">
-  <div id="pager"></div>
-  <div id="grid"></div>
-</div> -->
-
-<!-- All components pertaining to the image gallery. -->

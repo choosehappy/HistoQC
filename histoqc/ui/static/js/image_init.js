@@ -5,21 +5,29 @@
  */ 
 
 function initializeImageView(dataView) {
-	
-	var $parent = $("#image-view");
-	$parent.css("display", "flex");
 	var $div = $("#overview-gallery");
 	$div.empty();
+
+	d3.select("#zoom-range").on("input", function() {
+		const zoomValue = d3.select(this).property('value');
+		zoomImages(zoomValue);
+	});
+
+	const div = d3.select("#overview-gallery");
 
 	CURRENT_IMAGE_TYPE = DEFAULT_IMAGE_EXTENSIONS.indexOf(DEFAULT_IMAGE_EXTENSION);
 
 	const case_ids = getCaseidsFromDataView(dataView);
 	case_ids.forEach(function (case_id) {
-		$div.append(
-			generateImgBlock(case_id,
-				"overview-image-block", ORIGINAL_CASE_LIST[case_id], 
-				CURRENT_IMAGE_TYPE, CURRENT_COMPARE_TYPE, ORIGINAL_CASE_LIST[case_id]
-			)
+		// $div.append(
+		// 	generateImgBlock(case_id,
+		// 		"overview-image-block", ORIGINAL_CASE_LIST[case_id], 
+		// 		CURRENT_IMAGE_TYPE, CURRENT_COMPARE_TYPE, ORIGINAL_CASE_LIST[case_id]
+		// 	)
+		// );
+		generateImgBlock(div, ORIGINAL_DATASET[case_id]["id"],
+			"overview-image-block", ORIGINAL_CASE_LIST[case_id], 
+			CURRENT_IMAGE_TYPE, CURRENT_COMPARE_TYPE, ORIGINAL_CASE_LIST[case_id]
 		);
 	});
 
@@ -54,14 +62,33 @@ function updateImageView (dataView) {
 	var $div = $("#overview-gallery");
 	$div.empty();
 
+	div = d3.select("#overview-gallery");
+
 	const case_ids = getCaseidsFromDataView(dataView);
 	case_ids.forEach(function (case_id) {
-		$div.append(
-			generateImgBlock(ORIGINAL_DATASET[case_id]["id"],
-				"overview-image-block", ORIGINAL_CASE_LIST[case_id], 
-				CURRENT_IMAGE_TYPE, CURRENT_COMPARE_TYPE, ORIGINAL_CASE_LIST[case_id]
-			)
+		// $div.append(
+		// 	generateImgBlock(ORIGINAL_DATASET[case_id]["id"],
+		// 		"overview-image-block", ORIGINAL_CASE_LIST[case_id], 
+		// 		CURRENT_IMAGE_TYPE, CURRENT_COMPARE_TYPE, ORIGINAL_CASE_LIST[case_id]
+		// 	)
+		// );
+
+		const imgBlock = generateImgBlock(div, ORIGINAL_DATASET[case_id]["id"],
+			"overview-image-block", ORIGINAL_CASE_LIST[case_id],
+			CURRENT_IMAGE_TYPE, CURRENT_COMPARE_TYPE, ORIGINAL_CASE_LIST[case_id]
 		);
+
+		imgBlock.on("mouseover", function () {
+			PARCOORDS.highlight([ORIGINAL_DATASET[case_id]]);
+		});
+
+		imgBlock.on("mouseout", function () {
+			PARCOORDS.unhighlight([ORIGINAL_DATASET[case_id]]);
+		});
+
+		// d3.select("#" + ORIGINAL_DATASET[case_id]["id"]).on("hover", function () {
+		// 	console.log("hover");
+		// });
 	});
 
 	// const page_start = page_num * page_size;
@@ -111,16 +138,21 @@ function enterSelectImageView (dir) {
 	);
 	$div.append("<div><span>" + dir + "</span></div>");
 
-	$div = $("#select-candidate-container");
+	// $div = $("#select-candidate-container");
+	const div = d3.select("#select-candidate-container");
 	for (i = 0; i < DEFAULT_IMAGE_EXTENSIONS.length; i++) {
 		if (SKIP_IMAGE_EXTENSIONS.indexOf(i) >= 0) {
 			continue;
 		}
-		$div.append(
-			generateImgBlock(dir,
-				"candidate-image-block", dir, 
-				i, -1, DEFAULT_IMAGE_EXTENSIONS[i]
-			)
+		// $div.append(
+		// 	generateImgBlock(dir,
+		// 		"candidate-image-block", dir, 
+		// 		i, -1, DEFAULT_IMAGE_EXTENSIONS[i]
+		// 	)
+		// );
+		generateImgBlock(div, dir,
+			"candidate-image-block", dir, 
+			i, -1, DEFAULT_IMAGE_EXTENSIONS[i]
 		);
 	}
 
@@ -171,24 +203,40 @@ function calculateHeight ($div) {
 }
 
 
-function generateImgBlock (id, blk_class, file_name, img_type, compare_type, img_label) {
-	// TODO: rewrite using JQuery to generate html.
-	var img_block = "<div id='" + id + 
-		"' class='" + blk_class + "'>" +
-		"<img src='" + generateImgSrc(
+function generateImgBlock (container, id, blk_class, file_name, img_type, compare_type, img_label) {
+	const zoomValue = d3.select("#zoom-range").property('value');
+
+	const imgBlock = container.append("div")
+		.attr("id", id)
+		.attr("class", blk_class)
+		.style("zoom", zoomValue);
+
+
+	imgBlock.append("img")
+		.attr("src", generateImgSrc(
 			file_name, img_type, blk_class == "overview-image-block"
-		) + "' file_name='" + file_name + 
-		"' img_type='" + img_type + 
-		"' onerror=\"this.style.display='none'\" onclick='enterSelectImageView(\"" + file_name + "\")'/>";
+		))
+		.attr("file_name", file_name)
+		.attr("img_type", img_type)
+		.attr("onerror", "this.style.display='none'")
+		.attr("onclick", "enterSelectImageView(\"" + file_name + "\")")
+		
+
+	
 	if (compare_type != -1) {	// add on second image if we are in compare mode
-		img_block += "<img src='" + generateImgSrc(
+		imgBlock.append("img")
+			.attr("src", generateImgSrc(
 				file_name, compare_type, blk_class == "overview-image-block"
-			) + "' file_name='" + file_name + 
-			"' img_type='" + compare_type + 
-			"' onerror=\"this.style.display='none'\"/>";
+			))
+			.attr("file_name", file_name)
+			.attr("img_type", compare_type)
+			.attr("onerror", "this.style.display='none'");
 	}
-	img_block += "<div><span>" + img_label + "</span></div></div>";
-	return img_block;
+	imgBlock.append("div")
+		.append("span")
+		.text(img_label);
+
+	return imgBlock;
 }
 
 
@@ -298,3 +346,7 @@ function setPageSize(dataView, n) {
 	});
 	dataView.setPagingOptions({pageSize: n});
   }
+
+function zoomImages(zoomValue) {
+	d3.selectAll(".overview-image-block").style("zoom", zoomValue);
+}

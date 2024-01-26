@@ -1,4 +1,6 @@
 function renderScatterPlot(data) {
+    $()
+
     // Create the new elements
     var lassoCanvas = $('<canvas id="lasso-canvas" class="plot"></canvas>');
     var axisSvg = $('<svg id="axis-svg" class="plot"></svg>');
