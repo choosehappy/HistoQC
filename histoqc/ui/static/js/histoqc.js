@@ -1,11 +1,6 @@
 $(document).ready(function () {
 	console.log("[LOG] Document ready.")
 	// console.log($("#brushing").attr("fn"))
-
-
-	// $("#upload-input").change(readFile);
-
-    
     // Check if the user has specified resultsfilepath
     $.ajax({
 		url: "/get_hqc_results",

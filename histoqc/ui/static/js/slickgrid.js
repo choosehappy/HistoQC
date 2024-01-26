@@ -4,7 +4,8 @@ function renderLines() {
 	const parcoordsCardHeight = visualViewport.height * 0.5 - margin;
 	// $("#parcoords-parent").height(parcoordsCardHeight)
 	PARCOORDS = ParCoords()("#example")
-		.alpha(0.1)
+		.alpha(0.2)
+		// .alphaOnBrushed(0.3)
 		.mode("queue") // progressive rendering
 		.height(parcoordsCardHeight)
 
@@ -27,7 +28,8 @@ function renderLines() {
 		.attr("id", function (d, i) {
 			return parcoordsDimKeys[i]; // This will set IDs like "dimension-0", "dimension-1", etc.
 		})
-		.call(tooltip.bind(this), toolTipDiv); // will call the tooltip function
+		.call(tooltip.bind(this), toolTipDiv) // will call the tooltip function
+		.on("mouseout", () => console.log("mouseout"))
 
 	///////////////////////////// SLICK GRID SETUP /////////////////////////////
 	var column_keys = d3.keys(ORIGINAL_DATASET[0]);
@@ -50,6 +52,9 @@ function renderLines() {
 	var grid = new Slick.Grid("#grid", DATA_VIEW, columns, options);
 	var pager = new Slick.Controls.Pager(DATA_VIEW, grid, $("#pager"));
 
+	// wire up pager to drive the image pane. 
+	$(".sgi").click(() => updateImageView(DATA_VIEW))
+
 	// DATA_VIEW subscriptions drive the grid
 	DATA_VIEW.onRowCountChanged.subscribe(function (e, args) {
 		grid.updateRowCount();
@@ -63,8 +68,6 @@ function renderLines() {
 	DATA_VIEW.onRowsChanged.subscribe(function (e, args) {
 		grid.invalidateRows(args.rows);
 		grid.render();
-
-		updateImageView(DATA_VIEW);
 	});
 
 
@@ -117,6 +120,10 @@ function renderLines() {
 	PARCOORDS.on("brush", function (d) {
 		gridUpdate(d);
 
+	});
+
+	PARCOORDS.on("brushend", function (d) {
+		updateImageView(DATA_VIEW);
 	});
 
 	return DATA_VIEW;
