@@ -10,23 +10,12 @@ function initialize_image_view (case_list) {
 	var $div = $("#overview-gallery");
 	$div.empty();
 
+	init_pager();
+
 	CURRENT_IMAGE_TYPE = DEFAULT_IMAGE_EXTENSIONS.indexOf(DEFAULT_IMAGE_EXTENSION);
 
-	for (var i = 0; i < case_list.length; i++) {
-		$div.append(
-			generate_img_block(
-				"overview-image-block", case_list[i], 
-				CURRENT_IMAGE_TYPE, CURRENT_COMPARE_TYPE, case_list[i]
-			)
-		);
-	}
- 
-	$div.children("div").children("img").click(function(){
-		src_list = this.src.split('/');
-		enter_select_mode(src_list[src_list.length-2].replace("%20", " "));
-	});
-
 	init_image_selector();
+	
 }
 
 
@@ -38,11 +27,11 @@ function update_image_view (case_list) {
 	var $div = $("#overview-gallery");
 	$div.empty();
 
-	for (var i = 0; i < ORIGINAL_CASE_LIST.length; i++) {
+	for (var i = 0; i < case_list.length; i++) {
 		$div.append(
 			generate_img_block(
-				"overview-image-block", ORIGINAL_CASE_LIST[i], 
-				CURRENT_IMAGE_TYPE, CURRENT_COMPARE_TYPE, ORIGINAL_CASE_LIST[i]
+				"overview-image-block", case_list[i], 
+				CURRENT_IMAGE_TYPE, CURRENT_COMPARE_TYPE, case_list[i]
 			)
 		);
 	}
@@ -249,4 +238,17 @@ function init_image_selector () {
 			return "<option value='" + value + "'>" + key + "</option>";
 		}
 	}
+}
+
+function init_pager() {
+	$('#gallery-pager').empty().pagination({
+		dataSource: CURRENT_CASE_LIST,
+		pageSize: 20,
+		sizeChangerOptions: [25, 50, 100, 200, 400],
+		showSizeChanger: true,
+		callback: function(data, pagination) {
+			// template method of yourself
+			update_image_view(data);
+		}
+	})
 }

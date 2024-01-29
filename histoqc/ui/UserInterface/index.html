@@ -16,12 +16,16 @@
 	<link rel="stylesheet" type="text/css" href="libs/DataTables/dataTables.bootstrap4.min.css">
 	<!-- Custom CSS -->
 	<link rel="stylesheet" type="text/css" href="css/index.css"/>
+	<link rel="stylesheet" type="text/css" href="libs/pagination/pagination.css"/>
+
 
 	<!-- d3js Core JavaScript -->
 	<script type="text/javascript" src="libs/d3-3.5.17/d3.min.js"></script>
 	<script type="text/javascript" src="libs/d3-tip-master/index.js"></script>
 	<!-- jQuery -->
 	<script type="text/javascript" src="libs/jquery-1.12.4/jquery.min.js"></script>
+	<script type="text/javascript" src="libs/pagination/pagination.min.js"></script>
+	
 	<!-- Bootstrap Core JavaScript -->
 	<script type="text/javascript" src="libs/bootstrap/js/bootstrap.bundle.min.js"></script>
 	<script type="text/javascript" src="libs/bootstrap/js/bootstrap-select.min.js"></script>
@@ -113,12 +117,16 @@
 
 	<div id="image-view" class="base-view-outer bg-light">
 		<div id="image-control-group" class="control-group btn-group btn-group-sm">
-			<div id="img-select-button" class="btn-group btn-group-sm">
+			<span id="img-select-button" class="btn-group btn-group-sm">
 				<select id="img-select" class="selectpicker show-tick" data-size="10" data-style="btn-dark btn-sm" data-width="150px"></select>
 				<select id="comparison-select" class="selectpicker" data-size="10" data-style="btn-dark btn-sm" data-width="150px"></select>
+			</span>
+			<div id="gallery-pager">
+				Pager
 			</div>
 			<button id="exit-image-select-view-btn" class="btn btn-dark btn-sm">back</button>
 		</div>
+		
 		<div id="image-container" class="base-view-inner">
 			<div id="overview-gallery"></div>
 			<div id="select-image-view">
