@@ -243,7 +243,7 @@ function init_image_selector () {
 function init_pager() {
 	$('#gallery-pager').empty().pagination({
 		dataSource: CURRENT_CASE_LIST,
-		pageSize: 20,
+		pageSize: 50,
 		sizeChangerOptions: [25, 50, 100, 200, 400],
 		showSizeChanger: true,
 		callback: function(data, pagination) {
