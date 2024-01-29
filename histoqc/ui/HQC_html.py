@@ -71,9 +71,7 @@ def run_cohort_finder():
     
     cf_args.cols = request.args.get('featuresSelected')
     cf_args.nclusters = int(request.args.get('numClusters'))
-    cf_args.testpercent = float(request.args.get('testSetPercent'))
-    # cf_args.featuresSelected = request.args.get('featuresSelected')    
-    breakpoint()
+    cf_args.testpercent = float(request.args.get('testSetPercent'))  
     # add line to check if cohortFinder has already been run (with output saved). If so, load the results.tsv file and return.
     output, preds = runCohortFinder(cf_args)
 
