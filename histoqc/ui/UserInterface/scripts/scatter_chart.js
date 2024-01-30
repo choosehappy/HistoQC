@@ -446,4 +446,5 @@ var lasso_end = function() {
 	} else {
 		update_multi_selected();
 	}
+	init_pager();
 };

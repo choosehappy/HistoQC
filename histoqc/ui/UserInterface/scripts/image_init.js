@@ -208,7 +208,8 @@ function init_image_selector () {
 
 	$img_selector.change(function () {
 		CURRENT_IMAGE_TYPE = $(this).val();
-		update_image_view(CURRENT_CASE_LIST);
+		init_pager();
+		// update_image_view(CURRENT_CASE_LIST);
 	});
 
 	$cmp_selector.change(function () {
@@ -218,7 +219,8 @@ function init_image_selector () {
 		} else {
 			$("#comparison-select > option").last().text("compare ...");
 		}
-		update_image_view(CURRENT_CASE_LIST);
+		init_pager();
+		// update_image_view(CURRENT_CASE_LIST);
 	});
 
 	$("#exit-image-select-view-btn").click(function () {
@@ -241,11 +243,25 @@ function init_image_selector () {
 }
 
 function init_pager() {
+	var options = [];
+	for (var i = 25; i < ORIGINAL_CASE_LIST.length && i < 400; i*=2) {
+		options.push(i);
+	}
+	options.push(ORIGINAL_CASE_LIST.length);
+
+	var pageSize = CURRENT_PAGE_SIZE;
+	if (pageSize == undefined) {
+		pageSize = options[0];
+	}
+
 	$('#gallery-pager').empty().pagination({
 		dataSource: CURRENT_CASE_LIST,
-		pageSize: 50,
-		sizeChangerOptions: [25, 50, 100, 200, 400],
+		pageSize: pageSize,
+		sizeChangerOptions: options,
 		showSizeChanger: true,
+		afterSizeSelectorChange: function (event, newPageSize) {
+			CURRENT_PAGE_SIZE = newPageSize;
+		},
 		callback: function(data, pagination) {
 			// template method of yourself
 			update_image_view(data);

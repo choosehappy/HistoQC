@@ -226,6 +226,7 @@ function init_parallel_coordinate (dataset) {
 		}
 
 		update_multi_selected();
+		init_pager();
 	}
 }
 
