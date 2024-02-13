@@ -54,6 +54,10 @@ def main(argv=None):
                         help="break results file into subsets of this size",
                         type=int,
                         default=None)
+    parser.add_argument('-s', '--seed',
+                        help="set a seed used to produce a random number in all modules",
+                        type=int,
+                        default=None)    
     parser.add_argument('-n', '--nprocesses',
                         help="number of processes to launch",
                         type=int,
@@ -158,6 +162,7 @@ def main(argv=None):
         'shared_dict': mpm.dict(),
         'num_files': num_files,
         'force': args.force,
+        'seed': args.seed
     }
     failed = mpm.list()
     setup_plotting_backend(lm.logger)
