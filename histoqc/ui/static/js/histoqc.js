@@ -74,6 +74,7 @@ function loadResultsTsv(data) {
 function renderComponents() {
     var dataView = renderLines();
     initializeImageView(dataView);
-    // renderScatterPlot();
+    
+	initScatterPlotMessage('Click "CohortFinder" to render scatter plot.');
 	initializeCF();
 }

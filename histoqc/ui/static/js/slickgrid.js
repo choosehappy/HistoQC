@@ -3,7 +3,7 @@ function renderLines() {
 	// const margin = visualViewport.height * 0.05;
 	const max_key_length = d3.max(d3.keys(ORIGINAL_DATASET[0]).map(function (d) { return d.length; }));
 	const num_columns = d3.keys(ORIGINAL_DATASET[0]).length;
-	const parcoordsCardHeight = visualViewport.height * 0.45 + max_key_length * 3;
+	const parcoordsCardHeight = parseFloat(d3.select("#parcoords-card").style("height"));
 	// $("#parcoords-parent").height(parcoordsCardHeight)
 	PARCOORDS = ParCoords()("#example")
 		.alpha(0.3)
@@ -11,7 +11,7 @@ function renderLines() {
 		.alphaOnBrushed(0.5)
 		.brushedColor("#a13f57")
 		.mode("queue") // progressive rendering
-		.height(parcoordsCardHeight)
+		.height(parcoordsCardHeight - max_key_length * 3)
 		.width(100 * num_columns)
 		.margin({
 			top: max_key_length * 3,
@@ -133,9 +133,12 @@ function renderLines() {
 	// fill grid with data
 	gridUpdate(ORIGINAL_DATASET);
 
-	PARCOORDS.on("brushend", function (d) {
+	PARCOORDS.on("brushend", function (data) {
 		updateImageView(DATA_VIEW);
-		gridUpdate(d);
+		gridUpdate(data);
+		// if (COHORT_FINDER_RESULTS) {
+		// 	renderScatterPlot(COHORT_FINDER_RESULTS.filter(d => data.map(x => x.id).includes(d.id)));
+		// }
 	});
 
 	return DATA_VIEW;
@@ -153,6 +156,18 @@ function updateParcoords(data) {
 	PARCOORDS
 		.data(data)
 		.render();
+}
+
+function updateBrushedParcoords(data) {
+	PARCOORDS
+		.state.brushed = data;
+	
+	PARCOORDS.renderBrushed();
+}
+
+function clearBrushedParcoords() {
+	PARCOORDS.brushReset();
+	PARCOORDS.renderBrushed();
 }
 
 function rotateLabels(parcoords) {
@@ -182,7 +197,7 @@ function tooltip(selectionGroup, tooltipDiv) {
 		// show/reveal the tooltip, set its contents,
 		// style the element being hovered on
 		var color;
-		if (Object.keys(PARCOORDS.brushExtents()).length > 0) {
+		if (PARCOORDS.state.brushed && PARCOORDS.state.brushed.length < ORIGINAL_DATASET.length) {
 			color = "#a13f57";
 		} else {
 			color = "#426fbd";

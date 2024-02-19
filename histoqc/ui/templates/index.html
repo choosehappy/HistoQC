@@ -41,7 +41,8 @@
     }
 
     body {
-      overflow: scroll
+      overflow-y: scroll;
+      overflow-x: hidden;
     }
 
     .plot {
@@ -49,7 +50,16 @@
     }
 
     #scatter-card {
-      height: 540px;
+      height: 35vh;
+      width: 35vh;
+    }
+
+    #parcoords-card {
+      height: 35vh;
+    }
+
+    #overview-gallery-card {
+      height: 30vh
     }
 
     #plot-canvas {
@@ -57,7 +67,11 @@
     }
 
     #grid {
-      height: 250px;
+      height: 15vh;
+    }
+
+    .slick-pager {
+      height: 100%;
     }
 
     #lasso-canvas {
@@ -145,8 +159,7 @@
             <form>
               <div class="form-group">
                 <label for="exampleFormControlInput1"># of clusters</label>
-                <input type="text" class="form-control" id="exampleFormControlInput1" placeholder="3"
-                  name="numClusters">
+                <input type="text" class="form-control" id="exampleFormControlInput1" placeholder="3" name="numClusters" value="3">
               </div>
               <!-- Add more form fields as needed -->
               <!-- Add a slider from 0 to 100 -->
@@ -155,15 +168,9 @@
                 <input type="range" class="form-control-range" id="slider" min="0" max="100" value="20"
                   name="testSetPercent">
               </div>
-              <!-- Add this code inside the form element in the modal body -->
               <div class="form-group">
-                <label for="features-select">Select Features:</label>
-                <select multiple class="form-control" id="features-select" name="featuresSelected">
-                  <option value="feature1">Feature 1</option>
-                  <option value="feature2">Feature 2</option>
-                  <option value="feature3">Feature 3</option>
-                  <!-- Add more options as needed -->
-                </select>
+                <!-- Features selection checkboxes -->
+                <div id="features-select"></div>
               </div>
 
               <!-- Modal Footer with Submit button -->
@@ -211,8 +218,8 @@
       </div>
     </div>
     <div class="row mb-4">
-      <div class="col-8">
-        <div class="card" style="height: 50vh;">
+      <div class="col" style="flex-grow: 1;">
+        <div class="card" id="parcoords-card">
           <!-- THE PARALLEL COORDINATES PLOT -->
           <div class="card-body">
             <div id="parcoords-parent">
@@ -221,8 +228,10 @@
           </div>
         </div>
       </div>
-      <div class="col-4">
+      <div class="col" style="flex-grow: 0;">
         <div class="card" id="scatter-card">
+          <div class="card-header" id="scatter-card-header" style="display: none;">
+          </div>
           <div class="card-body">
             <!-- THE SCATTER PLOT -->
             <div id="scatter-parent">
@@ -233,13 +242,13 @@
     </div>
     <div class="row mb-4" >
       <div class="col-12">
-        <div class="card" style="height: 50vh;">
+        <div class="card" id="overview-gallery-card">
           <div class="card-header">
             <div id="image-control-group" class="control-group btn-group btn-group-sm">
               <span id="img-select-button" class="btn-group btn-group-sm">
-                <select id="img-select" class="selectpicker show-tick" data-size="10" data-style="btn-dark btn-sm"
+                <select id="img-select" class="selectpicker show-tick" data-size="5" data-style="btn-dark btn-sm"
                   data-width="150px"></select>
-                <select id="comparison-select" class="selectpicker" data-size="10" data-style="btn-dark btn-sm"
+                <select id="comparison-select" class="selectpicker" data-size="5" data-style="btn-dark btn-sm"
                   data-width="150px"></select>
               </span>
               <span id="pager"></span>

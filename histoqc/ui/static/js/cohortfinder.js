@@ -16,21 +16,65 @@ function handleCohortFinderClick(event) {
     $('#cf-params-modal').modal('toggle');
 }
 
+function handleCohortFinderClick(event) {
+    const formElement = d3.select('#features-select')
+    formElement.html('') // Clear existing content
+    formElement.style('height', '150px').style('overflow-y', 'scroll')
+    const keys = d3.keys(ORIGINAL_DATASET[0])
+    keys.forEach(key => {
+        if (key == 'case_name' || key == 'id' || key == 'gid') {
+            return // Skip these keys
+        }
+        
+        // Create a container for each checkbox (optional, for styling)
+        const checkboxContainer = formElement.append('div').classed('checkbox-container', true);
+        
+        // Append the checkbox input
+        const checkbox = checkboxContainer.append('input')
+            .attr('type', 'checkbox')
+            .attr('id', key) // Unique ID for the checkbox
+            .attr('name', 'featuresSelected') // Same name for all checkboxes to group them
+            .attr('value', key)
+            .property('checked', true); // Default to checked
+        
+        // Append the label for the checkbox
+        checkboxContainer.append('label')
+            .attr('for', key) // Associate label with checkbox by ID
+            .text(key); // Display text for the label
+        
+        // Optionally add a line break or additional spacing here, if needed
+    });
+
+    // Toggle modal after adding checkboxes
+    $('#cf-params-modal').modal('toggle');
+}
+
+
+
 function handleCohortFinderSubmit(event) {
     event.preventDefault();
 
-    // get the form data
+    // Initialize an empty object to hold the form data
+    var params = {
+        'numClusters': '',
+        'testSetPercent': '',
+        'featuresSelected': []
+    };
+
+    // Use FormData to gather input values
     var formData = new FormData(event.target);
 
-    // create a JSON strong from entries, if needed
-    // JSON.stringify(Object.fromEntries(formData));
+    // Directly assign values for 'numClusters' and 'testSetPercent'
+    params.numClusters = formData.get('numClusters');
+    params.testSetPercent = formData.get('testSetPercent');
 
-    // get relevant form data
-    var params = {
-        'numClusters': formData.get('numClusters'),
-        'testSetPercent': formData.get('testSetPercent'),
-        'featuresSelected': formData.getAll('featuresSelected').join(','),
-    };
+    // Iterate over FormData entries to populate 'featuresSelected'
+    formData.getAll('featuresSelected').forEach(value => {
+        params.featuresSelected.push(value);
+    });
+
+    // If you need to convert the array to a comma-separated string
+    params.featuresSelected = params.featuresSelected.join(',');
 
     // call the run_cohort_finder endpoint with the form data
     $.ajax({
@@ -40,8 +84,10 @@ function handleCohortFinderSubmit(event) {
         data: params,
         beforeSend: function () {
             $('#cf-params-modal').modal('toggle');
-            console.log("Running cohort finder with parameters:")
-            console.log(params)
+            initScatterPlotMessage("<h4>Running cohort finder with the following params...</h4>")
+            Object.keys(params).forEach((key) => {
+                appendScatterPlotMessage(`<b>${key}</b>: ${params[key]}`)
+            })
         },
         success: handleCohortFinderResponse
     }

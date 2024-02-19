@@ -7,8 +7,10 @@
 function initializeImageView(dataView) {
 	var $div = $("#overview-gallery");
 	$div.empty();
-
-	d3.select("#zoom-range").on("input", function() {
+	var zoomSlider = d3.select("#zoom-range");
+	zoomSlider.property('value', 0.5);
+	
+	zoomSlider.on("input", function() {
 		const zoomValue = d3.select(this).property('value');
 		zoomImages(zoomValue);
 	});

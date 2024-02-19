@@ -1,14 +1,21 @@
 function renderScatterPlot(data) {
+
+
     // Create the new elements
     var lassoCanvas = $('<canvas id="lasso-canvas" class="plot"></canvas>');
     var axisSvg = $('<svg id="axis-svg" class="plot"></svg>');
     var plotCanvas = $('<canvas id="plot-canvas" class="plot"></canvas>');
 
     // Append the new elements to the 'scatter-parent' element
+    $('#scatter-parent').empty();
     $('#scatter-parent').append(lassoCanvas, axisSvg, plotCanvas);
 
 
-    renderToolSelection();
+    appendButtonGroupToScatterCardHeader();
+    $('#scatter-mode-selector input[type=radio]').change(function () {
+        handleModeChange();
+    });
+
     // constants
     var subsetSize = 1000;
     var pointRadius = 2;
@@ -18,9 +25,9 @@ function renderScatterPlot(data) {
     var zoomEndTimeout;
 
     // define all size variables
-    var fullWidth = 500;
-    var fullHeight = 500;
-    var margin = { top: 10, right: 10, bottom: 30, left: 30 };
+    var fullWidth = parseFloat(d3.select("#parcoords-card").style("height"));
+    var fullHeight = parseFloat(d3.select("#parcoords-card").style("height"));
+    var margin = { top: 0, right: 50, bottom: 80, left: 20};
     var width = fullWidth - margin.left - margin.right;
     var height = fullHeight - margin.top - margin.bottom;
 
@@ -57,7 +64,7 @@ function renderScatterPlot(data) {
     });
 
     // create a quadtree for fast hit detection
-    var quadTree = d3.quadtree(plotData);
+    // var quadTree = d3.quadtree(plotData);
 
     // d3 only added randomInt in v6. However, we are using v5 https://stackoverflow.com/questions/61017839/d3-randomint-is-not-a-function
     d3.randomInt = d3.randomInt || (function sourceRandomInt(source) {
@@ -105,6 +112,8 @@ function renderScatterPlot(data) {
         .append("g")
         .attr("transform", "translate(" + margin.left + "," +
             margin.top + ")");
+
+
 
     // ranges, scales, axis, objects
     var xRange = d3.extent(plotData, function (d) { return d.x });
@@ -220,23 +229,25 @@ function renderScatterPlot(data) {
         else {
             selected_indices = [];
             plotData.forEach(function (point) {
-                if (scaled_polygon.length == 0 || d3.polygonContains(scaled_polygon, [point.x, point.y])) {
-                    drawPoint(point, pointRadius, xScale, yScale);
+                if (scaled_polygon.length == 0 || d3.polygonContains(scaled_polygon, [point.x, point.y])) {     // if there is a lasso
+
                     selected_indices.push(point.i);
                 }
+                drawPoint(point, pointRadius, xScale, yScale);
             });
             //TODO update dataview with selected indices
             // Filter the dataView items by the selected indices
-            if (selected_indices.length < ORIGINAL_DATASET.length && polygon.length > 0) {
+            if (selected_indices.length < ORIGINAL_DATASET.length && polygon.length > 0) {  // if lasso is applied
                 const filteredItems = ORIGINAL_DATASET.filter(item => selected_indices.includes(item.id))
-                
-                updateParcoords(filteredItems)  // TODO prevent update when zooming.
+
+                updateBrushedParcoords(filteredItems)
                 gridUpdate(filteredItems)
 
             } else {
-
-                updateParcoords(ORIGINAL_DATASET)
-                gridUpdate(ORIGINAL_DATASET)
+                clearBrushedParcoords();
+                gridUpdate(ORIGINAL_DATASET);
+                // updateParcoords(ORIGINAL_DATASET)
+                // gridUpdate(ORIGINAL_DATASET)
             }
 
         }
@@ -338,25 +349,83 @@ function renderScatterPlot(data) {
         lassoContext.canvas.dispatchEvent(new CustomEvent('input'));
     }
 
-    function renderToolSelection() {
-        const $container = $("#scatter-card");
+    function appendButtonGroupToScatterCardHeader() {
+        // Select the element with the ID 'scatter-card-header'
+        const cardHeader = d3.select('#scatter-card-header');
+
+        // Display the 'scatter-card-header' since it's hidden by default
+        cardHeader.style('display', null);
+
+        // Create the button group container within the 'scatter-card-header'
+        const buttonGroup = cardHeader.append('div')
+            .attr('class', 'btn-group')
+            .attr('id', 'scatter-mode-selector')
+            .attr('role', 'group')
+            .attr('aria-label', 'Basic radio toggle button group');
+
+        // Append the first radio button (Lasso)
+        buttonGroup.append('input')
+            .attr('type', 'radio')
+            .attr('class', 'btn-check')
+            .attr('name', 'btnradio')
+            .attr('id', 'btnradio1')
+            .attr('autocomplete', 'off')
+            .attr('value', 'lasso')
+            .property('checked', true);
+
+        buttonGroup.append('label')
+            .attr('class', 'btn-check-label')
+            .attr('for', 'btnradio1')
+            .text('Lasso');
+
+        // Append the second radio button (Zoom/Pan)
+        buttonGroup.append('input')
+            .attr('type', 'radio')
+            .attr('class', 'btn-check')
+            .attr('name', 'btnradio')
+            .attr('id', 'btnradio2')
+            .attr('autocomplete', 'off')
+            .attr('value', 'zoomPan');
+
+        buttonGroup.append('label')
+            .attr('class', 'btn-check-primary')
+            .attr('for', 'btnradio2')
+            .text('Zoom/Pan');
+    }
+
+
+    function handleModeChange() {
+        var mode = $('#scatter-mode-selector input[type=radio]:checked').val();
         const $lassoCanvas = $("#lasso-canvas");
+        if (mode === "lasso") {
+            $lassoCanvas.show();
+            
+        } else {
+            $lassoCanvas.hide();
+            clearBrushedParcoords();
+            polygon = [];
+        }
+        drawLasso(scaled_polygon1);
 
-        const $slickPager = $("<div class='slick-pager' />").prependTo($container);
-        var $settings = $("<span class='slick-pager-settings' />").appendTo($slickPager);
-
-        var $toggleButton = $("<button class='btn btn-primary slick-pager-button slick-pager-button-toggle' title='Toggle Lasso Mode'>" +
-            "</button>");
-
-        $toggleButton
-            .text($lassoCanvas.is(":visible") ? "Toggle Lasso" : "Toggle Zoom & Pan")
-            .click(function () {
-                $lassoCanvas.toggle();
-                drawLasso(scaled_polygon1);
-                $toggleButton.text($lassoCanvas.is(":visible") ? "Mode: Lasso" : "Mode: Zoom & Pan");
-            })
-            .appendTo($settings);
     }
 
 }
 
+function initScatterPlotMessage(message) {
+    d3.select("#scatter-card-header").html("")
+    const messageDiv = d3.select("#scatter-parent").html("")
+
+    messageDiv
+        .append("div")
+        .attr("id", "message-div")
+
+    if (message) {
+        appendScatterPlotMessage(message);
+    }
+}
+
+function appendScatterPlotMessage(message) {
+    const messageDiv = d3.select("#message-div")
+    const text = messageDiv.html();
+    messageDiv.html(text + message + "<br>");
+}
