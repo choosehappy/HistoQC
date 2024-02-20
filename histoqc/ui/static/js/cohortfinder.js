@@ -4,19 +4,7 @@ function initializeCF() {
 }
 
 function handleCohortFinderClick(event) {
-    const formElement = d3.select('#features-select')
-    formElement.html('')
-    const keys = d3.keys(ORIGINAL_DATASET[0])
-    keys.forEach(key => {
-        if (key == 'case_name' || key == 'id' || key == 'gid') {
-            return
-        }
-        formElement.append('option').attr('value', key).text(key)
-    })
-    $('#cf-params-modal').modal('toggle');
-}
-
-function handleCohortFinderClick(event) {
+    // Populate the features select form element with checkboxes for each feature.
     const formElement = d3.select('#features-select')
     formElement.html('') // Clear existing content
     formElement.style('height', '150px').style('overflow-y', 'scroll')

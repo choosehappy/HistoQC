@@ -68,13 +68,6 @@ function updateImageView (dataView) {
 
 	const case_ids = getCaseidsFromDataView(dataView);
 	case_ids.forEach(function (case_id) {
-		// $div.append(
-		// 	generateImgBlock(ORIGINAL_DATASET[case_id]["id"],
-		// 		"overview-image-block", ORIGINAL_CASE_LIST[case_id], 
-		// 		CURRENT_IMAGE_TYPE, CURRENT_COMPARE_TYPE, ORIGINAL_CASE_LIST[case_id]
-		// 	)
-		// );
-
 		const imgBlock = generateImgBlock(div, ORIGINAL_DATASET[case_id]["id"],
 			"overview-image-block", ORIGINAL_CASE_LIST[case_id],
 			CURRENT_IMAGE_TYPE, CURRENT_COMPARE_TYPE, ORIGINAL_CASE_LIST[case_id]
@@ -87,10 +80,6 @@ function updateImageView (dataView) {
 		imgBlock.on("mouseout", function () {
 			PARCOORDS.unhighlight([ORIGINAL_DATASET[case_id]]);
 		});
-
-		// d3.select("#" + ORIGINAL_DATASET[case_id]["id"]).on("hover", function () {
-		// 	console.log("hover");
-		// });
 	});
 
 	// const page_start = page_num * page_size;
@@ -143,9 +132,9 @@ function enterSelectImageView (dir) {
 	// $div = $("#select-candidate-container");
 	const div = d3.select("#select-candidate-container");
 	for (i = 0; i < DEFAULT_IMAGE_EXTENSIONS.length; i++) {
-		if (SKIP_IMAGE_EXTENSIONS.indexOf(i) >= 0) {
-			continue;
-		}
+		// if (SKIP_IMAGE_EXTENSIONS.indexOf(i) >= 0) {
+		// 	continue;
+		// }
 		// $div.append(
 		// 	generateImgBlock(dir,
 		// 		"candidate-image-block", dir, 
@@ -276,9 +265,9 @@ function initImageSelector (dataView) {
 	$cmp_selector = $("#comparison-select");
 
 	for (var index = 0; index < DEFAULT_IMAGE_EXTENSIONS.length; index ++) {
-		if (SKIP_IMAGE_EXTENSIONS.indexOf(index) >= 0) {
-			continue;
-		}
+		// if (SKIP_IMAGE_EXTENSIONS.indexOf(index) >= 0) {
+		// 	continue;
+		// }
 		var key = DEFAULT_IMAGE_EXTENSIONS[index];
 
 		if (key == DEFAULT_IMAGE_EXTENSION) {

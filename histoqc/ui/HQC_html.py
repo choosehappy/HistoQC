@@ -13,6 +13,14 @@ html = Blueprint('html', __name__, template_folder='templates')
 def index():
     return render_template('index.html')
 
+@html.route('/image_extensions/<foldername>', methods=['GET'])
+def image_extensions(foldername):
+    """
+    Returns the suffixes of the thumbnails that are available for a given folder.
+    """
+    folderpath = os.path.join(current_app.config['data_directory'], foldername)
+    thumbnail_suffixes = [f.split(foldername)[1] for f in os.listdir(folderpath) if f.endswith('.png')]
+    return thumbnail_suffixes
 
 @html.route('/image/<foldername>/<suffix>', methods=['GET'])
 def image(foldername, suffix):
@@ -23,14 +31,14 @@ def image(foldername, suffix):
     return send_file(img_path)
 
 
-@html.route('/get_results_path', methods=['GET'])
+@html.route('/results_path', methods=['GET'])
 def datadir():
     results_path = os.path.join(current_app.config['data_directory'], current_app.config['results_filename'])
     return results_path
 
 
-@html.route('/get_hqc_results', methods=['GET'])
-def get_hqc_results():
+@html.route('/hqc_results', methods=['GET'])
+def hqc_results():
     """
     Returns the HQC results file as a Flask response object.
     """
