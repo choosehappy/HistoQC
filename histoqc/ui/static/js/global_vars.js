@@ -41,4 +41,6 @@ var COHORT_FINDER_RESULTS;
 
 /****************** PARCOORDS ****************/
 var PARCOORDS;
+var BRUSHED_IDS;
 
+var SCATTER_PLOT = {};

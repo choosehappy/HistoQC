@@ -136,9 +136,23 @@ function renderLines() {
 	PARCOORDS.on("brushend", function (data) {
 		updateImageView(DATA_VIEW);
 		gridUpdate(data);
-		// if (COHORT_FINDER_RESULTS) {
-		// 	renderScatterPlot(COHORT_FINDER_RESULTS.filter(d => data.map(x => x.id).includes(d.id)));
-		// }
+		const canvas = d3.select('#plot-canvas');
+		BRUSHED_IDS = data.map(d => d.id);
+		// clearing the brush counts as a brushend. Only update the scatter plot if the brush actually filtered the data.
+		if (data.length < ORIGINAL_DATASET.length && COHORT_FINDER_RESULTS.length > 0) {	
+			const highlightedCanvas = d3.select('#highlighted-canvas')
+			highlightedCanvas.style("display", "block");
+			
+			
+			canvas.style("opacity", 0.2)
+			if (SCATTER_PLOT.state.newX && BRUSHED_IDS.length > 0) {
+				drawHighlightedPoints(COHORT_FINDER_RESULTS, BRUSHED_IDS, SCATTER_PLOT.state.newX, SCATTER_PLOT.state.newY, highlightedCanvas);
+			} else {
+				drawHighlightedPoints(COHORT_FINDER_RESULTS, BRUSHED_IDS, SCATTER_PLOT.state.xScale, SCATTER_PLOT.state.yScale, highlightedCanvas);
+			}
+		} else {
+			canvas.style("opacity", 1)	// seems to be a bug where brushend is called multiple times in succession.
+		}
 	});
 
 	return DATA_VIEW;
@@ -151,7 +165,7 @@ function gridUpdate(data) {
 };
 
 function updateParcoords(data) {
-	PARCOORDS.brushReset(); // need this not to update grid. 
+	PARCOORDS.brushReset();
 	PARCOORDS.brushed(false)
 	PARCOORDS
 		.data(data)

@@ -84,7 +84,33 @@ function handleCohortFinderSubmit(event) {
 }
 
 function handleCohortFinderResponse(data) {
-    COHORT_FINDER_RESULTS = data
+    const colors = [
+        "#FF5733",  // Reddish Orange
+        "#3498DB",  // Soft Blue
+        "#2ECC71",  // Green
+        "#F1C40F",  // Yellow
+        "#9B59B6",  // Purple
+        "#34495E",  // Dark Blue
+        "#E74C3C",  // Red
+        "#16A085",  // Sea Green
+        "#2980B9",  // Medium Blue
+        "#8E44AD",  // Dark Purple
+        "#2C3E50",  // Navy Blue
+        "#F39C12",  // Orange
+        "#D35400",  // Pumpkin
+        "#C0392B",  // Dark Red
+        "#7F8C8D"   // Grey
+    ]
+
+    COHORT_FINDER_RESULTS = d3.range(data.embed_x.length).map(function (i) {
+        return {
+            x: data.embed_x[i],
+            y: data.embed_y[i],
+            i: i, // save the index of the point as a property, this is useful
+            color: colors[data.groupid[i]]
+        };
+    });
+
     console.log("received cohort finder results:")
     console.log(COHORT_FINDER_RESULTS)
     renderScatterPlot(COHORT_FINDER_RESULTS);
