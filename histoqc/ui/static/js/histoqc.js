@@ -76,7 +76,7 @@ function renderComponents() {
 
 			var dataView = renderLines();
 			initializeImageView(dataView);
-			initScatterPlotMessage('Click "CohortFinder" to render scatter plot.');
+			initScatterPlotMessage('<h4>Click "CohortFinder" to compute and render the 2D embedding.<h4>');
 			initializeCF();
 		}
 	});

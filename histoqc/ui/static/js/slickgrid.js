@@ -133,11 +133,18 @@ function renderLines() {
 	// fill grid with data
 	gridUpdate(ORIGINAL_DATASET);
 
+	PARCOORDS.on("brushstart", function () {
+		// change the scatter plot mode to zoom/Pan
+		updateRadio("zoomPan")
+		
+	})
+
 	PARCOORDS.on("brushend", function (data) {
 		updateImageView(DATA_VIEW);
 		gridUpdate(data);
 		const canvas = d3.select('#plot-canvas');
 		BRUSHED_IDS = data.map(d => d.id);
+
 		// clearing the brush counts as a brushend. Only update the scatter plot if the brush actually filtered the data.
 		if (data.length < ORIGINAL_DATASET.length && COHORT_FINDER_RESULTS.length > 0) {	
 			const highlightedCanvas = d3.select('#highlighted-canvas')
@@ -195,10 +202,10 @@ function rotateLabels(parcoords) {
 }
 
 function tooltip(selectionGroup, tooltipDiv) {
-	const mousePosOffset = 30;
-	const margin = ({ top: 10, right: 10, bottom: 10, left: 10 })
-	const tooltip_height = 500
-	const tooltip_width = 400
+	const mousePosOffset = 10;
+	const margin = ({ top: 10, right: 10, bottom: 110, left: 10 })
+	const tooltip_height = window.visualViewport.width * 0.25 + 100
+	const tooltip_width = window.visualViewport.width * 0.2
 
 	selectionGroup.each(function () {
 		d3.select(this)
@@ -217,13 +224,13 @@ function tooltip(selectionGroup, tooltipDiv) {
 			color = "#426fbd";
 		}
 		showTooltip();
-		renderViolinPlotHist(tooltipDiv, DATA_VIEW.items, id, [`${id}_distribution`], tooltip_width, tooltip_height - 50, color);
+		renderViolinPlotHist(tooltipDiv, DATA_VIEW.items, id, [`${id}_distribution`], tooltip_width, tooltip_height - margin.bottom, color);
 		renderAxisMetrics(tooltipDiv, DATA_VIEW.items, id);
 	}
 
 	function handleMousemove(event) {
 		// update the tooltip's position
-		const [mouseX, mouseY] = d3.mouse(this.parentNode) // d3.pointer(event, this); // for d3 v6
+		const [mouseX, mouseY] = d3.mouse(this.parentNode.parentNode.parentNode) // d3.pointer(event, this); // for d3 v6
 		// add the left & top margin values to account for the SVG g element transform
 		setPosition(mouseX + margin.left, mouseY + margin.top);
 	}
@@ -467,12 +474,13 @@ function tooltip(selectionGroup, tooltipDiv) {
 
 		var htmlContent = ""
 		metrics.forEach((d, i) => {
-			htmlContent += `<b>${d.label}:</b> ${d.value} `;
+			htmlContent += `<b>${d.label}:</b> ${d.value}<br>`;
 		})
 
 		selectedContainer
 			.append('p')
 			.html(htmlContent)
+
 
 
 	}

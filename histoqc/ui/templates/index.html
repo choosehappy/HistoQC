@@ -152,7 +152,7 @@
         <div class="modal-content">
           <!-- Modal Header -->
           <div class="modal-header">
-            <h5 class="modal-title" id="exampleModalLabel">Cohort Finder Parameters</h5>
+            <h5 class="modal-title" id="exampleModalLabel">CohortFinder Parameters</h5>
             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
               <span aria-hidden="true">&times;</span>
             </button>
@@ -187,13 +187,13 @@
         </div>
       </div>
     </div>
-    <div class="modal" id="select-image-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+    <div class="modal" id="select-image-modal" tabindex="-1" role="dialog" aria-labelledby="select-image-modal"
       aria-hidden="true">
-      <div class="modal-dialog modal-lg" role="document">
+      <div class="modal-dialog modal-lg" role="document" style="max-width: 95%;">
         <div class="modal-content">
           <!-- Modal Header -->
           <div class="modal-header">
-            <h5 class="modal-title" id="exampleModalLabel">Select Image Pane</h5>
+            <h5 class="modal-title" id="select-image-modal-title"></h5>
             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
               <span aria-hidden="true">&times;</span>
             </button>
@@ -202,7 +202,8 @@
           <div class="modal-body">
             <!-- Your form elements go here -->
             <div id="select-image-view">
-              <div id="select-image-container"></div>
+              <div id="select-image-container">
+              </div>
               <div id="select-candidate-container"></div>
             </div>
           </div>
@@ -244,7 +245,7 @@
         </div>
       </div>
     </div>
-    <div class="row mb-4" >
+    <div class="row mb-4" style="flex-grow: 1;">
       <div class="col-12">
         <div class="card" id="overview-gallery-card">
           <div class="card-header">

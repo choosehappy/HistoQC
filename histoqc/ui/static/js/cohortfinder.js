@@ -72,7 +72,7 @@ function handleCohortFinderSubmit(event) {
         data: params,
         beforeSend: function () {
             $('#cf-params-modal').modal('toggle');
-            initScatterPlotMessage("<h4>Running cohort finder with the following params...</h4>")
+            initScatterPlotMessage("<h4>Running CohortFinder with the following parameters...</h4>")
             Object.keys(params).forEach((key) => {
                 appendScatterPlotMessage(`<b>${key}</b>: ${params[key]}`)
             })
@@ -111,7 +111,7 @@ function handleCohortFinderResponse(data) {
         };
     });
 
-    console.log("received cohort finder results:")
+    console.log("received CohortFinder results:")
     console.log(COHORT_FINDER_RESULTS)
     renderScatterPlot(COHORT_FINDER_RESULTS);
 }

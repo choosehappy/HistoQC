@@ -60,7 +60,7 @@ def run_cohort_finder():
         pass
 
 
-    current_app.logger.info('running cohort finder')
+    current_app.logger.info('running CohortFinder...')
     cf_args = Namespace()
 
     # ---------------- default values ----------------

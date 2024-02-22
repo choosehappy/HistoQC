@@ -124,5 +124,8 @@ var DEFAULT_IMAGE_EXTENSIONS = [
 var SMALL_IMAGE_EXTENSIONS = [
 	"_thumb.png"
 ];
+
+const SKIP_IMAGE_EXTENSIONS = [];
 // Default image type
 var DEFAULT_IMAGE_EXTENSION = "_thumb_small.png";
+var DEFAULT_LARGE_IMAGE_EXTENSION = "_thumb.png";

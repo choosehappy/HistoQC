@@ -7,6 +7,7 @@ function renderScatterPlot(data) {
 
     appendButtonGroupToScatterCardHeader();
     $('#scatter-mode-selector input[type=radio]').change(function () {
+        updateRadio("toggle");
         handleModeChange();
     });
 
@@ -399,8 +400,8 @@ function renderScatterPlot(data) {
             lassoCanvas.style("display", "none");
             // highlightedCanvas.style("display", "none");
             // clearHighlightedPoints(highlightedCanvas);
-            clearBrushedParcoords();
-            gridUpdate(ORIGINAL_DATASET);
+            // clearBrushedParcoords();
+            // gridUpdate(ORIGINAL_DATASET);
             polygon = [];
         }
     }
@@ -456,6 +457,20 @@ function initScatterPlotMessage(message) {
 
     if (message) {
         appendScatterPlotMessage(message);
+    }
+}
+
+function updateRadio(operation) {
+    const $selector = $('#scatter-mode-selector input[type=radio]');
+    if (operation == "toggle") {
+        const value = $selector.val()
+        if (value == "lasso") {
+            $selector.val("zoomPan");
+        } else {
+            $selector.val("lasso");
+        }
+    } else if (operation == "lasso" || operation == "zoomPan"){
+        $selector.val(operation).prop('checked', true).trigger("change");
     }
 }
 
