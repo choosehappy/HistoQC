@@ -18,7 +18,7 @@ RUN python -m venv venv \
     # We force this so there is no error even if the dll does not exist.
     && rm -f libopenslide-0.dll
 
-FROM rayproject/ray-ml:latest-py38-cu118
+FROM rayproject/ray-ml:latest-gpu
 ARG DEBIAN_FRONTEND=noninteractive
 USER root
 RUN sudo apt-get update \
