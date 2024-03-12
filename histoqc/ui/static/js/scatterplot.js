@@ -1,63 +1,39 @@
 function renderScatterPlot(data) {
-    // Create the new elements
-    var lassoCanvas = $('<canvas id="lasso-canvas" class="plot"></canvas>');
-    var axisSvg = $('<svg id="axis-svg" class="plot"></svg>');
-    var plotCanvas = $('<canvas id="plot-canvas" class="plot"></canvas>');
+    SCATTER_PLOT["state"] = {}
+    const state = SCATTER_PLOT.state;
 
-    // Append the new elements to the 'scatter-parent' element
-    $('#scatter-parent').append(lassoCanvas, axisSvg, plotCanvas);
+    const scatterParent = d3.select("#scatter-parent").html("");
 
 
-    renderToolSelection();
+    appendButtonGroupToScatterCardHeader();
+    $('#scatter-mode-selector input[type=radio]').change(function () {
+        updateRadio("toggle");
+        handleModeChange();
+    });
+
     // constants
     var subsetSize = 1000;
-    var pointRadius = 2;
     var zoomEndDelay = 0;
 
     // timeout function
     var zoomEndTimeout;
 
     // define all size variables
-    var fullWidth = 500;
-    var fullHeight = 500;
-    var margin = { top: 10, right: 10, bottom: 30, left: 30 };
+    var fullWidth = parseFloat(d3.select("#parcoords-card").style("height"));
+    var fullHeight = parseFloat(d3.select("#parcoords-card").style("height"));
+    var margin = { top: 0, right: 50, bottom: 80, left: 20 };
     var width = fullWidth - margin.left - margin.right;
     var height = fullHeight - margin.top - margin.bottom;
 
     // produce array of N false values
-    var numberPoints = data["embed_x"].length;
+    var numberPoints = data.length;
 
     var polygon = [];
     var scaled_polygon1 = [];
     var selected_indices = [];
-    const colors = [
-        "#FF5733",  // Reddish Orange
-        "#3498DB",  // Soft Blue
-        "#2ECC71",  // Green
-        "#F1C40F",  // Yellow
-        "#9B59B6",  // Purple
-        "#34495E",  // Dark Blue
-        "#E74C3C",  // Red
-        "#16A085",  // Sea Green
-        "#2980B9",  // Medium Blue
-        "#8E44AD",  // Dark Purple
-        "#2C3E50",  // Navy Blue
-        "#F39C12",  // Orange
-        "#D35400",  // Pumpkin
-        "#C0392B",  // Dark Red
-        "#7F8C8D"   // Grey
-    ]
-    var plotData = d3.range(numberPoints).map(function (i) {
-        return {
-            x: data.embed_x[i],
-            y: data.embed_y[i],
-            i: i, // save the index of the point as a property, this is useful
-            color: colors[data.groupid[i]]
-        };
-    });
 
     // create a quadtree for fast hit detection
-    var quadTree = d3.quadtree(plotData);
+    // var quadTree = d3.quadtree(data);
 
     // d3 only added randomInt in v6. However, we are using v5 https://stackoverflow.com/questions/61017839/d3-randomint-is-not-a-function
     d3.randomInt = d3.randomInt || (function sourceRandomInt(source) {
@@ -82,58 +58,74 @@ function renderScatterPlot(data) {
         randomIndex.push(d3.randomInt(0, numberPoints)());
     }
 
-    // the canvas is shifted by 1px to prevent any artefacts
-    // when the svg axis and the canvas overlap
-    var canvas = d3.select("#plot-canvas")
+    // ----------------- DEFINE DOM ELEMENTS -----------------
+    var lassoCanvas = scatterParent.append("canvas")
         .html("")
+        .attr("id", "lasso-canvas")
+        .attr("class", "plot")
         .attr("width", width - 1)
         .attr("height", height - 1)
         .style("transform", "translate(" + (margin.left + 1) +
             "px" + "," + (margin.top + 1) + "px" + ")");
 
-    var lassoCanvas = d3.select("#lasso-canvas")
+    var svg = scatterParent.append("svg")
         .html("")
-        .attr("width", width - 1)
-        .attr("height", height - 1)
-        .style("transform", "translate(" + (margin.left + 1) +
-            "px" + "," + (margin.top + 1) + "px" + ")");
-
-    var svg = d3.select("#axis-svg")
-        .html("")
+        .attr("id", "axis-svg")
+        .attr("class", "plot")
         .attr("width", fullWidth)
         .attr("height", fullHeight)
         .append("g")
         .attr("transform", "translate(" + margin.left + "," +
             margin.top + ")");
 
-    // ranges, scales, axis, objects
-    var xRange = d3.extent(plotData, function (d) { return d.x });
-    var yRange = d3.extent(plotData, function (d) { return d.y });
+    var canvas = scatterParent.append("canvas")
+        .html("")
+        .attr("id", "plot-canvas")
+        .attr("class", "plot")
+        .attr("width", width - 1)
+        .attr("height", height - 1)
+        .style("transform", "translate(" + (margin.left + 1) +
+            "px" + "," + (margin.top + 1) + "px" + ")");
 
-    var xScale = d3.scaleLinear()
+    var highlightedCanvas = scatterParent.append("canvas")
+        .html("")
+        .attr("id", "highlighted-canvas")
+        .attr("class", "plot")
+        .attr("width", width - 1)
+        .attr("height", height - 1)
+        .style("transform", "translate(" + (margin.left + 1) +
+            "px" + "," + (margin.top + 1) + "px" + ")");
+
+
+    // ----------------- DEFINE SCALES -----------------
+    var xRange = d3.extent(data, function (d) { return d.x });
+    var yRange = d3.extent(data, function (d) { return d.y });
+
+    SCATTER_PLOT.state["xScale"] = d3.scaleLinear()
         .domain([xRange[0] - 5, xRange[1] + 5])
         .range([0, width]);
 
-    var yScale = d3.scaleLinear()
+    SCATTER_PLOT.state["yScale"] = d3.scaleLinear()
         .domain([yRange[0] - 5, yRange[1] + 5])
         .range([height, 0]);
 
-    var newX = d3.scaleLinear()
+    SCATTER_PLOT.state["newX"] = d3.scaleLinear()
         .domain([xRange[0] - 5, xRange[1] + 5])
         .range([0, width]);
 
-    var newY = d3.scaleLinear()
+    SCATTER_PLOT.state["newY"] = d3.scaleLinear()
         .domain([yRange[0] - 5, yRange[1] + 5])
         .range([height, 0]);
 
 
-    var xAxis = d3.axisBottom(xScale).scale(xScale)
-    var yAxis = d3.axisLeft(yScale).scale(yScale)
+    var xAxis = d3.axisBottom(state.xScale).scale(state.xScale)
+    var yAxis = d3.axisLeft(state.yScale).scale(state.yScale)
 
 
     // create zoom behaviour
     var zoomBehaviour = d3.zoom()
         .scaleExtent([1, 1000])
+        .on("start", onZoomStart)
         .on("zoom", onZoom)
         .on("end", onZoomEnd);
 
@@ -147,54 +139,69 @@ function renderScatterPlot(data) {
         .attr('class', 'y axis')
         .call(yAxis);
 
-    // on onclick handler
-    // canvas.on("click", onClick);
-
-
-
-    // get the canvas drawing context
-    var context = canvas.node().getContext('2d')
+    // ----------------- DEFINE CONTEXTS -----------------
     var lassoContext = lassoCanvas.node().getContext('2d'), path = d3.geoPath().context(lassoContext);
+    var highlightedContext = highlightedCanvas.node().getContext('2d');
 
-    draw(null, xScale, yScale, []);
+
+    draw(data, null, state.xScale, state.yScale, [], canvas);
+
+    function onZoomStart() {
+        // clear highlighted points
+        clearHighlightedPoints(highlightedCanvas);
+    }
 
 
     function onZoom() {
         clearTimeout(zoomEndTimeout);
         console.log("polygon: " + polygon[0])
-        scaled_polygon1 = polygon.map(p => [xScale.invert(p[0]), yScale.invert(p[1])]); // scale polygon to data space
+        scaled_polygon1 = polygon.map(p => [state.xScale.invert(p[0]), state.yScale.invert(p[1])]); // scale polygon to data space
         console.log("scaled_polygon1 before rescale: " + scaled_polygon1[0])
-        newX = d3.event.transform.rescaleX(xScale);
-        newY = d3.event.transform.rescaleY(yScale);
-        scaled_polygon1 = scaled_polygon1.map(p => [newX(p[0]), newY(p[1])]);   // scale polygon to canvas space
+        SCATTER_PLOT.state.newX = d3.event.transform.rescaleX(SCATTER_PLOT.state.xScale);
+        SCATTER_PLOT.state.newY = d3.event.transform.rescaleY(SCATTER_PLOT.state.yScale);
+        scaled_polygon1 = scaled_polygon1.map(p => [state.newX(p[0]), state.newY(p[1])]);   // scale polygon to canvas space
         console.log("scaled_polygon1 after rescale: " + scaled_polygon1[0])
 
-        xAxisSvg.call(xAxis.scale(newX));
-        yAxisSvg.call(yAxis.scale(newY));
-        draw(randomIndex, newX, newY, []);
+        xAxisSvg.call(xAxis.scale(SCATTER_PLOT.state.newX));
+        yAxisSvg.call(yAxis.scale(SCATTER_PLOT.state.newY));
 
-
+        const selectedIndices = draw(data, randomIndex, SCATTER_PLOT.state.newX, SCATTER_PLOT.state.newY, [], canvas);
+        
+        
     }
 
     function onZoomEnd() {
         // when zooming is stopped, create a delay before
         // redrawing the full plot
-        newX = d3.event.transform.rescaleX(xScale);
-        newY = d3.event.transform.rescaleY(yScale);
+        SCATTER_PLOT.state.newX = d3.event.transform.rescaleX(state.xScale);
+        SCATTER_PLOT.state.newY = d3.event.transform.rescaleY(state.yScale);
 
         zoomEndTimeout = setTimeout(function () {
-            draw(null, newX, newY, []);
+            const selectedIndices = draw(data, null, SCATTER_PLOT.state.newX, SCATTER_PLOT.state.newY, [], canvas);
+            if (BRUSHED_IDS && BRUSHED_IDS.length < data.length) {
+                drawHighlightedPoints(data, BRUSHED_IDS, SCATTER_PLOT.state.newX, SCATTER_PLOT.state.newY, highlightedCanvas);
+            }
         }, zoomEndDelay);
     }
 
     lassoCanvas.call(lasso().on("start lasso end", drawLasso))
     canvas.call(zoomBehaviour);
+    highlightedCanvas.call(zoomBehaviour);
 
 
     // the draw function draws the full dataset if no index
     // parameter supplied, otherwise it draws a subset according
     // to the indices in the index parameter
-    function draw(index, xScale, yScale, polygon) {
+    function draw(pointArr, index, xScale, yScale, polygon, canvas) {
+        /**
+         * @param {Array} pointArr - array of points to draw
+         * @param {Array} index - array of indices to draw
+         * @param {Object} xScale - d3 x scale
+         * @param {Object} yScale - d3 y scale
+         * @param {Array} polygon - array of points that define the lasso
+         * @param {Object} canvas - canvas
+         */
+        var pointRadius = 2;
         var scaled_polygon;
 
         if (polygon.length > 0) {
@@ -203,6 +210,7 @@ function renderScatterPlot(data) {
             scaled_polygon = polygon;
         }
 
+        const context = canvas.node().getContext('2d');
         context.clearRect(0, 0, fullWidth, fullHeight);
         context.fillStyle = 'steelblue';
         context.lineWidth = 1;
@@ -210,54 +218,32 @@ function renderScatterPlot(data) {
 
         // if an index parameter is supplied, we only want to draw points
         // with indices in that array
-        if (index) {
+        if (index) {    // if zooming/panning
             index.forEach(function (i) {
-                var point = plotData[i];
-                drawPoint(point, pointRadius, xScale, yScale);
+                var point = pointArr[i];
+                drawPoint(point, pointRadius, xScale, yScale, context);
             });
         }
         // draw the full dataset otherwise
         else {
             selected_indices = [];
-            plotData.forEach(function (point) {
-                if (scaled_polygon.length == 0 || d3.polygonContains(scaled_polygon, [point.x, point.y])) {
-                    drawPoint(point, pointRadius, xScale, yScale);
+            pointArr.forEach(function (point) {
+                if (scaled_polygon.length > 0 && d3.polygonContains(scaled_polygon, [point.x, point.y])) {     // if the point is within the lasso
                     selected_indices.push(point.i);
                 }
+                drawPoint(point, pointRadius, xScale, yScale, context);
             });
             //TODO update dataview with selected indices
             // Filter the dataView items by the selected indices
-            if (selected_indices.length < ORIGINAL_DATASET.length && polygon.length > 0) {
-                const filteredItems = ORIGINAL_DATASET.filter(item => selected_indices.includes(item.id))
-                
-                updateParcoords(filteredItems)  // TODO prevent update when zooming.
-                gridUpdate(filteredItems)
-
-            } else {
-
-                updateParcoords(ORIGINAL_DATASET)
-                gridUpdate(ORIGINAL_DATASET)
-            }
-
         }
+
+        return selected_indices;
     }
 
-    function drawPoint(point, r, xScale, yScale) {
-        var cx = xScale(point.x);
-        var cy = yScale(point.y);
 
-        context.fillStyle = point.color;
 
-        // NOTE; each point needs to be drawn as its own path
-        // as every point needs its own stroke. you can get an insane
-        // speed up if the path is closed after all the points have been drawn
-        // and don't mind points not having a stroke
-        context.beginPath();
-        context.arc(cx, cy, r, 0, 2 * Math.PI);
-        context.closePath();
-        context.fill();
-        context.stroke();
-    }
+
+
 
     function trackMouse(e, { start, move, out, end }) {
         const tracker = {},
@@ -309,7 +295,25 @@ function renderScatterPlot(data) {
                         },
                         end: p => {
                             dispatch.call("end", node, polygon);
-                            draw(null, newX, newY, polygon);
+                            // draw plot with selected points
+                            const selectedIndices = draw(data, null, state.newX, state.newY, polygon, canvas);
+
+                            // update parcoords and dataview with filtered items
+                            const filteredItems = ORIGINAL_DATASET.filter(item => selectedIndices.includes(item.id))
+
+                            if (filteredItems.length > 0) {
+                                canvas.style("opacity", 0.2)
+                                drawHighlightedPoints(data, selectedIndices, state.newX, state.newY, highlightedCanvas);
+
+                                updateBrushedParcoords(filteredItems)
+                                gridUpdate(filteredItems)
+                            } else {
+                                canvas.style("opacity", 1)
+                                clearHighlightedPoints(highlightedCanvas);
+                                clearBrushedParcoords();
+                                gridUpdate(ORIGINAL_DATASET);
+                            }
+
                         }
                     });
                 });
@@ -338,25 +342,140 @@ function renderScatterPlot(data) {
         lassoContext.canvas.dispatchEvent(new CustomEvent('input'));
     }
 
-    function renderToolSelection() {
-        const $container = $("#scatter-card");
-        const $lassoCanvas = $("#lasso-canvas");
+    function appendButtonGroupToScatterCardHeader() {
+        // Select the element with the ID 'scatter-card-header'
+        const cardHeader = d3.select('#scatter-card-header');
 
-        const $slickPager = $("<div class='slick-pager' />").prependTo($container);
-        var $settings = $("<span class='slick-pager-settings' />").appendTo($slickPager);
+        // Display the 'scatter-card-header' since it's hidden by default
+        cardHeader.style('display', null);
 
-        var $toggleButton = $("<button class='btn btn-primary slick-pager-button slick-pager-button-toggle' title='Toggle Lasso Mode'>" +
-            "</button>");
+        // Create the button group container within the 'scatter-card-header'
+        const buttonGroup = cardHeader.append('div')
+            .attr('class', 'btn-group')
+            .attr('id', 'scatter-mode-selector')
+            .attr('role', 'group')
+            .attr('aria-label', 'Basic radio toggle button group');
 
-        $toggleButton
-            .text($lassoCanvas.is(":visible") ? "Toggle Lasso" : "Toggle Zoom & Pan")
-            .click(function () {
-                $lassoCanvas.toggle();
-                drawLasso(scaled_polygon1);
-                $toggleButton.text($lassoCanvas.is(":visible") ? "Mode: Lasso" : "Mode: Zoom & Pan");
-            })
-            .appendTo($settings);
+        // Append the first radio button (Lasso)
+        buttonGroup.append('input')
+            .attr('type', 'radio')
+            .attr('class', 'btn-check')
+            .attr('name', 'btnradio')
+            .attr('id', 'btnradio1')
+            .attr('autocomplete', 'off')
+            .attr('value', 'lasso')
+            .property('checked', true);
+
+        buttonGroup.append('label')
+            .attr('class', 'btn-check-label')
+            .attr('for', 'btnradio1')
+            .text('Lasso');
+
+        // Append the second radio button (Zoom/Pan)
+        buttonGroup.append('input')
+            .attr('type', 'radio')
+            .attr('class', 'btn-check')
+            .attr('name', 'btnradio')
+            .attr('id', 'btnradio2')
+            .attr('autocomplete', 'off')
+            .attr('value', 'zoomPan');
+
+        buttonGroup.append('label')
+            .attr('class', 'btn-check-primary')
+            .attr('for', 'btnradio2')
+            .text('Zoom/Pan');
     }
+
+
+    function handleModeChange() {
+        var mode = $('#scatter-mode-selector input[type=radio]:checked').val();
+        const lassoCanvas = d3.select("#lasso-canvas");
+        const highlightedCanvas = d3.select("#highlighted-canvas");
+        if (mode === "lasso") {
+            drawLasso(scaled_polygon1);
+            lassoCanvas.style("display", "block");
+            highlightedCanvas.style("display", "block");
+
+        } else {
+            lassoCanvas.style("display", "none");
+            // highlightedCanvas.style("display", "none");
+            // clearHighlightedPoints(highlightedCanvas);
+            // clearBrushedParcoords();
+            // gridUpdate(ORIGINAL_DATASET);
+            polygon = [];
+        }
+    }
+
+
 
 }
 
+function drawPoint(point, r, xScale, yScale, context) {
+    var cx = xScale(point.x);
+    var cy = yScale(point.y);
+
+    context.fillStyle = point.color;
+
+    // NOTE; each point needs to be drawn as its own path
+    // as every point needs its own stroke. you can get an insane
+    // speed up if the path is closed after all the points have been drawn
+    // and don't mind points not having a stroke
+    context.beginPath();
+    context.arc(cx, cy, r, 0, 2 * Math.PI);
+    context.closePath();
+    context.fill();
+    context.stroke();
+}
+
+
+function drawHighlightedPoints(pointArr, indices, xScale, yScale, canvas) {
+    const context = canvas.node().getContext('2d');
+    context.clearRect(0, 0, canvas.attr("width"), canvas.attr("height"));
+    context.fillStyle = 'steelblue';
+    context.lineWidth = 1;
+    context.strokeStyle = 'white';
+    var pointRadius = 2;
+
+    indices.forEach(function (i) {
+        var point = pointArr[i];
+        drawPoint(point, pointRadius, xScale, yScale, context);
+    });
+}
+
+function clearHighlightedPoints(canvas) {
+    const context = canvas.node().getContext('2d');
+    context.clearRect(0, 0, canvas.attr("width"), canvas.attr("height"));
+}
+
+function initScatterPlotMessage(message) {
+    d3.select("#scatter-card-header").html("")
+    const messageDiv = d3.select("#scatter-parent").html("")
+
+    messageDiv
+        .append("div")
+        .attr("id", "message-div")
+
+    if (message) {
+        appendScatterPlotMessage(message);
+    }
+}
+
+function updateRadio(operation) {
+    const $selector = $('#scatter-mode-selector input[type=radio]');
+    if (operation == "toggle") {
+        const value = $selector.val()
+        if (value == "lasso") {
+            $selector.val("zoomPan");
+        } else {
+            $selector.val("lasso");
+        }
+    } else if (operation == "lasso" || operation == "zoomPan"){
+        $selector.val(operation).prop('checked', true).trigger("change");
+    }
+}
+
+function appendScatterPlotMessage(message) {
+    const messageDiv = d3.select("#message-div")
+    const text = messageDiv.html();
+    messageDiv.html(text + message + "<br>");
+}

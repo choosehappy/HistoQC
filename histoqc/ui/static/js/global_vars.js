@@ -28,8 +28,7 @@ var FILE_HEADER = "";
 var COHORT_LOADED = false;
 
 /****************** IMAGE VIEW ****************/
-var SKIP_IMAGE_EXTENSIONS = [];
-var CHECK_IMAGE_EXTENSIONS = DEFAULT_IMAGE_EXTENSIONS.map(function () {return false;});
+var IMAGE_EXTENSIONS = [];
 var CURRENT_IMAGE_TYPE = 0,
 	CURRENT_COMPARE_TYPE = -1;
 var DETAIL_MODE_FLAG = false;
@@ -42,4 +41,6 @@ var COHORT_FINDER_RESULTS;
 
 /****************** PARCOORDS ****************/
 var PARCOORDS;
+var BRUSHED_IDS;
 
+var SCATTER_PLOT = {};

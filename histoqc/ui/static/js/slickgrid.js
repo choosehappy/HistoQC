@@ -3,7 +3,7 @@ function renderLines() {
 	// const margin = visualViewport.height * 0.05;
 	const max_key_length = d3.max(d3.keys(ORIGINAL_DATASET[0]).map(function (d) { return d.length; }));
 	const num_columns = d3.keys(ORIGINAL_DATASET[0]).length;
-	const parcoordsCardHeight = visualViewport.height * 0.45 + max_key_length * 3;
+	const parcoordsCardHeight = parseFloat(d3.select("#parcoords-card").style("height"));
 	// $("#parcoords-parent").height(parcoordsCardHeight)
 	PARCOORDS = ParCoords()("#example")
 		.alpha(0.3)
@@ -11,7 +11,7 @@ function renderLines() {
 		.alphaOnBrushed(0.5)
 		.brushedColor("#a13f57")
 		.mode("queue") // progressive rendering
-		.height(parcoordsCardHeight)
+		.height(parcoordsCardHeight - max_key_length * 3)
 		.width(100 * num_columns)
 		.margin({
 			top: max_key_length * 3,
@@ -133,9 +133,33 @@ function renderLines() {
 	// fill grid with data
 	gridUpdate(ORIGINAL_DATASET);
 
-	PARCOORDS.on("brushend", function (d) {
+	PARCOORDS.on("brushstart", function () {
+		// change the scatter plot mode to zoom/Pan
+		updateRadio("zoomPan")
+		
+	})
+
+	PARCOORDS.on("brushend", function (data) {
 		updateImageView(DATA_VIEW);
-		gridUpdate(d);
+		gridUpdate(data);
+		const canvas = d3.select('#plot-canvas');
+		BRUSHED_IDS = data.map(d => d.id);
+
+		// clearing the brush counts as a brushend. Only update the scatter plot if the brush actually filtered the data.
+		if (data.length < ORIGINAL_DATASET.length && COHORT_FINDER_RESULTS.length > 0) {	
+			const highlightedCanvas = d3.select('#highlighted-canvas')
+			highlightedCanvas.style("display", "block");
+			
+			
+			canvas.style("opacity", 0.2)
+			if (SCATTER_PLOT.state.newX && BRUSHED_IDS.length > 0) {
+				drawHighlightedPoints(COHORT_FINDER_RESULTS, BRUSHED_IDS, SCATTER_PLOT.state.newX, SCATTER_PLOT.state.newY, highlightedCanvas);
+			} else {
+				drawHighlightedPoints(COHORT_FINDER_RESULTS, BRUSHED_IDS, SCATTER_PLOT.state.xScale, SCATTER_PLOT.state.yScale, highlightedCanvas);
+			}
+		} else {
+			canvas.style("opacity", 1)	// seems to be a bug where brushend is called multiple times in succession.
+		}
 	});
 
 	return DATA_VIEW;
@@ -148,11 +172,23 @@ function gridUpdate(data) {
 };
 
 function updateParcoords(data) {
-	PARCOORDS.brushReset(); // need this not to update grid. 
+	PARCOORDS.brushReset();
 	PARCOORDS.brushed(false)
 	PARCOORDS
 		.data(data)
 		.render();
+}
+
+function updateBrushedParcoords(data) {
+	PARCOORDS
+		.state.brushed = data;
+	
+	PARCOORDS.renderBrushed();
+}
+
+function clearBrushedParcoords() {
+	PARCOORDS.brushReset();
+	PARCOORDS.renderBrushed();
 }
 
 function rotateLabels(parcoords) {
@@ -166,10 +202,10 @@ function rotateLabels(parcoords) {
 }
 
 function tooltip(selectionGroup, tooltipDiv) {
-	const mousePosOffset = 30;
-	const margin = ({ top: 10, right: 10, bottom: 10, left: 10 })
-	const tooltip_height = 500
-	const tooltip_width = 400
+	const mousePosOffset = 10;
+	const margin = ({ top: 10, right: 10, bottom: 110, left: 10 })
+	const tooltip_height = window.visualViewport.width * 0.25 + 100
+	const tooltip_width = window.visualViewport.width * 0.2
 
 	selectionGroup.each(function () {
 		d3.select(this)
@@ -182,19 +218,19 @@ function tooltip(selectionGroup, tooltipDiv) {
 		// show/reveal the tooltip, set its contents,
 		// style the element being hovered on
 		var color;
-		if (Object.keys(PARCOORDS.brushExtents()).length > 0) {
+		if (PARCOORDS.state.brushed && PARCOORDS.state.brushed.length < ORIGINAL_DATASET.length) {
 			color = "#a13f57";
 		} else {
 			color = "#426fbd";
 		}
 		showTooltip();
-		renderViolinPlotHist(tooltipDiv, DATA_VIEW.items, id, [`${id}_distribution`], tooltip_width, tooltip_height - 50, color);
+		renderViolinPlotHist(tooltipDiv, DATA_VIEW.items, id, [`${id}_distribution`], tooltip_width, tooltip_height - margin.bottom, color);
 		renderAxisMetrics(tooltipDiv, DATA_VIEW.items, id);
 	}
 
 	function handleMousemove(event) {
 		// update the tooltip's position
-		const [mouseX, mouseY] = d3.mouse(this.parentNode) // d3.pointer(event, this); // for d3 v6
+		const [mouseX, mouseY] = d3.mouse(this.parentNode.parentNode.parentNode) // d3.pointer(event, this); // for d3 v6
 		// add the left & top margin values to account for the SVG g element transform
 		setPosition(mouseX + margin.left, mouseY + margin.top);
 	}
@@ -438,12 +474,13 @@ function tooltip(selectionGroup, tooltipDiv) {
 
 		var htmlContent = ""
 		metrics.forEach((d, i) => {
-			htmlContent += `<b>${d.label}:</b> ${d.value} `;
+			htmlContent += `<b>${d.label}:</b> ${d.value}<br>`;
 		})
 
 		selectedContainer
 			.append('p')
 			.html(htmlContent)
+
 
 
 	}

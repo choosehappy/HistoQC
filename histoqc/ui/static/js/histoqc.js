@@ -3,18 +3,13 @@ $(document).ready(function () {
 	// console.log($("#brushing").attr("fn"))
     // Check if the user has specified resultsfilepath
     $.ajax({
-		url: "/get_hqc_results",
+		url: "/hqc_results",
 		type: "GET",
 		async: true,
-		success: handleSuccess
-		}
-	);
+		success: loadResultsTsv
+	});
 
 });
-
-function handleSuccess(data) {
-    loadResultsTsv(data);
-}
 
 function loadResultsTsv(data) {
 	console.log("loaded data")
@@ -72,8 +67,18 @@ function loadResultsTsv(data) {
 }
 
 function renderComponents() {
-    var dataView = renderLines();
-    initializeImageView(dataView);
-    // renderScatterPlot();
-	initializeCF();
+	$.ajax({
+		url: `/image_extensions/${ORIGINAL_CASE_LIST[0]}`,
+		type: "GET",
+		async: true,
+		success: function (data) {
+			DEFAULT_IMAGE_EXTENSIONS = data	// extensions (suffixes) should be set before rendering other components.
+
+			var dataView = renderLines();
+			initializeImageView(dataView);
+			initScatterPlotMessage('<h4>Click "CohortFinder" to compute and render the 2D embedding.<h4>');
+			initializeCF();
+		}
+	});
+	
 }
