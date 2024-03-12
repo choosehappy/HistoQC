@@ -113,6 +113,7 @@ function handleCohortFinderResponse(data) {
 
     console.log("received CohortFinder results:")
     console.log(COHORT_FINDER_RESULTS)
+    updatePopover('be-scores-info', 'Batch Effect Scores', 'test content for the batch effect scores popover', null);
     renderScatterPlot(COHORT_FINDER_RESULTS);
 }
 

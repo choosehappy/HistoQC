@@ -98,3 +98,13 @@ svg {
   position: absolute;
   bottom: 0px;
 }
+
+.info-button {
+  background: #f2f2f2;
+  border: 1px solid #ccc;
+  padding: 4px 8px;
+  margin: 0 4px;
+  cursor: pointer;
+  display: inline-block;
+  border-radius: 4px;
+}

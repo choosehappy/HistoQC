@@ -81,12 +81,16 @@ def run_cohort_finder():
     cf_args.nclusters = int(request.args.get('numClusters'))
     cf_args.testpercent = float(request.args.get('testSetPercent'))  
     # add line to check if cohortFinder has already been run (with output saved). If so, load the results.tsv file and return.
-    output, preds = runCohortFinder(cf_args)
+    output = runCohortFinder(cf_args)
 
     out_dict = {
         'embed_x': output['embed_x'].tolist(),
         'embed_y': output['embed_y'].tolist(),
         'groupid': output['groupid'].tolist(),
-        'testind': output['testind'].tolist()
+        'testind': output['testind'].tolist(),
+        'sil_score': output['sil_score'],
+        'db_score': output['db_score'],
+        'ch_score': output['ch_score']
     }
+    
     return out_dict

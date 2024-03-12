@@ -21,6 +21,7 @@
   <script src="{{url_for('static', filename='libs/slickgrid/js/slick.grid.js')}}"></script>
   <script src="{{url_for('static', filename='libs/slickgrid/js/slick.dataview.js')}}"></script>
 
+
   <script src="{{url_for('static', filename='libs/slickgrid/js/controls/slick.pager.js')}}"></script>
   <script src="{{url_for('static', filename='libs/slickgrid/js/controls/slick.columnpicker.js')}}"></script>
 
@@ -123,14 +124,18 @@
   <script src="{{url_for('static', filename='libs/d3/js/d3.min.js')}}"></script>
   <script src="{{url_for('static', filename='libs/parcoords/js/parcoords.standalone.js')}}"></script>
   <script src="{{url_for('static', filename='js/image_init.js')}}"></script>
+  <script src="{{url_for('static', filename='libs/bootstrap/js/popper.min.js')}}"></script>
   <script src="{{url_for('static', filename='libs/bootstrap/js/bootstrap.min.js')}}"></script>
+  
 
   <script src="{{url_for('static', filename='js/global_config.js')}}"></script>
   <script src="{{url_for('static', filename='js/global_vars.js')}}"></script>
+  <script src="{{url_for('static', filename='js/popovers.js')}}"></script>
   <script src="{{url_for('static', filename='js/slickgrid.js')}}" id="brushing"></script>
   <script src="{{url_for('static', filename='js/scatterplot.js')}}"></script>
   <script src="{{url_for('static', filename='js/histoqc.js')}}"></script>
   <script src="{{url_for('static', filename='js/cohortfinder.js')}}"></script>
+  <script src="{{url_for('static', filename='js/batcheffectinfo.js')}}"></script>
 </head>
 
 <body>
@@ -249,6 +254,7 @@
       <div class="col-12">
         <div class="card" id="overview-gallery-card">
           <div class="card-header">
+            <button type="button" id="popover-1" class="btn btn-lg btn-danger" data-toggle="popover">Click to toggle popover</button>
             <div id="image-control-group" class="control-group btn-group btn-group-sm">
               <span id="img-select-button" class="btn-group btn-group-sm">
                 <select id="img-select" class="selectpicker show-tick" data-size="5" data-style="btn-dark btn-sm"

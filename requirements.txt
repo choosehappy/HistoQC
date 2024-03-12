@@ -15,5 +15,4 @@ setuptools~=65.6.3
 shapely~=2.0.1
 flask~=2.3.2
 
---extra-index-url https://test.pypi.org/simple/
-cohortfinder-choosehappy
+cohortfinder==0.0.4

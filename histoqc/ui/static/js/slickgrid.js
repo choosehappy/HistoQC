@@ -146,7 +146,7 @@ function renderLines() {
 		BRUSHED_IDS = data.map(d => d.id);
 
 		// clearing the brush counts as a brushend. Only update the scatter plot if the brush actually filtered the data.
-		if (data.length < ORIGINAL_DATASET.length && COHORT_FINDER_RESULTS.length > 0) {	
+		if (data.length < ORIGINAL_DATASET.length && COHORT_FINDER_RESULTS) {	
 			const highlightedCanvas = d3.select('#highlighted-canvas')
 			highlightedCanvas.style("display", "block");
 			

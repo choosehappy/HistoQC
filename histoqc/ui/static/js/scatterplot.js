@@ -11,6 +11,8 @@ function renderScatterPlot(data) {
         handleModeChange();
     });
 
+    renderBatchEffectInfoButton("#scatter-card-header");
+
     // constants
     var subsetSize = 1000;
     var zoomEndDelay = 0;
@@ -166,8 +168,8 @@ function renderScatterPlot(data) {
         yAxisSvg.call(yAxis.scale(SCATTER_PLOT.state.newY));
 
         const selectedIndices = draw(data, randomIndex, SCATTER_PLOT.state.newX, SCATTER_PLOT.state.newY, [], canvas);
-        
-        
+
+
     }
 
     function onZoomEnd() {
@@ -386,6 +388,15 @@ function renderScatterPlot(data) {
             .text('Zoom/Pan');
     }
 
+    function renderBatchEffectInfoButton(parentid) {
+        const cardHeader = d3.select(parentid);
+        const infoButton = cardHeader.append('div')
+            .append('button')
+            .attr('id', 'be-scores-info')
+            .attr('data-toggle', 'popover')
+            .text('BatchEffectInfo')
+    }
+
 
     function handleModeChange() {
         var mode = $('#scatter-mode-selector input[type=radio]:checked').val();
@@ -469,7 +480,7 @@ function updateRadio(operation) {
         } else {
             $selector.val("lasso");
         }
-    } else if (operation == "lasso" || operation == "zoomPan"){
+    } else if (operation == "lasso" || operation == "zoomPan") {
         $selector.val(operation).prop('checked', true).trigger("change");
     }
 }
