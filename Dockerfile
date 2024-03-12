@@ -3,7 +3,6 @@
 # installed. This requires a C compiler. In the second stage, the HistoQC directory and
 # the python environment are copied over. We do not require a C compiler in the second
 # stage, and so we can use a slimmer base image.
-
 FROM python:3.8 AS builder
 ARG DEBIAN_FRONTEND=noninteractive
 WORKDIR /opt/HistoQC
@@ -30,11 +29,12 @@ RUN apt-get update \
 
 WORKDIR /opt/HistoQC
 COPY --from=builder /opt/HistoQC/ .
+# install
+RUN pip install -r requirements.txt \
+    && pip install .
 
-RUN pip install .
-
-USER ray
 WORKDIR /data
 
 # CMD ["bash"]
-CMD [ "python", "-m", "histoqc", "--help" ]
+CMD [ "python", "-m", "histoqc", "-c", "/data/config_v2.1.ini", "/data/*.svs" ]
+
