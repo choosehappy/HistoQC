@@ -4,14 +4,14 @@ function renderScatterPlot(data) {
 
     const scatterParent = d3.select("#scatter-parent").html("");
 
-
+    renderBatchEffectInfoButton("#scatter-card-header");
     appendButtonGroupToScatterCardHeader();
     $('#scatter-mode-selector input[type=radio]').change(function () {
         updateRadio("toggle");
         handleModeChange();
     });
 
-    renderBatchEffectInfoButton("#scatter-card-header");
+
 
     // constants
     var subsetSize = 1000;
@@ -352,14 +352,21 @@ function renderScatterPlot(data) {
         cardHeader.style('display', null);
 
         // Create the button group container within the 'scatter-card-header'
-        const buttonGroup = cardHeader.append('div')
+        const buttonGroup = cardHeader.append('span')
             .attr('class', 'btn-group')
             .attr('id', 'scatter-mode-selector')
             .attr('role', 'group')
             .attr('aria-label', 'Basic radio toggle button group');
 
         // Append the first radio button (Lasso)
-        buttonGroup.append('input')
+        buttonGroup.append('label')
+            .text('Mode:')
+
+        const span1 = buttonGroup.append('span')
+        const span2 = buttonGroup.append('span')
+
+
+        span1.append('input')
             .attr('type', 'radio')
             .attr('class', 'btn-check')
             .attr('name', 'btnradio')
@@ -368,21 +375,21 @@ function renderScatterPlot(data) {
             .attr('value', 'lasso')
             .property('checked', true);
 
-        buttonGroup.append('label')
+        span1.append('label')
             .attr('class', 'btn-check-label')
             .attr('for', 'btnradio1')
             .text('Lasso');
 
         // Append the second radio button (Zoom/Pan)
-        buttonGroup.append('input')
+        span2.append('input')
             .attr('type', 'radio')
             .attr('class', 'btn-check')
             .attr('name', 'btnradio')
             .attr('id', 'btnradio2')
             .attr('autocomplete', 'off')
-            .attr('value', 'zoomPan');
+            .attr('value', 'zoomPan')
 
-        buttonGroup.append('label')
+        span2.append('label')
             .attr('class', 'btn-check-primary')
             .attr('for', 'btnradio2')
             .text('Zoom/Pan');
@@ -390,11 +397,12 @@ function renderScatterPlot(data) {
 
     function renderBatchEffectInfoButton(parentid) {
         const cardHeader = d3.select(parentid);
-        const infoButton = cardHeader.append('div')
+        const infoButton = cardHeader.append('span')
             .append('button')
             .attr('id', 'be-scores-info')
+            .attr('class', 'btn btn-primary')
             .attr('data-toggle', 'popover')
-            .text('BatchEffectInfo')
+            .text('BE Info')
     }
 
 

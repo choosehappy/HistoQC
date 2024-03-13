@@ -13,10 +13,10 @@ function handleCohortFinderClick(event) {
         if (key == 'case_name' || key == 'id' || key == 'gid') {
             return // Skip these keys
         }
-        
+
         // Create a container for each checkbox (optional, for styling)
         const checkboxContainer = formElement.append('div').classed('checkbox-container', true);
-        
+
         // Append the checkbox input
         const checkbox = checkboxContainer.append('input')
             .attr('type', 'checkbox')
@@ -24,12 +24,12 @@ function handleCohortFinderClick(event) {
             .attr('name', 'featuresSelected') // Same name for all checkboxes to group them
             .attr('value', key)
             .property('checked', true); // Default to checked
-        
+
         // Append the label for the checkbox
         checkboxContainer.append('label')
             .attr('for', key) // Associate label with checkbox by ID
             .text(key); // Display text for the label
-        
+
         // Optionally add a line break or additional spacing here, if needed
     });
 
@@ -113,8 +113,24 @@ function handleCohortFinderResponse(data) {
 
     console.log("received CohortFinder results:")
     console.log(COHORT_FINDER_RESULTS)
-    updatePopover('be-scores-info', 'Batch Effect Scores', 'test content for the batch effect scores popover', null);
     renderScatterPlot(COHORT_FINDER_RESULTS);
+
+    POPOVERS['be-scores-info'] = {
+        'title': 'Batch Effect Scores',
+        'dataContent':
+            `CohortFinder calculated batch effect (BE) scores for each sample. 
+            Higher BE scores indicate more pronounced batch effects in your dataset yielding distinct clusters in the low-dimensional embedding.<br><br>
+            <b>silhouette score:</b> ${data.sil_score}<br> <b>davies-bouldin score:</b> ${data.db_score}<br> <b>calinski-harabasz score:</b> ${data.ch_score}<br>`,
+        'options': {
+            'trigger': 'click',
+            'html': true,
+            'placement': 'auto',
+            'container': 'body',
+        }
+    };
+
+    updateAllPopovers();
+
 }
 
 function handleCohortFinderSubmitTEST(event) {

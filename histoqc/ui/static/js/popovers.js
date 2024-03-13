@@ -14,7 +14,8 @@ function updateAllPopovers() {
 
     $('[data-toggle="popover"]').each(function() {
         var id = $(this).attr('id');
-        updatePopover(id, POPOVERS[id].title, POPOVERS[id].content, options);
+        const popover = POPOVERS[id];
+        updatePopover(id, popover.title, popover.dataContent, popover.options);
     });
 
 }

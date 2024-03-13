@@ -1,7 +1,7 @@
 from flask import render_template, Blueprint, request, current_app, send_file
 import os
 from argparse import Namespace
-from cohortfinder_choosehappy.cohortfinder_colormod_original import runCohortFinder
+from cohortfinder import runCohortFinder
 import json
 # constants 
 cf_results_filename = 'results_cohortfinder.tsv'
@@ -73,6 +73,7 @@ def run_cohort_finder():
     cf_args.randomseed = None
     cf_args.resultsfilepath = os.path.join(current_app.config['data_directory'], current_app.config['results_filename'])
     cf_args.disable_save = True
+    cf_args.quality_control_tool = "histoqc"
     
     
     # ---------------- user input ----------------
@@ -81,16 +82,15 @@ def run_cohort_finder():
     cf_args.nclusters = int(request.args.get('numClusters'))
     cf_args.testpercent = float(request.args.get('testSetPercent'))  
     # add line to check if cohortFinder has already been run (with output saved). If so, load the results.tsv file and return.
-    output = runCohortFinder(cf_args)
-
+    output, sil_score, db_score, ch_score = runCohortFinder(cf_args)
     out_dict = {
         'embed_x': output['embed_x'].tolist(),
         'embed_y': output['embed_y'].tolist(),
         'groupid': output['groupid'].tolist(),
         'testind': output['testind'].tolist(),
-        'sil_score': output['sil_score'],
-        'db_score': output['db_score'],
-        'ch_score': output['ch_score']
+        'sil_score': float(sil_score),
+        'db_score': float(db_score),
+        'ch_score': float(ch_score)
     }
     
     return out_dict

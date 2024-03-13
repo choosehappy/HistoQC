@@ -48,13 +48,4 @@ var SCATTER_PLOT = {};
 
 // Each element key should be the id of the popover element, and the value should be another object with the keys 'title' and 'content'
 var POPOVERS = {
-	'popover-1': {
-		'title': 'Title 1',
-		'content': 'Content 1'
-	},
-	// 'popover-2': {
-	// 	'title': 'Title 2',
-	// 	'content': 'Content 2'
-	// }
-
 };
