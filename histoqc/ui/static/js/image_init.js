@@ -63,7 +63,7 @@ function updateImageView(dataView) {
 	div = d3.select("#overview-gallery");
 	const zoomValue = d3.select("#zoom-range").property('value');
 	const case_ids = getCaseidsFromDataView(dataView);
-	
+
 	case_ids.forEach(function (case_id) {
 		const imgBlock = generateImgBlock(div, ORIGINAL_DATASET[case_id]["id"],
 			"overview-image-block", ORIGINAL_CASE_LIST[case_id],
@@ -71,11 +71,12 @@ function updateImageView(dataView) {
 		);
 
 		imgBlock.on("mouseover", function () {
-			PARCOORDS.highlight([ORIGINAL_DATASET[case_id]]);
+
+			PARCOORDS.highlight([ORIGINAL_DATASET[ORIGINAL_DATASET.map(function (x) { return x.id; }).indexOf(case_id)]]);
 		});
 
 		imgBlock.on("mouseout", function () {
-			PARCOORDS.unhighlight([ORIGINAL_DATASET[case_id]]);
+			PARCOORDS.unhighlight([ORIGINAL_DATASET[ORIGINAL_DATASET.map(function (x) { return x.id; }).indexOf(case_id)]]);
 		});
 	});
 
@@ -122,7 +123,7 @@ function enterSelectImageView(dir, img_type) {
 	var imgSrc = generateImgSrc(dir, img_type, false);
 
 	var svg = d3.select("#select-image-container").append("svg").attr('width', '100%')
-	.attr('height', '100%');
+		.attr('height', '100%');
 
 	svg.append('image')
 		.attr("id", "zoomable-image")

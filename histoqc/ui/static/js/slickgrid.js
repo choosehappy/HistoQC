@@ -101,7 +101,8 @@ function renderLines() {
 	grid.onSort.subscribe(function (e, args) {
 		sortdir = args.sortAsc ? 1 : -1;
 		sortcol = args.sortCol.field;
-
+		
+		// sorting functions modify the original data passed into the dataview!
 		if ($.browser.msie && $.browser.version <= 8) {
 			DATA_VIEW.fastSort(sortcol, args.sortAsc);
 		} else {
