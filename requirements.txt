@@ -13,3 +13,6 @@ requests~=2.28.1
 Pillow~=9.4.0
 setuptools~=65.6.3
 shapely~=2.0.1
+flask~=2.3.2
+
+cohortfinder==0.0.4
