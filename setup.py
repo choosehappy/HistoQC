@@ -16,7 +16,11 @@ data_files = [
     for f in glob.iglob(f"histoqc/data/{folder}/**/*", recursive=True)
     if os.path.isfile(f)
 ]
-
+import_wrapper_files = [
+    os.path.relpath(f, "histoqc/import_wrapper_files/")
+    for f in glob.iglob(f"histoqc/import_wrapper_files/**/*", recursive=True)
+    if os.path.isfile(f)
+]
 setup(
     use_scm_version={
         # duplicated config from pyproject.toml; keep in sync
@@ -28,5 +32,6 @@ setup(
         'histoqc.config': ['*.ini'],
         'histoqc.data': data_files,
         'histoqc.ui': ui_files,
+        'histoqc.import_wrapper': import_wrapper_files
     }
 )

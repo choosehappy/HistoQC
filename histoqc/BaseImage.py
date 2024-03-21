@@ -1,5 +1,5 @@
 import logging
-import os
+import os, re
 import numpy as np
 import zlib, dill
 from distutils.util import strtobool
