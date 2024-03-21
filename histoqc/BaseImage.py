@@ -4,6 +4,7 @@ import numpy as np
 import zlib, dill
 from distutils.util import strtobool
 from PIL import Image
+import re
 from typing import Union, Tuple
 #os.environ['PATH'] = 'C:\\research\\openslide\\bin' + ';' + os.environ['PATH'] #can either specify openslide bin path in PATH, or add it dynamically
 from histoqc.import_wrapper.openslide import openslide
@@ -45,7 +46,7 @@ class BaseImage(dict):
 
         if not self["base_mag"]:
             logging.error(f"{self['filename']}: Has unknown or uncalculated base magnification, cannot specify magnification scale! Did you try getMag?")
-            raise ValueError(f"{self['filename']}: Has unknown or uncalculated base magnification, cannot specify magnification scale! Did you try getMag?")
+            return -1
 
         self.addToPrintList("base_mag", self["base_mag"])
 
@@ -109,7 +110,24 @@ class BaseImage(dict):
         else:
             return (osh.get_best_level_for_downsample(downsample_factor), False)
 
+    @staticmethod
+    def is_valid_size(size: str):
+        size = str(size)
+        return _PATTERN_MAG.fullmatch(size) is not None
+
+    @staticmethod
+    def validate_slide_size(size: str, assertion: bool = False):
+        size = str(size)
+        if assertion:
+            assert BaseImage.is_valid_size(size), f"{size}: does not match pattern {_REGEX_MAG}"
+        # for now just cast it to str
+        return size
+
     def getImgThumb(self, size: str):
+        # note that while size is annotated as str, a bunch of functions in process Modules like SaveModule doesn't
+        # really handle it that way, and trace of previous coding also suggest that there actually lack a params
+        # type protocol in xxxModules. I think an extra layer of data sanitizing is necessary here.
+        size = BaseImage.validate_slide_size(size, assertion=False)
         # get img key with size
         key = "img_" + str(size)
         # return the img if it exists
@@ -124,8 +142,17 @@ class BaseImage(dict):
         (bx, by, bwidth, bheight) = self["img_bbox"]
         img_base_size = (bwidth, bheight)
 
+        # barricade the invalid input first
+        # can't determine operation.
+        if not BaseImage.is_valid_size(size):
+            # print out error message
+            err_msg = f"{self['filename']}: invalid arguments - {size}"
+            logging.error(err_msg)
+            self["warnings"].append(err_msg)
+            return
+
         # specifies a desired operating magnification
-        if size.endswith(("X","x")) and size[:-1].replace(".", "0", 1).isdigit():
+        if size.endswith(("X", "x")) and size[:-1].replace(".", "0", 1).isdigit():
             target_mag = float(size.upper().split("X")[0])
             # magnification
             base_mag = self["base_mag"]
@@ -176,15 +203,6 @@ class BaseImage(dict):
                 target_dims = getDimensionsByOneDim(self, int(size))
                 target_sampling_factor = img_base_size[0] / target_dims[0]
                 self[key] = getBestThumb(self, bx, by, target_dims, target_sampling_factor)
-
-        # can't determine operation.
-        else:
-            # print out error message
-            err_msg = f"{self['filename']}: invalid arguments - {size}"
-            logging.error(err_msg)
-            self["warnings"].append(err_msg)
-            return
-        
         return self[key]
 
 def getBestThumb(s: BaseImage, x: int, y: int, dims: Tuple[int, int], target_sampling_factor: float):
@@ -250,11 +268,13 @@ def resizeTileDownward(self, target_downsampling_factor, level):
     output = np.concatenate(output, axis=1)
     return output
 
+
 def rgba2rgb(s: BaseImage, img):
     bg_color = "#" + s["os_handle"].properties.get(openslide.PROPERTY_NAME_BACKGROUND_COLOR, "ffffff")
     thumb = Image.new("RGB", img.size, bg_color)
     thumb.paste(img, None, img)
     return thumb
+
 
 def printMaskHelper(type: str, prev_mask, curr_mask):
     if type == "relative2mask":
@@ -270,30 +290,53 @@ def printMaskHelper(type: str, prev_mask, curr_mask):
         return str(-1)
 
 
+def parsed_mag(mag: Union[str, int, float]) -> Union[None, float]:
+    """Parse magnification to float
+    Args:
+        mag:
+
+    Returns:
+        Validated size factor either as a float number or "NA" (MAG_NA)
+    """
+    if isinstance(mag, (int, float)):
+        return float(mag)
+    numeric_mag_str_flag = BaseImage.is_valid_size(mag)
+    invalid_flag = mag == MAG_NA or not numeric_mag_str_flag
+    if invalid_flag:
+        return MAG_NA
+    # regex determines X must either be abscent or at the end of the string
+    if "X" in mag.upper():
+        mag = mag[0:-1]
+    return float(mag)
+
+
 # this function is seperated out because in the future we hope to have automatic detection of
 # magnification if not present in open slide, and/or to confirm openslide base magnification
 def getMag(s: BaseImage, params) -> Union[float, None]:
     logging.info(f"{s['filename']} - \tgetMag")
     osh = s["os_handle"]
     mag = osh.properties.get("openslide.objective-power") or \
-            osh.properties.get("aperio.AppMag") or None
+            osh.properties.get("aperio.AppMag") or MAG_NA
     # if mag or strtobool(params.get("confirm_base_mag", "False")):
     #     # do analysis work here
     #     logging.warning(f"{s['filename']} - Unknown base magnification for file")
     #     s["warnings"].append(f"{s['filename']} - Unknown base magnification for file")
     #     return None
     # else:
-    if not mag:
-        return None
+    # workaround for unspecified mag -- with or without automatic detection it might be preferred to have
+    # mag predefined
+    mag = mag or parsed_mag(params.get("base_mag"))
+    # mag is santized after invoking getMag regarding whether it's None. Therefore, it should not raise
+    # the exception here.
+    return float(mag) if mag is not MAG_NA else MAG_NA
 
-    return float(mag)
 
 def getDimensionsByOneDim(s: BaseImage, dim: int) -> Tuple[int, int]:
     (x, y, width, height) = s["img_bbox"]
     # calulate the width or height depends on dim
     if width > height:
         h = int(dim * height / width)
-        return (dim, h)
+        return dim, h
     else:
         w = int(dim * width / height)
-        return (w, dim)
+        return w, dim

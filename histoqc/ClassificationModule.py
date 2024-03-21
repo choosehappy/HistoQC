@@ -191,7 +191,7 @@ def byExampleWithFeatures(s, params):
             # convert grayscale images into binary images if images are not binary format 
             if mask.dtype.kind != 'b':
                 # warning log
-                msg = f"Mask file '{ex[1]}' is not a binary image"
+                msg = f"Mask file '{ex[1]}' is not a binary image. Automatically converting to binary..."
                 logging.warning(s['filename'] + ' - ' + msg)
                 s["warnings"].append(msg)
                 # convert to binary
