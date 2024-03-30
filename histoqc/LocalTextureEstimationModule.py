@@ -24,6 +24,12 @@ def estimateGreyComatrixFeatures(s, params):
     img = color.rgb2gray(img)
 
     mask = s[mask_name] if not invert else ~s[mask_name]
+    if len(mask.nonzero()[0]) == 0:  # add warning in case the no tissus detected in mask
+        msg = f"LocalTextureEstimationModule.estimateGreyComatrixFeatures:{prefix} Can not estimate the empty mask since NO tissue remains detectable in mask"
+        logging.warning(f"{s['filename']} - {msg}")
+        s["warnings"].append(msg)
+        return
+
     maskidx = mask.nonzero()
     maskidx = np.asarray(maskidx).transpose()
     idx = np.random.choice(maskidx.shape[0], npatches)

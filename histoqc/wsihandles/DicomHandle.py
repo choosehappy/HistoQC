@@ -3,12 +3,13 @@ from wsidicom import WsiDicom
 import numpy as np
 from typing import Union
 
-class DicomHandle(WSIImageHandle):
+
+class DicomHandle(WSIImageHandle[WsiDicom]):
+
     def __init__(self, fname):
         self.fname = fname
         self.osh = WsiDicom.open(fname)
 
-        
         # get mmp
         self._mpp_x = self.osh.mpp.width
         self._mpp_y = self.osh.mpp.height
@@ -33,7 +34,6 @@ class DicomHandle(WSIImageHandle):
         self._has_bounding_box = False
         self._bounding_box = (0, 0, self.osh.size.width, self.osh.size.height)
 
-
     @property
     def has_bounding_box(self):
         return self._has_bounding_box
@@ -49,7 +49,7 @@ class DicomHandle(WSIImageHandle):
 
     @property
     def dimensions(self):
-        return (self.osh.size.width, self.osh.size.height) 
+        return self.osh.size.width, self.osh.size.height
 
     @property
     def magnification(self) -> Union[float, None]:

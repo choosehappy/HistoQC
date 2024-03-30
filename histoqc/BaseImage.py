@@ -1,12 +1,14 @@
 import logging
 import os
 import numpy as np
-import zlib, dill
+import zlib
+import dill
 from distutils.util import strtobool
 from PIL import Image
 import re
 from typing import Union, Tuple
 from histoqc.wsihandles.WSIImageHandle import WSIImageHandle
+
 _REGEX_MAG = r"^(\d?\.?\d*X?)"
 _PATTERN_MAG: re.Pattern = re.compile(_REGEX_MAG, flags=re.IGNORECASE)
 MAG_NA = None
@@ -29,25 +31,25 @@ class BaseImage(dict):
         self["outdir"] = fname_outdir
         self["dir"] = os.path.dirname(fname)
 
-        
         # get handles from config
         handles = params.get("handles", "openslide,wsidicom")
         # dynamically load wsi image handle
         self["os_handle"]: WSIImageHandle = WSIImageHandle.create_wsi_handle(fname, handles)
 
         self["image_base_size"] = self["os_handle"].dimensions
-        self["enable_bounding_box"] = strtobool(params.get("enable_bounding_box","False"))
+        self["enable_bounding_box"] = strtobool(params.get("enable_bounding_box", "False"))
         # check if the bbox if doesn't have bbox set enable_bounding_box to False
         self.setBBox()
         self.addToPrintList("image_bounding_box", self["img_bbox"])
         self["image_work_size"] = params.get("image_work_size", "1.25x")
         self["mask_statistics"] = params.get("mask_statistics", "relative2mask")
-        
+
         self["base_mag"] = getMag(self, params)
 
         if not self["base_mag"]:
-            logging.error(f"{self['filename']}: Has unknown or uncalculated base magnification, cannot specify magnification scale! Did you try getMag?")
-            return -1
+            logging.error(
+                f"{self['filename']}: Has unknown or uncalculated base magnification, cannot specify magnification scale! Did you try getMag?")
+            return
 
         self.addToPrintList("base_mag", self["base_mag"])
 
@@ -64,15 +66,15 @@ class BaseImage(dict):
 
     def __getitem__(self, key):
         value = super(BaseImage, self).__getitem__(key)
-        if hasattr(self,"in_memory_compression") and  self.in_memory_compression and key.startswith("img"):
+        if hasattr(self, "in_memory_compression") and self.in_memory_compression and key.startswith("img"):
             value = dill.loads(zlib.decompress(value))
         return value
 
     def __setitem__(self, key, value):
-        if hasattr(self,"in_memory_compression") and self.in_memory_compression and key.startswith("img"):
+        if hasattr(self, "in_memory_compression") and self.in_memory_compression and key.startswith("img"):
             value = zlib.compress(dill.dumps(value), level=5)
 
-        return super(BaseImage, self).__setitem__(key,value)
+        return super(BaseImage, self).__setitem__(key, value)
 
     # setbounding box start coordinate and size
     def setBBox(self):
@@ -82,14 +84,14 @@ class BaseImage(dict):
         (dim_width, dim_height) = osh.dimensions
         self["img_bbox"] = (0, 0, dim_width, dim_height)
         # try to get bbox if bounding_box is ture
-        
+
         # Does WSI has bounding box
         if self["enable_bounding_box"] and osh.has_bounding_box:
             self["img_bbox"] = osh.bounding_box
         elif self["enable_bounding_box"] and not osh.has_bounding_box:
             self["enable_bounding_box"] = False
             logging.warning(f"{self['filename']}: Bounding Box requested but could not read")
-            self["warnings"].append("Bounding Box requested but could not read")        
+            self["warnings"].append("Bounding Box requested but could not read")
 
     def addToPrintList(self, name, val):
         self[name] = val
@@ -97,10 +99,10 @@ class BaseImage(dict):
 
     # find the next higher level by giving a downsample factor 
     # return (level, isFindCloseLevel)
-    def getBestLevelForDownsample(self, downsample_factor: float) -> Tuple[int, bool]: 
+    def getBestLevelForDownsample(self, downsample_factor: float) -> Tuple[int, bool]:
         osh = self["os_handle"]
-        relative_down_factors_idx=[np.isclose(i/downsample_factor,1,atol=.01) for i in osh.level_downsamples]
-        level=np.where(relative_down_factors_idx)[0]
+        relative_down_factors_idx = [np.isclose(i / downsample_factor, 1, atol=.01) for i in osh.level_downsamples]
+        level = np.where(relative_down_factors_idx)[0]
         if level.size:
             return (level[0], True)
         else:
@@ -129,7 +131,7 @@ class BaseImage(dict):
         # return the img if it exists
         if key in self:
             return self[key]
-        
+
         # get open slide handle
         osh = self["os_handle"]
 
@@ -154,10 +156,10 @@ class BaseImage(dict):
             base_mag = self["base_mag"]
             target_sampling_factor = base_mag / target_mag
             target_dims = tuple(np.rint(np.asarray(img_base_size) / target_sampling_factor).astype(int))
-            
+
             # generate the thumb img
             self[key] = getBestThumb(self, bx, by, target_dims, target_sampling_factor)
-        
+
         # the size of the img is number 
         elif size.replace(".", "0", 1).isdigit():
             size = float(size)
@@ -166,7 +168,7 @@ class BaseImage(dict):
                 target_downscaling_factor = size
                 target_sampling_factor = 1 / target_downscaling_factor
                 target_dims = tuple(np.rint(np.asarray(img_base_size) * target_downscaling_factor).astype(int))
-                
+
                 # generate the thumb img
                 self[key] = getBestThumb(self, bx, by, target_dims, target_sampling_factor)
 
@@ -175,20 +177,20 @@ class BaseImage(dict):
                 target_level = int(size)
                 if target_level >= osh.level_count:
                     target_level = osh.level_count - 1
-                    msg = f"Desired Image Level {size+1} does not exist! Instead using level {osh.level_count-1}! Downstream output may not be correct"
-                    logging.error(f"{self['filename']}: {msg}" )
+                    msg = f"Desired Image Level {size + 1} does not exist! Instead using level {osh.level_count - 1}! Downstream output may not be correct"
+                    logging.error(f"{self['filename']}: {msg}")
                     self["warnings"].append(msg)
-                size = (tuple((np.array(img_base_size)/osh.level_downsamples[target_level]).astype(int))
+                size = (tuple((np.array(img_base_size) / osh.level_downsamples[target_level]).astype(int))
                         if self["enable_bounding_box"]
                         else osh.level_dimensions[target_level])
                 logging.info(
                     f"{self['filename']} - \t\tloading image from level {target_level} of size {osh.level_dimensions[target_level]}")
-                tile = osh.read_region((bx, by), target_level, size)                
+                tile = osh.read_region((bx, by), target_level, size)
                 self[key] = (np.asarray(rgba2rgb(self, tile))
-                            if np.shape(tile)[-1]==4 
-                            else np.asarray(tile))        
-       
-            # specifies a desired size of thumbnail
+                             if np.shape(tile)[-1] == 4
+                             else np.asarray(tile))
+
+                # specifies a desired size of thumbnail
             else:
                 # recommend having the dimension is less than 10k     
                 if size > 10000:
@@ -201,36 +203,40 @@ class BaseImage(dict):
                 self[key] = getBestThumb(self, bx, by, target_dims, target_sampling_factor)
         return self[key]
 
+
 def getBestThumb(s: BaseImage, x: int, y: int, dims: Tuple[int, int], target_sampling_factor: float):
     osh = s["os_handle"]
-    
+
     # get thumb from og
     if not s["enable_bounding_box"]:
         max_dim = dims[0] if dims[0] > dims[1] else dims[1]
         return np.array(osh.get_thumbnail((max_dim, max_dim)))
-    
+
     (level, isExactLevel) = s.getBestLevelForDownsample(target_sampling_factor)
-    
+
     # check if get the existing level
     if isExactLevel:
         tile = osh.read_region((x, y), level, dims)
-        return np.asarray(rgba2rgb(s, tile)) if np.shape(tile)[-1]==4 else np.asarray(tile)
+        return np.asarray(rgba2rgb(s, tile)) if np.shape(tile)[-1] == 4 else np.asarray(tile)
     # scale down the thumb img from the next high level
     else:
         return resizeTileDownward(s, target_sampling_factor, level)
-        
+
+
 '''
 the followings are helper functions 
 '''
+
+
 def resizeTileDownward(self, target_downsampling_factor, level):
     osh = self["os_handle"]
     (bx, by, bwidth, bheight) = self["img_bbox"]
     end_x = bx + bwidth
     end_y = by + bheight
-    
+
     cloest_downsampling_factor = osh.level_downsamples[level]
     win_size = 2048
-    
+
     # create a new img
     output = []
     for x in range(bx, end_x, win_size):
@@ -240,26 +246,25 @@ def resizeTileDownward(self, target_downsampling_factor, level):
             # Adjust extraction size for endcut
             if end_x < x + win_width:
                 win_width = end_x - x
-            if end_y < y +  win_height:
+            if end_y < y + win_height:
                 win_height = end_y - y
 
-            
             win_down_width = int(round(win_width / target_downsampling_factor))
             win_down_height = int(round(win_height / target_downsampling_factor))
-            
+
             win_width = int(round(win_width / cloest_downsampling_factor))
             win_height = int(round(win_height / cloest_downsampling_factor))
-            
+
             # TODO Note: this isn't very efficient, and if more efficiency isneeded 
             # We should likely refactor using "paste" from Image.
             # Or even just set the pixels directly with indexing.
             cloest_region = osh.read_region((x, y), level, (win_width, win_height))
-            if np.shape(cloest_region)[-1]==4:
+            if np.shape(cloest_region)[-1] == 4:
                 cloest_region = rgba2rgb(self, cloest_region)
             target_region = cloest_region.resize((win_down_width, win_down_height))
             row_piece.append(target_region)
         row_piece = np.concatenate(row_piece, axis=0)
-        
+
         output.append(row_piece)
     output = np.concatenate(output, axis=1)
     return output
@@ -308,7 +313,6 @@ def parsed_mag(mag: Union[str, int, float]) -> Union[None, float]:
 # this function is seperated out because in the future we hope to have automatic detection of
 # magnification if not present in open slide, and/or to confirm openslide base magnification
 def getMag(s: BaseImage, params) -> Union[float, None]:
-    
     osh = s["os_handle"]
     mag = osh.magnification or MAG_NA
     # workaround for unspecified mag -- with or without automatic detection it might be preferred to have
