@@ -24,6 +24,10 @@ setup(
         "version_scheme": "post-release",
     },
     setup_requires=['setuptools_scm'],
+    extras_require={
+        "dicom": ["wsidicom"],
+        "cucim": ["cucim", "cupy"],
+    },
     package_data={
         'histoqc.config': ['*.ini'],
         'histoqc.data': data_files,

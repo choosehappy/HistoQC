@@ -23,9 +23,9 @@ def separateStains(s, params):
         sys.exit(1)
         return
 
-    stain_matrix = getattr(sys.modules[__name__], stain, "")
+    stain_matrix = getattr(sys.modules[__name__], stain, None)
 
-    if stain_matrix == "":
+    if stain_matrix is None:
         logging.error(f"{s['filename']} - Unknown stain matrix specified in DeconolutionModule.separateStains")
         sys.exit(1)
         return

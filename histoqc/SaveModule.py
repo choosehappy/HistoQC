@@ -40,24 +40,14 @@ def saveAssociatedImage(s, key:str, dim:int):
     logging.info(f"{s['filename']} - \tsave{key.capitalize()}")
     osh = s["os_handle"]
 
-    # get asscociated image by key
-    associated_img = None
-    try:
-        # get label image
-        if key == "label":
-            associated_img = osh.read_label()
-        # get macro image
-        elif key == "macro":
-            associated_img = osh.read_macro()
-        else:
-            raise NameError(f"Unknown {key} image in associated_images from {s['filename']}")
-    except Exception:
-        message = f"{s['filename']}- \tsave{key.capitalize()} Can't Read '{key}' Image from Slide's Associated Images"
+    if not key in osh.associated_images:
+        message = f"{s['filename']}- save{key.capitalize()} Can't Read '{key}' Image from Slide's Associated Images"
         logging.warning(message)
         s["warnings"].append(message)
         return
-           
-    # get associated image size
+    
+    # get asscociated image by key
+    associated_img = osh.associated_images[key]
     (width, height)  = associated_img.size
 
     # calulate the width or height depends on dim
@@ -71,11 +61,6 @@ def saveAssociatedImage(s, key:str, dim:int):
     associated_img = associated_img.resize(size)
     associated_img = np.asarray(associated_img)[:, :, 0:3]
     io.imsave(f"{s['outdir']}{os.sep}{s['filename']}_{key}.png", associated_img)
-
-def saveLabel(s, params):
-    dim = params.get("small_dim", 500)
-    saveAssociatedImage(s, "label", dim)
-    return    
 
 def saveMacro(s, params):
     dim = params.get("small_dim", 500)
