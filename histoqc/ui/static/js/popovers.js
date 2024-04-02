@@ -4,14 +4,6 @@ function initPopovers() {
 }
 
 function updateAllPopovers() {
-    // Define the options for the popover.
-    const options = {
-        trigger: 'hover',
-        html: true,
-        placement: 'auto',
-        container: 'body',
-    }
-
     $('[data-toggle="popover"]').each(function() {
         var id = $(this).attr('id');
         const popover = POPOVERS[id];
