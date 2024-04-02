@@ -118,7 +118,7 @@ function handleCohortFinderResponse(data) {
     POPOVERS['be-scores-info'] = {
         'title': 'Batch Effect Scores',
         'dataContent':
-            `CohortFinder calculated batch effect (BE) scores for each sample. 
+            `CohortFinder calculated batch effect (BE) scores across the sample. 
             Higher BE scores indicate more pronounced batch effects in your dataset yielding distinct clusters in the low-dimensional embedding.<br><br>
             <b>silhouette score:</b> ${data.sil_score}<br> <b>davies-bouldin score:</b> ${data.db_score}<br> <b>calinski-harabasz score:</b> ${data.ch_score}<br>`,
         'options': {
