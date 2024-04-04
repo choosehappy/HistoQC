@@ -205,8 +205,8 @@ function rotateLabels(parcoords) {
 function tooltip(selectionGroup, tooltipDiv) {
 	const mousePosOffset = 10;
 	const margin = ({ top: 10, right: 10, bottom: 110, left: 10 })
-	const tooltip_height = window.visualViewport.width * 0.25 + 100
-	const tooltip_width = window.visualViewport.width * 0.2
+	const tooltip_height = window.visualViewport.height * 0.25 + 100
+	const tooltip_width = window.visualViewport.width * 0.18
 
 	selectionGroup.each(function () {
 		d3.select(this)

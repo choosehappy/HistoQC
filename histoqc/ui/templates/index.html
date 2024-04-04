@@ -42,7 +42,7 @@
     }
 
     body {
-      overflow-y: scroll;
+      overflow-y: hidden;
       overflow-x: hidden;
     }
 
@@ -51,20 +51,21 @@
     }
 
     #scatter-card {
-      height: 35vh;
-      width: 35vh;
+      height: 25vh;
+      width: 15vw;
     }
 
     #parcoords-card {
-      height: 35vh;
+      height: 25vh;
     }
 
     #overview-gallery-card {
-      height: 30vh
+      height: 45vh;
     }
 
     #plot-canvas {
       z-index: 0;
+
     }
 
     #grid {
@@ -77,10 +78,12 @@
 
     #lasso-canvas {
       z-index: 2;
+      cursor: crosshair;
     }
 
-    #highlight-canvas {
+    #highlighted-canvas {
       z-index: 1;
+      cursor: grab;
     }
 
     #axis-svg {
@@ -122,8 +125,7 @@
     }
 
     #scatter-mode-selector * {
-      vertical-align: middle;
-      margin: 0px 5px 0px 5px;
+      margin: 0px 2px 0px 2px;
     }
     
     #scatter-mode-selector{
@@ -253,7 +255,7 @@
       </div>
       <div class="col" style="flex-grow: 0;">
         <div class="card" id="scatter-card">
-          <div class="card-header" id="scatter-card-header" style="display: none;">
+          <div class="card-header" id="scatter-card-header" style="display: none; padding: 0.25rem;">
           </div>
           <div class="card-body">
             <!-- THE SCATTER PLOT -->
@@ -281,7 +283,7 @@
               </span>
             </div>
           </div>
-          <div class="card-body" id="overview-gallery" style="overflow: scroll;">
+          <div class="card-body" id="overview-gallery" style="overflow-y: scroll;">
             </div>
           </div>
         </div>

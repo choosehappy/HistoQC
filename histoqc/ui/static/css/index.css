@@ -179,6 +179,7 @@ th {
 	align-items: flex-end;
 	justify-content: center;
 	box-shadow: 1px 1px 2px #999;
+	cursor: pointer;
 }
 
 .overview-image-block > img {

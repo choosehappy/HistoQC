@@ -21,8 +21,8 @@ function renderScatterPlot(data) {
     var zoomEndTimeout;
 
     // define all size variables
-    var fullWidth = parseFloat(d3.select("#parcoords-card").style("height"));
-    var fullHeight = parseFloat(d3.select("#parcoords-card").style("height"));
+    var fullWidth = parseFloat(d3.select("#scatter-card").style("width"));
+    var fullHeight = parseFloat(d3.select("#scatter-card").style("height"));
     var margin = { top: 0, right: 50, bottom: 80, left: 20 };
     var width = fullWidth - margin.left - margin.right;
     var height = fullHeight - margin.top - margin.bottom;
@@ -376,7 +376,7 @@ function renderScatterPlot(data) {
             .property('checked', true);
 
         span1.append('label')
-            .attr('class', 'btn-check-label')
+            .attr('class', 'btn-check-primary')
             .attr('for', 'btnradio1')
             .text('Lasso');
 

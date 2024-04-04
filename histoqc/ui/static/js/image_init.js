@@ -165,7 +165,7 @@ function enterSelectImageView(dir, img_type) {
 function enableZoomInSelectImageView(svg) {
 	// Create the zoom behavior
 	var zoom = d3.zoom()
-		.scaleExtent([1, 10]) // Limit zoom scale (min, max)
+		.scaleExtent([1, 200]) // Limit zoom scale (min, max)
 		.on('zoom', zoomed);
 
 	// Function to handle zoom event, compatible with D3 v5
