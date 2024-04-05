@@ -29,23 +29,6 @@ function initializeImageView(dataView) {
 		);
 	});
 
-
-	// const page_start = page_num * page_size;
-	// for (var i = page_start; i < page_start+page_size; i++) {//i < case_list.length; i++) {
-	// 	$div.append(
-	// 		generate_img_block(ORIGINAL_DATASET[i]["id"],
-	// 			"overview-image-block", ORIGINAL_CASE_LIST[i], 
-	// 			CURRENT_IMAGE_TYPE, CURRENT_COMPARE_TYPE, ORIGINAL_CASE_LIST[i]
-	// 		)
-	// 	);
-	// }
-
-	// IMAGE SELECT MODE FUNCTIONALITY
-
-	// $div.children("div").children("img").click(function(){
-	// 	src_list = this.src.split('/');
-	// 	enter_select_mode(src_list[src_list.length-2].replace("%20", " "));
-	// });
 	setPageSize(dataView, 25);
 	initImageSelector(dataView);
 
@@ -53,7 +36,13 @@ function initializeImageView(dataView) {
 
 
 function updateImageView(dataView) {
-	// TODO: rewrite update function.
+	// get signal from abort controller
+	if (ABORT_CONTROLLER) {
+		ABORT_CONTROLLER.abort();
+		console.log("image requests aborted")
+	}
+	ABORT_CONTROLLER = new AbortController();
+	const signal = ABORT_CONTROLLER.signal;
 
 	updateImageViewHeight();
 
@@ -65,9 +54,15 @@ function updateImageView(dataView) {
 	const case_ids = getCaseidsFromDataView(dataView);
 
 	case_ids.forEach(function (case_id) {
-		const imgBlock = generateImgBlock(div, ORIGINAL_DATASET[case_id]["id"],
-			"overview-image-block", ORIGINAL_CASE_LIST[case_id],
-			CURRENT_IMAGE_TYPE, CURRENT_COMPARE_TYPE, ORIGINAL_CASE_LIST[case_id], zoomValue
+		const imgBlock = generateImgBlock(div, 
+			ORIGINAL_DATASET[case_id]["id"],
+			"overview-image-block", 
+			ORIGINAL_CASE_LIST[case_id],
+			CURRENT_IMAGE_TYPE, 
+			CURRENT_COMPARE_TYPE, 
+			ORIGINAL_CASE_LIST[case_id], 
+			zoomValue,
+			signal
 		);
 
 		imgBlock.on("mouseover", function () {
@@ -79,23 +74,6 @@ function updateImageView(dataView) {
 			PARCOORDS.unhighlight([ORIGINAL_DATASET[ORIGINAL_DATASET.map(function (x) { return x.id; }).indexOf(case_id)]]);
 		});
 	});
-
-	// const page_start = page_num * page_size;
-	// for (var i = page_start; i < page_start+page_size; i++) {//ORIGINAL_CASE_LIST.length; i++) {
-	// 	$div.append(
-	// 		generate_img_block(data, // data was not defined and will raise an error.
-	// 			"overview-image-block", ORIGINAL_CASE_LIST[i], 
-	// 			CURRENT_IMAGE_TYPE, CURRENT_COMPARE_TYPE, ORIGINAL_CASE_LIST[i]
-	// 		)
-	// 	);
-	// }
-
-	// $div.children("div").children("img").click(function(){
-	// 	src_list = this.src.split('/');
-	// 	enter_select_mode(src_list[src_list.length-2].replace("%20", " "));
-	// });
-
-	// update_multi_selected_image_view(case_list);
 }
 
 
@@ -212,7 +190,7 @@ function calculateHeight($div) {
 }
 
 
-function generateImgBlock(container, id, blk_class, file_name, img_type, compare_type, img_label, zoomValue) {
+function generateImgBlock(container, id, blk_class, file_name, img_type, compare_type, img_label, zoomValue, abortSignal) {
 
 	const imgBlock = container.append("div")
 		.attr("id", id)
@@ -224,24 +202,49 @@ function generateImgBlock(container, id, blk_class, file_name, img_type, compare
 		imgTypeToShow = DEFAULT_IMAGE_EXTENSIONS.indexOf(DEFAULT_LARGE_IMAGE_EXTENSION)
 	}
 	imgBlock.append("img")
-		.attr("src", generateImgSrc(
-			file_name, img_type, blk_class == "overview-image-block"
-		))
+		// .attr("src", generateImgSrc(
+		// 	file_name, img_type, blk_class == "overview-image-block"
+		// ))
 		.attr("file_name", file_name)
 		.attr("img_type", img_type)
 		.attr("onerror", "this.style.display='none'")
 		.attr("onclick", "enterSelectImageView('" + file_name + "', '" + imgTypeToShow + "')");
 
+	// Fetch the image
+	fetch(generateImgSrc(file_name, img_type, blk_class == "overview-image-block"), { abortSignal })
+		.then(response => response.blob()) // Convert response to Blob
+		.then(blob => {
+			// Create a data URL for the fetched image
+			const objectURL = URL.createObjectURL(blob);
+			// Set the src attribute of the image to the data URL
+			imgBlock.select("img").attr("src", objectURL);
+		})
+		.catch(error => console.error('Error fetching image:', error));
+
 
 	if (compare_type != -1) {	// add on second image if we are in compare mode
-		imgBlock.append("img")
-			.attr("src", generateImgSrc(
-				file_name, compare_type, blk_class == "overview-image-block"
-			))
+		const compareImg = imgBlock.append("img")
+			// .attr("src", generateImgSrc(
+			// 	file_name, compare_type, blk_class == "overview-image-block"
+			// ))
 			.attr("file_name", file_name)
 			.attr("img_type", compare_type)
 			.attr("onerror", "this.style.display='none'");
+
+		fetch(generateImgSrc(file_name, compare_type, blk_class == "overview-image-block"), { abortSignal })
+			.then(response => response.blob()) // Convert response to Blob
+			.then(blob => {
+				// Create a data URL for the fetched image
+				const objectURL = URL.createObjectURL(blob);
+				// Set the src attribute of the image to the data URL
+				compareImg.attr("src", objectURL);
+			})
+			.catch(error => console.error('Error fetching image:', error));
 	}
+
+
+
+
 	imgBlock.append("div")
 		.append("span")
 		.text(img_label);
@@ -298,11 +301,6 @@ function initImageSelector(dataView) {
 	}
 	$cmp_selector.append(generateOptionHtml("-1", "compare ...", true));
 
-	// $img_selector.selectpicker('refresh');
-	// $img_selector.selectpicker('render');
-
-	// $cmp_selector.selectpicker('refresh');
-	// $cmp_selector.selectpicker('render');
 
 	$img_selector.change(function () {
 		CURRENT_IMAGE_TYPE = $(this).val();

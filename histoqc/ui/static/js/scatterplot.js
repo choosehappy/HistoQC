@@ -22,8 +22,8 @@ function renderScatterPlot(data) {
 
     // define all size variables
     var fullWidth = parseFloat(d3.select("#scatter-card").style("width"));
-    var fullHeight = parseFloat(d3.select("#scatter-card").style("height"));
-    var margin = { top: 0, right: 50, bottom: 80, left: 20 };
+    var fullHeight = parseFloat(d3.select("#scatter-card-body").style("height"));
+    var margin = { top: 0, right: 50, bottom: 50, left: 20 };
     var width = fullWidth - margin.left - margin.right;
     var height = fullHeight - margin.top - margin.bottom;
 
@@ -305,8 +305,8 @@ function renderScatterPlot(data) {
 
                             if (filteredItems.length > 0) {
                                 canvas.style("opacity", 0.2)
+                                // clearBrushedParcoords();
                                 drawHighlightedPoints(data, selectedIndices, state.newX, state.newY, highlightedCanvas);
-
                                 updateBrushedParcoords(filteredItems)
                                 gridUpdate(filteredItems)
                             } else {
@@ -315,6 +315,7 @@ function renderScatterPlot(data) {
                                 clearBrushedParcoords();
                                 gridUpdate(ORIGINAL_DATASET);
                             }
+                            updateImageView(DATA_VIEW)
 
                         }
                     });

@@ -67,7 +67,10 @@ function renderLines() {
 	var pager = new Slick.Controls.Pager(DATA_VIEW, grid, $("#pager"));
 
 	// wire up pager to drive the image pane. 
-	$(".sgi").click(() => updateImageView(DATA_VIEW))
+	$(".sgi").click(() => {
+		updateImageView(DATA_VIEW)
+	})
+
 
 	// DATA_VIEW subscriptions drive the grid
 	DATA_VIEW.onRowCountChanged.subscribe(function (e, args) {
@@ -75,7 +78,7 @@ function renderLines() {
 		grid.render();
 
 		// update the image pane when the paging changes
-		updateImageView(DATA_VIEW);
+		// updateImageView(DATA_VIEW);
 
 	});
 
@@ -84,7 +87,7 @@ function renderLines() {
 		grid.render();
 
 		// update the image pane when the paging changes
-		updateImageView(DATA_VIEW);
+		// updateImageView(DATA_VIEW);
 	});
 
 
@@ -108,6 +111,7 @@ function renderLines() {
 		} else {
 			DATA_VIEW.sort(comparer, args.sortAsc);
 		}
+		updateImageView(DATA_VIEW);
 	});
 
 	// highlight row in chart
@@ -141,8 +145,9 @@ function renderLines() {
 	})
 
 	PARCOORDS.on("brushend", function (data) {
-		updateImageView(DATA_VIEW);
 		gridUpdate(data);
+		updateImageView(DATA_VIEW);
+
 		const canvas = d3.select('#plot-canvas');
 		BRUSHED_IDS = data.map(d => d.id);
 
@@ -183,12 +188,18 @@ function updateParcoords(data) {
 function updateBrushedParcoords(data) {
 	PARCOORDS
 		.state.brushed = data;
+	BRUSHED_IDS = data.map(d => d.id);
 	
 	PARCOORDS.renderBrushed();
 }
 
 function clearBrushedParcoords() {
-	PARCOORDS.brushReset();
+	// PARCOORDS.brushReset();
+	PARCOORDS.state.brushed = [];
+	PARCOORDS.brushed(false)
+	BRUSHED_IDS = [];
+	const canvas = d3.select('#plot-canvas');
+	canvas.style("opacity", 1)
 	PARCOORDS.renderBrushed();
 }
 

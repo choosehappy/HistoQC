@@ -76,6 +76,7 @@ function renderComponents() {
 
 			var dataView = renderLines();
 			initializeImageView(dataView);
+			updateImageView(dataView);
 			initScatterPlotMessage('<h4>Click "CohortFinder" to compute and render the 2D embedding.<h4>');
 			initializeCF();
 			initPopovers();

@@ -49,3 +49,5 @@ var SCATTER_PLOT = {};
 // Each element key should be the id of the popover element, and the value should be another object with the keys 'title' and 'content'
 var POPOVERS = {
 };
+
+var ABORT_CONTROLLER;
