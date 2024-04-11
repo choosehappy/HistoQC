@@ -57,3 +57,5 @@ function abortFetch() {
 	ABORT_CONTROLLER = new AbortController();
 	console.log("Fetch aborted")
 }
+
+var USE_SMALL = true;

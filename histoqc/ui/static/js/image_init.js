@@ -200,22 +200,19 @@ function generateImgBlock(container, case_id, blk_class, file_name, img_type, co
 		imgTypeToShow = DEFAULT_IMAGE_EXTENSIONS.indexOf(DEFAULT_LARGE_IMAGE_EXTENSION)
 	}
 	imgBlock.append("img")
-		// .attr("src", generateImgSrc(
-		// 	file_name, img_type, blk_class == "overview-image-block"
-		// ))
 		.attr("file_name", file_name)
 		.attr("img_type", img_type)
 		.attr("onerror", "this.style.display='none'")
 		.attr("onclick", "enterSelectImageView('" + file_name + "', '" + imgTypeToShow + "')");
 		
-	const imgSource = generateImgSrc(file_name, img_type, blk_class == "overview-image-block")
+	const imgSource = generateImgSrc(file_name, img_type, USE_SMALL)
 	// Fetch the image
 	fetchImage(imgSource, case_id, "first", abortSignal);
 
 
 
 	if (compare_type != -1) {	// add on second image if we are in compare mode
-		const compareSource = generateImgSrc(file_name, compare_type, blk_class == "overview-image-block")
+		const compareSource = generateImgSrc(file_name, compare_type, USE_SMALL)
 		const compareImg = imgBlock.append("img")
 			.attr("file_name", file_name)
 			.attr("img_type", compare_type)
@@ -232,14 +229,12 @@ function generateImgBlock(container, case_id, blk_class, file_name, img_type, co
 }
 
 
-function generateImgSrc(file_name, img_type_index, use_small = false) {
+function generateImgSrc(file_name, img_type_index, use_small) {
 	var image_extension = DEFAULT_IMAGE_EXTENSIONS[img_type_index];
-	// if (use_small && SMALL_IMAGE_EXTENSIONS.indexOf(image_extension) >= 0) {
-	// 	image_extension = image_extension.split(".")[0] + "_small.png";
-	// }
-
-	// path calls the image endpoint.
-	return window.location.origin + "/image/" + file_name + '/' + image_extension;
+	if (use_small && image_extension != DEFAULT_IMAGE_EXTENSION) {
+		return `${window.location.origin}/image/${file_name}/${image_extension}/0.1`;
+	}
+	return `${window.location.origin}/image/${file_name}/${image_extension}`;
 }
 
 

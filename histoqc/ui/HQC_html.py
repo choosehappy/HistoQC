@@ -3,6 +3,8 @@ import os
 from argparse import Namespace
 from cohortfinder import runCohortFinder
 import json
+from PIL import Image
+import io
 # constants 
 cf_results_filename = 'results_cohortfinder.tsv'
 
@@ -27,13 +29,29 @@ def image_extensions(foldername):
     return thumbnail_suffixes
 
 @html.route('/image/<foldername>/<suffix>', methods=['GET'])
-def image(foldername, suffix):
+@html.route('/image/<foldername>/<suffix>/<downsample>', methods=['GET'])
+def image(foldername, suffix, downsample=None):
+    
     # read image from file system and send over http
     img_name = foldername + suffix
     img_path = os.path.join(current_app.config['data_directory'], foldername, img_name)
     # return send_from_directory(current_app.config['assets_path'], fn)
-    return send_file(img_path)
+    if downsample is None:
+        return send_file(img_path)
+    elif float(downsample) < 1:
+        # Read image from file system
+        img_path = os.path.join(current_app.config['data_directory'], foldername, img_name)
+        image_buffer = io.BytesIO()
 
+        image = Image.open(img_path)
+        size = [int(dim * float(downsample)) for dim in image.size]
+        image.thumbnail(size)
+        image.save(image_buffer, format='PNG')
+        image_buffer.seek(0)
+
+        # Return the image buffer
+        return send_file(image_buffer, mimetype='image/png')
+    
 
 @html.route('/results_path', methods=['GET'])
 def datadir():
