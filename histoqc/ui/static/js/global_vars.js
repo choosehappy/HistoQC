@@ -50,4 +50,10 @@ var SCATTER_PLOT = {};
 var POPOVERS = {
 };
 
-var ABORT_CONTROLLER;
+var ABORT_CONTROLLER = new AbortController();
+
+function abortFetch() {
+	ABORT_CONTROLLER.abort()
+	ABORT_CONTROLLER = new AbortController();
+	console.log("Fetch aborted")
+}

@@ -13,6 +13,10 @@ html = Blueprint('html', __name__, template_folder='templates')
 def index():
     return render_template('index.html')
 
+@html.route('/abort', methods=['GET'])
+def abort():
+    return render_template('abort.html')
+
 @html.route('/image_extensions/<foldername>', methods=['GET'])
 def image_extensions(foldername):
     """
