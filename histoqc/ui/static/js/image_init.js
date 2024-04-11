@@ -23,7 +23,7 @@ function initializeImageView(dataView) {
 
 	const case_ids = getCaseidsFromDataView(dataView);
 	case_ids.forEach(function (case_id) {
-		generateImgBlock(div, ORIGINAL_DATASET[case_id]["id"],
+		generateImgBlock(div, case_id,
 			"overview-image-block", ORIGINAL_CASE_LIST[case_id],
 			CURRENT_IMAGE_TYPE, CURRENT_COMPARE_TYPE, ORIGINAL_CASE_LIST[case_id], zoomValue
 		);
@@ -50,70 +50,26 @@ function updateImageView(dataView) {
 	const case_ids = getCaseidsFromDataView(dataView);
 
 	case_ids.forEach(function (case_id) {
-		const source = generateImgSrc(ORIGINAL_CASE_LIST[case_id], CURRENT_IMAGE_TYPE, false);
-		var compare_source = null;
-		if (CURRENT_COMPARE_TYPE != -1) {
-			compare_source = generateImgSrc(ORIGINAL_CASE_LIST[case_id], CURRENT_COMPARE_TYPE, false);
-		}
+		const imgBlock = generateImgBlock(div, 
+			case_id,
+			"overview-image-block", 
+			ORIGINAL_CASE_LIST[case_id],
+			CURRENT_IMAGE_TYPE, 
+			CURRENT_COMPARE_TYPE, 
+			ORIGINAL_CASE_LIST[case_id], 
+			zoomValue,
+			signal
+		);
 
-		fetchImages(source, compare_source, signal).then(urls => {
-			generateImgBlock(div,
-				case_id,
-				ORIGINAL_DATASET[case_id]["id"],
-				"overview-image-block",
-				ORIGINAL_CASE_LIST[case_id],
-				CURRENT_IMAGE_TYPE,
-				CURRENT_COMPARE_TYPE,
-				ORIGINAL_CASE_LIST[case_id],
-				zoomValue,
-				urls,
-			);
-		})
+		imgBlock.on("mouseover", function () {
 
-		// fetch(source, { signal }).then(response => {
-		// 	if (CURRENT_COMPARE_TYPE != -1) {
-		// 		fetch(compare_source, { signal });
-		// 	}
-		// 	return response.blob();
-		// }).then(blob => {
-		// 	const objectURL = URL.createObjectURL(blob);
-			
+			PARCOORDS.highlight([ORIGINAL_DATASET[ORIGINAL_DATASET.map(function (x) { return x.id; }).indexOf(case_id)]]);
+		});
 
-		// }).catch(error => {
-		// 	if (error.name === 'AbortError') {
-		// 		console.log('Fetch aborted:', error.message);
-		// 		// Handle abort signal
-		// 	} else {
-		// 		console.error('Fetch error:', error);
-		// 		// Handle other errors
-		// 	}
-		// });
-		// const imgBlock = generateImgBlock(div, 
-		// 	ORIGINAL_DATASET[case_id]["id"],
-		// 	"overview-image-block", 
-		// 	ORIGINAL_CASE_LIST[case_id],
-		// 	CURRENT_IMAGE_TYPE, 
-		// 	CURRENT_COMPARE_TYPE, 
-		// 	ORIGINAL_CASE_LIST[case_id], 
-		// 	zoomValue,
-		// 	signal
-		// );
-
-		// imgBlock.on("mouseover", function () {
-
-		// 	PARCOORDS.highlight([ORIGINAL_DATASET[ORIGINAL_DATASET.map(function (x) { return x.id; }).indexOf(case_id)]]);
-		// });
-
-		// imgBlock.on("mouseout", function () {
-		// 	PARCOORDS.unhighlight([ORIGINAL_DATASET[ORIGINAL_DATASET.map(function (x) { return x.id; }).indexOf(case_id)]]);
-		// });
+		imgBlock.on("mouseout", function () {
+			PARCOORDS.unhighlight([ORIGINAL_DATASET[ORIGINAL_DATASET.map(function (x) { return x.id; }).indexOf(case_id)]]);
+		});
 	});
-	// try {
-	// 	ABORT_CONTROLLER.abort();
-
-	// } catch (error) {
-	// 	console.error('Error aborting image requests:', error);
-	// }
 }
 
 
@@ -160,9 +116,11 @@ function enterSelectImageView(dir, img_type) {
 		if (SKIP_IMAGE_EXTENSIONS.indexOf(i) >= 0) {
 			continue;
 		}
-		generateImgBlock(div, dir,
+		const extension = DEFAULT_IMAGE_EXTENSIONS[i];
+		generateImgBlock(div, 
+						extension.split(".")[0],
 			"candidate-image-block", dir,
-			i, -1, DEFAULT_IMAGE_EXTENSIONS[i], 1.0
+			i, -1, extension, 1.0, null
 		);
 	}
 
@@ -230,23 +188,12 @@ function calculateHeight($div) {
 }
 
 
-function generateImgBlock(container, case_id, id, blk_class, file_name, img_type, compare_type, img_label, zoomValue, urls) {
+function generateImgBlock(container, case_id, blk_class, file_name, img_type, compare_type, img_label, zoomValue, abortSignal) {
 
 	const imgBlock = container.append("div")
-		.attr("id", id)
+		.attr("id", case_id)
 		.attr("class", blk_class)
-		.style("zoom", zoomValue)
-		.on("mouseover", function () {
-			PARCOORDS.highlight(
-				[ORIGINAL_DATASET[ORIGINAL_DATASET.map(function (x) { return x.id; }).indexOf(case_id)]]
-			);
-		})
-		.on("mouseout", function () {
-			PARCOORDS.unhighlight(
-				[ORIGINAL_DATASET[ORIGINAL_DATASET.map(function (x) { return x.id; }).indexOf(case_id)]]
-			);
-		});
-		
+		.style("zoom", zoomValue);
 
 	var imgTypeToShow = img_type;
 	if (img_type == DEFAULT_IMAGE_EXTENSIONS.indexOf(DEFAULT_IMAGE_EXTENSION)) {	// No need to show the small image.
@@ -259,15 +206,22 @@ function generateImgBlock(container, case_id, id, blk_class, file_name, img_type
 		.attr("file_name", file_name)
 		.attr("img_type", img_type)
 		.attr("onerror", "this.style.display='none'")
-		.attr("onclick", "enterSelectImageView('" + file_name + "', '" + imgTypeToShow + "')")
-		.attr("src", urls[0]);
+		.attr("onclick", "enterSelectImageView('" + file_name + "', '" + imgTypeToShow + "')");
+		
+	const imgSource = generateImgSrc(file_name, img_type, blk_class == "overview-image-block")
+	// Fetch the image
+	fetchImage(imgSource, case_id, "first", abortSignal);
+
+
 
 	if (compare_type != -1) {	// add on second image if we are in compare mode
-		imgBlock.append("img")
+		const compareSource = generateImgSrc(file_name, compare_type, blk_class == "overview-image-block")
+		const compareImg = imgBlock.append("img")
 			.attr("file_name", file_name)
 			.attr("img_type", compare_type)
-			.attr("onerror", "this.style.display='none'")
-			.attr("src", urls[1]);
+			.attr("onerror", "this.style.display='none'");
+
+		fetchImage(compareSource, case_id, "last", abortSignal);
 	}
 
 	imgBlock.append("div")
@@ -288,20 +242,6 @@ function generateImgSrc(file_name, img_type_index, use_small = false) {
 	return window.location.origin + "/image/" + file_name + '/' + image_extension;
 }
 
-async function fetchImages(source, compare_source, signal) {
-	var imgURL = await fetch(source, { signal })
-		.then(response => response.blob())
-		.then(blob => URL.createObjectURL(blob));
-	var compareURL;
-
-	if (compare_source) {
-		compareURL = await fetch(compare_source, { signal })
-		.then(response => response.blob())
-		.then(blob => URL.createObjectURL(blob));
-	}
-	return [imgURL, compareURL];
-}
-
 
 function enterDetailImageView(file_name, img_type, src) {
 	$("#detail-image-name > span").text(file_name);
@@ -319,6 +259,17 @@ function enterDetailImageView(file_name, img_type, src) {
 	}
 }
 
+async function fetchImage(source, dom_id, firstlast, abortSignal) {
+	fetch(source, { signal: abortSignal })
+	.then(response => response.blob())
+	.then(blob => {
+		const objectURL = URL.createObjectURL(blob);
+		
+		$(`#${dom_id} img:${firstlast}`).attr('src', objectURL);
+	})
+	// .catch(error => console.error('Error fetching image:', error));
+}
+
 
 function initImageSelector(dataView) {
 
@@ -326,9 +277,6 @@ function initImageSelector(dataView) {
 	$cmp_selector = $("#comparison-select");
 
 	for (var index = 0; index < DEFAULT_IMAGE_EXTENSIONS.length; index++) {
-		// if (SKIP_IMAGE_EXTENSIONS.indexOf(index) >= 0) {
-		// 	continue;
-		// }
 		var key = DEFAULT_IMAGE_EXTENSIONS[index];
 
 		if (key == DEFAULT_IMAGE_EXTENSION) {
