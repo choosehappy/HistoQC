@@ -37,7 +37,11 @@ function initializeImageView(dataView) {
 
 function updateImageView(dataView) {
 	// get signal from abort controller
-	abortFetch();
+	if (ABORT_CONTROLLER) {
+		ABORT_CONTROLLER.abort();
+		console.log("image requests aborted")
+	}
+	ABORT_CONTROLLER = new AbortController();
 	const signal = ABORT_CONTROLLER.signal;
 
 	updateImageViewHeight();
@@ -50,70 +54,26 @@ function updateImageView(dataView) {
 	const case_ids = getCaseidsFromDataView(dataView);
 
 	case_ids.forEach(function (case_id) {
-		const source = generateImgSrc(ORIGINAL_CASE_LIST[case_id], CURRENT_IMAGE_TYPE, false);
-		var compare_source = null;
-		if (CURRENT_COMPARE_TYPE != -1) {
-			compare_source = generateImgSrc(ORIGINAL_CASE_LIST[case_id], CURRENT_COMPARE_TYPE, false);
-		}
+		const imgBlock = generateImgBlock(div, 
+			ORIGINAL_DATASET[case_id]["id"],
+			"overview-image-block", 
+			ORIGINAL_CASE_LIST[case_id],
+			CURRENT_IMAGE_TYPE, 
+			CURRENT_COMPARE_TYPE, 
+			ORIGINAL_CASE_LIST[case_id], 
+			zoomValue,
+			signal
+		);
 
-		fetchImages(source, compare_source, signal).then(urls => {
-			generateImgBlock(div,
-				case_id,
-				ORIGINAL_DATASET[case_id]["id"],
-				"overview-image-block",
-				ORIGINAL_CASE_LIST[case_id],
-				CURRENT_IMAGE_TYPE,
-				CURRENT_COMPARE_TYPE,
-				ORIGINAL_CASE_LIST[case_id],
-				zoomValue,
-				urls,
-			);
-		})
+		imgBlock.on("mouseover", function () {
 
-		// fetch(source, { signal }).then(response => {
-		// 	if (CURRENT_COMPARE_TYPE != -1) {
-		// 		fetch(compare_source, { signal });
-		// 	}
-		// 	return response.blob();
-		// }).then(blob => {
-		// 	const objectURL = URL.createObjectURL(blob);
-			
+			PARCOORDS.highlight([ORIGINAL_DATASET[ORIGINAL_DATASET.map(function (x) { return x.id; }).indexOf(case_id)]]);
+		});
 
-		// }).catch(error => {
-		// 	if (error.name === 'AbortError') {
-		// 		console.log('Fetch aborted:', error.message);
-		// 		// Handle abort signal
-		// 	} else {
-		// 		console.error('Fetch error:', error);
-		// 		// Handle other errors
-		// 	}
-		// });
-		// const imgBlock = generateImgBlock(div, 
-		// 	ORIGINAL_DATASET[case_id]["id"],
-		// 	"overview-image-block", 
-		// 	ORIGINAL_CASE_LIST[case_id],
-		// 	CURRENT_IMAGE_TYPE, 
-		// 	CURRENT_COMPARE_TYPE, 
-		// 	ORIGINAL_CASE_LIST[case_id], 
-		// 	zoomValue,
-		// 	signal
-		// );
-
-		// imgBlock.on("mouseover", function () {
-
-		// 	PARCOORDS.highlight([ORIGINAL_DATASET[ORIGINAL_DATASET.map(function (x) { return x.id; }).indexOf(case_id)]]);
-		// });
-
-		// imgBlock.on("mouseout", function () {
-		// 	PARCOORDS.unhighlight([ORIGINAL_DATASET[ORIGINAL_DATASET.map(function (x) { return x.id; }).indexOf(case_id)]]);
-		// });
+		imgBlock.on("mouseout", function () {
+			PARCOORDS.unhighlight([ORIGINAL_DATASET[ORIGINAL_DATASET.map(function (x) { return x.id; }).indexOf(case_id)]]);
+		});
 	});
-	// try {
-	// 	ABORT_CONTROLLER.abort();
-
-	// } catch (error) {
-	// 	console.error('Error aborting image requests:', error);
-	// }
 }
 
 
@@ -230,23 +190,12 @@ function calculateHeight($div) {
 }
 
 
-function generateImgBlock(container, case_id, id, blk_class, file_name, img_type, compare_type, img_label, zoomValue, urls) {
+function generateImgBlock(container, id, blk_class, file_name, img_type, compare_type, img_label, zoomValue, abortSignal) {
 
 	const imgBlock = container.append("div")
 		.attr("id", id)
 		.attr("class", blk_class)
-		.style("zoom", zoomValue)
-		.on("mouseover", function () {
-			PARCOORDS.highlight(
-				[ORIGINAL_DATASET[ORIGINAL_DATASET.map(function (x) { return x.id; }).indexOf(case_id)]]
-			);
-		})
-		.on("mouseout", function () {
-			PARCOORDS.unhighlight(
-				[ORIGINAL_DATASET[ORIGINAL_DATASET.map(function (x) { return x.id; }).indexOf(case_id)]]
-			);
-		});
-		
+		.style("zoom", zoomValue);
 
 	var imgTypeToShow = img_type;
 	if (img_type == DEFAULT_IMAGE_EXTENSIONS.indexOf(DEFAULT_IMAGE_EXTENSION)) {	// No need to show the small image.
@@ -259,16 +208,42 @@ function generateImgBlock(container, case_id, id, blk_class, file_name, img_type
 		.attr("file_name", file_name)
 		.attr("img_type", img_type)
 		.attr("onerror", "this.style.display='none'")
-		.attr("onclick", "enterSelectImageView('" + file_name + "', '" + imgTypeToShow + "')")
-		.attr("src", urls[0]);
+		.attr("onclick", "enterSelectImageView('" + file_name + "', '" + imgTypeToShow + "')");
+
+	// Fetch the image
+	fetch(generateImgSrc(file_name, img_type, blk_class == "overview-image-block"), { abortSignal })
+		.then(response => response.blob()) // Convert response to Blob
+		.then(blob => {
+			// Create a data URL for the fetched image
+			const objectURL = URL.createObjectURL(blob);
+			// Set the src attribute of the image to the data URL
+			imgBlock.select("img").attr("src", objectURL);
+		})
+		.catch(error => console.error('Error fetching image:', error));
+
 
 	if (compare_type != -1) {	// add on second image if we are in compare mode
-		imgBlock.append("img")
+		const compareImg = imgBlock.append("img")
+			// .attr("src", generateImgSrc(
+			// 	file_name, compare_type, blk_class == "overview-image-block"
+			// ))
 			.attr("file_name", file_name)
 			.attr("img_type", compare_type)
-			.attr("onerror", "this.style.display='none'")
-			.attr("src", urls[1]);
+			.attr("onerror", "this.style.display='none'");
+
+		fetch(generateImgSrc(file_name, compare_type, blk_class == "overview-image-block"), { abortSignal })
+			.then(response => response.blob()) // Convert response to Blob
+			.then(blob => {
+				// Create a data URL for the fetched image
+				const objectURL = URL.createObjectURL(blob);
+				// Set the src attribute of the image to the data URL
+				compareImg.attr("src", objectURL);
+			})
+			.catch(error => console.error('Error fetching image:', error));
 	}
+
+
+
 
 	imgBlock.append("div")
 		.append("span")
@@ -286,20 +261,6 @@ function generateImgSrc(file_name, img_type_index, use_small = false) {
 
 	// path calls the image endpoint.
 	return window.location.origin + "/image/" + file_name + '/' + image_extension;
-}
-
-async function fetchImages(source, compare_source, signal) {
-	var imgURL = await fetch(source, { signal })
-		.then(response => response.blob())
-		.then(blob => URL.createObjectURL(blob));
-	var compareURL;
-
-	if (compare_source) {
-		compareURL = await fetch(compare_source, { signal })
-		.then(response => response.blob())
-		.then(blob => URL.createObjectURL(blob));
-	}
-	return [imgURL, compareURL];
 }
 
 
