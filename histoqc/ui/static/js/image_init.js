@@ -232,7 +232,7 @@ function generateImgBlock(container, case_id, blk_class, file_name, img_type, co
 function generateImgSrc(file_name, img_type_index, use_small) {
 	var image_extension = DEFAULT_IMAGE_EXTENSIONS[img_type_index];
 	if (use_small && image_extension != DEFAULT_IMAGE_EXTENSION) {
-		return `${window.location.origin}/image/${file_name}/${image_extension}/0.1`;
+		return `${window.location.origin}/image/${file_name}/${image_extension}/${SMALL_HEIGHT}`;
 	}
 	return `${window.location.origin}/image/${file_name}/${image_extension}`;
 }

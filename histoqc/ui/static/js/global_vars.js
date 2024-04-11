@@ -59,3 +59,4 @@ function abortFetch() {
 }
 
 var USE_SMALL = true;
+const SMALL_HEIGHT = 100;
