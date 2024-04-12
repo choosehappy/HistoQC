@@ -262,7 +262,7 @@ async function fetchImage(source, dom_id, firstlast, abortSignal) {
 		
 		$(`#${dom_id} img:${firstlast}`).attr('src', objectURL);
 	})
-	// .catch(error => console.error('Error fetching image:', error));
+	.catch(error => console.error('Error fetching image:', error));
 }
 
 

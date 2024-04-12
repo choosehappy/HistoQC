@@ -19,6 +19,7 @@
   <script src="{{url_for('static', filename='libs/slickgrid/js/slick.core.js')}}"></script>
   <script src="{{url_for('static', filename='libs/slickgrid/js/slick.interactions.js')}}"></script>
   <script src="{{url_for('static', filename='libs/slickgrid/js/slick.grid.js')}}"></script>
+  <script src="{{url_for('static', filename='libs/slickgrid/js/slick.editors.js')}}"></script>
   <script src="{{url_for('static', filename='libs/slickgrid/js/slick.dataview.js')}}"></script>
 
 
@@ -161,6 +162,7 @@
       </span>
       <span>
         <button type="button" id="modal-toggle" class="btn btn-primary btn-lg">CohortFinder</button>
+        <button type="button" class="btn btn-primary btn-lg" onclick="exportResultsTsv()">Download</button>
       </span>
     </div>
   </nav>

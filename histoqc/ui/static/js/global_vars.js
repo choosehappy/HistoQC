@@ -9,7 +9,9 @@ var ORIGINAL_DATASET = [],
 	ORIGINAL_CASE_LIST = [],
 	CURRENT_CASE_LIST = [],
 	ORIGINAL_CASE_DICT = {},
-	ORIGINAL_FEATURE_LIST = [];
+	ORIGINAL_FEATURE_LIST = [],
+	ORIGINAL_TSV_LINES;
+
 var CURRENT_SELECTED = "";
 // decide which attributes to keep in ORIGINAL_CASE_DICT
 var FEATURES_TO_MAP = ["outdir"];

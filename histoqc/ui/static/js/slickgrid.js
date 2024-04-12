@@ -48,11 +48,13 @@ function renderLines() {
 	///////////////////////////// SLICK GRID SETUP /////////////////////////////
 	var column_keys = d3.keys(ORIGINAL_DATASET[0]);
 	var columns = column_keys.map(function (key, i) {
+		const editor = key == "comments" ? Slick.Editors.LongText : null;
 		return {
 			id: key,
 			name: key,
 			field: key,
-			sortable: true
+			sortable: true,
+			editor: editor
 		}
 	});
 
@@ -60,6 +62,7 @@ function renderLines() {
 		enableCellNavigation: true,
 		enableColumnReorder: false,
 		multiColumnSort: false,
+		editable: true
 	};
 
 	DATA_VIEW = new Slick.Data.DataView();

@@ -13,10 +13,10 @@ $(document).ready(function () {
 
 function loadResultsTsv(data) {
 	console.log("loaded data")
-	console.log(data);
 
+	FILE_HEADER = data.split(/#dataset:\s?/)[0] + "#dataset: ";
 	const fileContents = data.split(/#dataset:\s?/)[1];
-	const lines = d3.tsvParse(fileContents, function (d) {  // taken from original HistoQC ui code
+	ORIGINAL_TSV_LINES = d3.tsvParse(fileContents, function (d) {  // taken from original HistoQC ui code
 		if (d.hasOwnProperty("")) delete d[""];
 		for (var key in d) {
 			if ($.isNumeric(d[key])) {
@@ -35,11 +35,11 @@ function loadResultsTsv(data) {
 		return d;
 	});
 
-	original_features = Object.keys(lines[0])
+	original_features = Object.keys(ORIGINAL_TSV_LINES[0])
 
 	current_parallel_attributes = original_features.filter(function (d) {
 		// in DEFAULT_PARAC_ATTRIBUTES and is numeric
-		if (typeof (lines[0][d]) == "number" && DEFAULT_PARAC_ATTRIBUTES.indexOf(d) != -1) {
+		if (typeof (ORIGINAL_TSV_LINES[0][d]) == "number" && DEFAULT_PARAC_ATTRIBUTES.indexOf(d) != -1) {
 			return true;
 		}
 		return false;
@@ -47,10 +47,12 @@ function loadResultsTsv(data) {
 
 	console.log(current_parallel_attributes)
 
-	ORIGINAL_DATASET = lines.map(function (d) {
+	// Format data entries into a list of dictionaries.
+	ORIGINAL_DATASET = ORIGINAL_TSV_LINES.map(function (d) {
 		attr_value_dict = {
 			case_name: d["filename"],
-			gid: d["groupid"]
+			gid: d["groupid"],
+			comments: d["comments"]
 		};
 		for (var i = 0; i < current_parallel_attributes.length; i++) {
 			attr_value_dict[current_parallel_attributes[i]] =
@@ -59,11 +61,36 @@ function loadResultsTsv(data) {
 		return attr_value_dict;
 	});
 	
-	ORIGINAL_CASE_LIST = ORIGINAL_DATASET.map(function (d) {
-		return d["case_name"];
+	ORIGINAL_CASE_LIST = ORIGINAL_TSV_LINES.map(function (d) {
+		return d["filename"];
 	});
 
 	renderComponents();
+}
+
+function exportResultsTsv() {
+	const lines_with_comments = ORIGINAL_TSV_LINES.map(function (d, i) {
+		d["comments"] = DATA_VIEW.items[i]["comments"];
+		return d;
+	});
+
+	const fileContent = FILE_HEADER + d3.tsvFormat(lines_with_comments)
+
+	// Create a blob object representing the data as a file
+	var blob = new Blob([fileContent], { type: 'text/plain' });
+
+	// Create a temporary anchor element
+	var a = document.createElement('a');
+	a.href = window.URL.createObjectURL(blob);
+
+	// Set the file name
+	a.download = 'results_modified.tsv';
+
+	// Trigger the download
+	document.body.appendChild(a);
+	a.click();
+
+	document.body.removeChild(a);
 }
 
 function renderComponents() {
