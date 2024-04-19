@@ -15,9 +15,6 @@ html = Blueprint('html', __name__, template_folder='templates')
 def index():
     return render_template('index.html')
 
-@html.route('/abort', methods=['GET'])
-def abort():
-    return render_template('abort.html')
 
 @html.route('/image_extensions/<foldername>', methods=['GET'])
 def image_extensions(foldername):
@@ -27,6 +24,7 @@ def image_extensions(foldername):
     folderpath = os.path.join(current_app.config['data_directory'], foldername)
     thumbnail_suffixes = [f.split(foldername)[1] for f in os.listdir(folderpath) if f.endswith('.png')]
     return thumbnail_suffixes
+
 
 @html.route('/image/<foldername>/<suffix>', methods=['GET'])
 @html.route('/image/<foldername>/<suffix>/<height>', methods=['GET'])
@@ -52,8 +50,6 @@ def image(foldername, suffix, height=None):
 
         # Return the image buffer
         return send_file(image_buffer, mimetype='image/png')
-    
-    
 
 
 @html.route('/results_path', methods=['GET'])
@@ -77,13 +73,13 @@ def hqc_results():
 
     return send_file(results_path)
 
+
 @html.route('/run_cohort_finder', methods=['GET'])
 def run_cohort_finder():
     # check if cohortFinder has already been run (with output saved)
     fp = os.path.join(current_app.config['data_directory'], '**', cf_results_filename)[0]
     if os.path.isfile(fp):
         pass
-
 
     current_app.logger.info('running CohortFinder...')
     cf_args = Namespace()
@@ -99,7 +95,6 @@ def run_cohort_finder():
     cf_args.resultsfilepath = os.path.join(current_app.config['data_directory'], current_app.config['results_filename'])
     cf_args.disable_save = True
     cf_args.quality_control_tool = "histoqc"
-    
     
     # ---------------- user input ----------------
     

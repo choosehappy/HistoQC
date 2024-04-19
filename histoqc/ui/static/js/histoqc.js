@@ -1,7 +1,5 @@
 $(document).ready(function () {
 	console.log("[LOG] Document ready.")
-	// console.log($("#brushing").attr("fn"))
-    // Check if the user has specified resultsfilepath
     $.ajax({
 		url: "/hqc_results",
 		type: "GET",

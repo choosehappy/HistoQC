@@ -1,20 +1,19 @@
 function initializeCF() {
-    $('#modal-toggle').on('click', handleCohortFinderClick);
+    $('#modal-toggle').on('click', renderCFParamsModal);
     $('#cf-params-modal form').on('submit', handleCohortFinderSubmit);
 }
 
-function handleCohortFinderClick(event) {
+function renderCFParamsModal(event) {
     // Populate the features select form element with checkboxes for each feature.
     const formElement = d3.select('#features-select')
     formElement.html('') // Clear existing content
     formElement.style('height', '150px').style('overflow-y', 'scroll')
     const keys = d3.keys(ORIGINAL_DATASET[0])
     keys.forEach(key => {
-        if (key == 'case_name' || key == 'id' || key == 'gid') {
+        if (key == 'case_name' || key == 'id' || key == 'gid' || key == 'comments') {
             return // Skip these keys
         }
 
-        // Create a container for each checkbox (optional, for styling)
         const checkboxContainer = formElement.append('div').classed('checkbox-container', true);
 
         // Append the checkbox input
@@ -29,15 +28,11 @@ function handleCohortFinderClick(event) {
         checkboxContainer.append('label')
             .attr('for', key) // Associate label with checkbox by ID
             .text(key); // Display text for the label
-
-        // Optionally add a line break or additional spacing here, if needed
     });
 
     // Toggle modal after adding checkboxes
     $('#cf-params-modal').modal('toggle');
 }
-
-
 
 function handleCohortFinderSubmit(event) {
     event.preventDefault();
@@ -61,10 +56,8 @@ function handleCohortFinderSubmit(event) {
         params.featuresSelected.push(value);
     });
 
-    // If you need to convert the array to a comma-separated string
     params.featuresSelected = params.featuresSelected.join(',');
 
-    // call the run_cohort_finder endpoint with the form data
     $.ajax({
         url: "/run_cohort_finder",
         type: "GET",
@@ -129,19 +122,6 @@ function handleCohortFinderResponse(data) {
         }
     };
 
-    updateAllPopovers();
+    updatePopover('be-scores-info');
 
 }
-
-function handleCohortFinderSubmitTEST(event) {
-    event.preventDefault();
-    const data = {
-        'embed_x': [1, 2, 3, 4, 5],
-        'embed_y': [1, 2, 3, 4, 5],
-        'groupid': [1, 1, 2, 3, 3],
-        'testind': [0, 0, 0, 0, 1]
-    };
-
-    handleCohortFinderResponse(data);
-}
-

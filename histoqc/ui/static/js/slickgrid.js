@@ -19,14 +19,14 @@ function renderLines() {
 			right: 15,
 			bottom: 16
 		});
-	
-	
+
+
 
 	// slickgrid needs each data element to have an id
 	ORIGINAL_DATASET.forEach(function (d, i) { d.id = d.id || i; });
 	PARCOORDS
 		.data(ORIGINAL_DATASET)
-		.hideAxis(["case_name", "gid"])
+		.hideAxis(["case_name", "gid", "comments"])
 		.render()
 		.reorderable()
 		.brushMode("1D-axes");
@@ -74,23 +74,20 @@ function renderLines() {
 		updateImageView(DATA_VIEW)
 	})
 
+	$(".slick-pager-settings-expanded").children().click(() => {
+		updateImageView(DATA_VIEW)
+	})
+
 
 	// DATA_VIEW subscriptions drive the grid
 	DATA_VIEW.onRowCountChanged.subscribe(function (e, args) {
 		grid.updateRowCount();
 		grid.render();
-
-		// update the image pane when the paging changes
-		// updateImageView(DATA_VIEW);
-
 	});
 
 	DATA_VIEW.onRowsChanged.subscribe(function (e, args) {
 		grid.invalidateRows(args.rows);
 		grid.render();
-
-		// update the image pane when the paging changes
-		// updateImageView(DATA_VIEW);
 	});
 
 
@@ -107,7 +104,7 @@ function renderLines() {
 	grid.onSort.subscribe(function (e, args) {
 		sortdir = args.sortAsc ? 1 : -1;
 		sortcol = args.sortCol.field;
-		
+
 		// sorting functions modify the original data passed into the dataview!
 		if ($.browser.msie && $.browser.version <= 8) {
 			DATA_VIEW.fastSort(sortcol, args.sortAsc);
@@ -144,7 +141,7 @@ function renderLines() {
 	PARCOORDS.on("brushstart", function () {
 		// change the scatter plot mode to zoom/Pan
 		updateRadio("zoomPan")
-		
+
 	})
 
 	PARCOORDS.on("brushend", function (data) {
@@ -155,11 +152,11 @@ function renderLines() {
 		BRUSHED_IDS = data.map(d => d.id);
 
 		// clearing the brush counts as a brushend. Only update the scatter plot if the brush actually filtered the data.
-		if (data.length < ORIGINAL_DATASET.length && COHORT_FINDER_RESULTS) {	
+		if (data.length < ORIGINAL_DATASET.length && COHORT_FINDER_RESULTS) {
 			const highlightedCanvas = d3.select('#highlighted-canvas')
 			highlightedCanvas.style("display", "block");
-			
-			
+
+
 			canvas.style("opacity", 0.2)
 			if (SCATTER_PLOT.state.newX && BRUSHED_IDS.length > 0) {
 				drawHighlightedPoints(COHORT_FINDER_RESULTS, BRUSHED_IDS, SCATTER_PLOT.state.newX, SCATTER_PLOT.state.newY, highlightedCanvas);
@@ -192,13 +189,13 @@ function updateBrushedParcoords(data) {
 	PARCOORDS
 		.state.brushed = data;
 	BRUSHED_IDS = data.map(d => d.id);
-	
+
 	PARCOORDS.renderBrushed();
 }
 
 function clearBrushedParcoords() {
-	// PARCOORDS.brushReset();
-	PARCOORDS.state.brushed = [];
+	// PARCOORDS.brushReset();	// this triggers a brushend event which is not always desired.
+	PARCOORDS.state.brushed = [];	
 	PARCOORDS.brushed(false)
 	BRUSHED_IDS = [];
 	const canvas = d3.select('#plot-canvas');
@@ -208,12 +205,12 @@ function clearBrushedParcoords() {
 
 function rotateLabels(parcoords) {
 	parcoords.svg
-    .selectAll('text.label')
-    .attr(
-      'transform',
-      'translate(0,-10) rotate(-15)'
-    )
-	.attr("text-anchor", "start");
+		.selectAll('text.label')
+		.attr(
+			'transform',
+			'translate(0,-10) rotate(-15)'
+		)
+		.attr("text-anchor", "start");
 }
 
 function tooltip(selectionGroup, tooltipDiv) {
@@ -273,8 +270,8 @@ function tooltip(selectionGroup, tooltipDiv) {
 			.style("width", `${tooltip_width}px`);
 	}
 
-	function renderViolinPlotHist(selectedContainer, data, yDomainLabel, xDomainLabels, width, height, color="#a13f57") {
-		
+	function renderViolinPlotHist(selectedContainer, data, yDomainLabel, xDomainLabels, width, height, color = "#a13f57") {
+
 		/** Render the violin plot using the histogram method.
 		 * https://d3-graph-gallery.com/graph/violin_basicHist.html
 		 * @param {d3.Selection} selectedContainer - The container to render the plot in.
@@ -292,7 +289,7 @@ function tooltip(selectionGroup, tooltipDiv) {
 		var margin = { top: 10, right: 30, bottom: 30, left: 60 },
 			width = width - margin.left - margin.right,
 			height = height - margin.top - margin.bottom;
-			
+
 		var svg = selectedContainer
 			.append("svg")
 			.attr("width", width + margin.left + margin.right)
@@ -481,10 +478,10 @@ function tooltip(selectionGroup, tooltipDiv) {
 
 		const metrics = [
 			{ label: 'Count', value: data.length },
-			{ label: 'Mean', value: d3.mean(numbers).toFixed(3)},
-			{ label: 'Std', value: d3.deviation(numbers).toFixed(3)},
-			{ label: 'Min', value: d3.min(numbers)},
-			{ label: 'Max', value: d3.max(numbers)},
+			{ label: 'Mean', value: d3.mean(numbers).toFixed(3) },
+			{ label: 'Std', value: d3.deviation(numbers).toFixed(3) },
+			{ label: 'Min', value: d3.min(numbers) },
+			{ label: 'Max', value: d3.max(numbers) },
 		]
 
 		var htmlContent = ""
@@ -495,9 +492,6 @@ function tooltip(selectionGroup, tooltipDiv) {
 		selectedContainer
 			.append('p')
 			.html(htmlContent)
-
-
-
 	}
 
 }

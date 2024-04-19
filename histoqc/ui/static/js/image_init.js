@@ -1,9 +1,3 @@
-/* Image View model.
- * initialize/update the image view, enter/exit selected stage & detailed stage for image view.
- * last modified: 03/17/2018 14:24:00
- * update log: Add id to image blocks. Add multi-select. Re-define the generate_img_block function.
- */
-
 function initializeImageView(dataView) {
 	var $div = $("#overview-gallery");
 	$div.empty();
@@ -12,14 +6,13 @@ function initializeImageView(dataView) {
 
 	zoomSlider.on("input", function () {
 		const zoomValue = d3.select(this).property('value');
-		zoomImages(zoomValue);
+		d3.selectAll(".overview-image-block").style("zoom", zoomValue);
 	});
 
 	const div = d3.select("#overview-gallery");
 	const zoomValue = d3.select("#zoom-range").property('value');
 
 	CURRENT_IMAGE_TYPE = DEFAULT_IMAGE_EXTENSIONS.indexOf(DEFAULT_IMAGE_EXTENSION);
-	SKIP_IMAGE_EXTENSIONS.push(CURRENT_IMAGE_TYPE);
 
 	const case_ids = getCaseidsFromDataView(dataView);
 	case_ids.forEach(function (case_id) {
@@ -39,8 +32,6 @@ function updateImageView(dataView) {
 	// get signal from abort controller
 	abortFetch();
 	const signal = ABORT_CONTROLLER.signal;
-
-	updateImageViewHeight();
 
 	var $div = $("#overview-gallery");
 	$div.empty();
@@ -72,21 +63,7 @@ function updateImageView(dataView) {
 	});
 }
 
-
-function updateImageViewHeight() {
-	$("#image-view").outerHeight(
-		$(window).height() -
-		$("header").outerHeight(includeMargin = true) -
-		$("#table-view").outerHeight(includeMargin = true) -
-		$("#chart-view").outerHeight(includeMargin = true)
-	);
-}
-
-
 function enterSelectImageView(dir, img_type) {
-	// $("#overview-gallery").css("display", "none");
-	// $("#img-select-button").css("display", "none");
-	// $("#exit-image-select-view-btn").css("display", "block");
 	$('#select-image-modal').modal('show');
 	$("#select-candidate-container > *").remove();
 	$("#zoomable-svg > *").remove();
@@ -101,22 +78,24 @@ function enterSelectImageView(dir, img_type) {
 
 	svg.append('image')
 		.attr("id", "zoomable-image")
-		.attr('xlink:href', imgSrc)  // Note: For modern browsers and the latest SVG spec, just 'href' might be sufficient
-		// .attr('href', imgSrc) // This is more compatible with the latest SVG specifications
-		.attr('file_name', dir) // Custom attributes like 'file_name' are not standard SVG attributes. Consider using data attributes or managing this data separately.
-		.attr('img_type', img_type) // Similarly, this should be handled as a data attribute if necessary.
+		.attr('href', imgSrc) // This is more compatible with the latest SVG specifications
+		.attr('file_name', dir) 
+		.attr('img_type', img_type) 
 		.attr('width', '100%')
 		.attr('height', '100%');
 
 
 	enableZoomInSelectImageView(svg);
-	// $div = $("#select-candidate-container");
+
 	const div = d3.select("#select-candidate-container");
 	for (i = 0; i < DEFAULT_IMAGE_EXTENSIONS.length; i++) {
-		if (SKIP_IMAGE_EXTENSIONS.indexOf(i) >= 0) {
+		const extension = DEFAULT_IMAGE_EXTENSIONS[i];
+
+		// Exclude the focused image and the thumbnail image from the candidate list.
+		if (extension == DEFAULT_IMAGE_EXTENSIONS[img_type] || extension == DEFAULT_IMAGE_EXTENSION) {
 			continue;
 		}
-		const extension = DEFAULT_IMAGE_EXTENSIONS[i];
+		
 		generateImgBlock(div, 
 						extension.split(".")[0],
 			"candidate-image-block", dir,
@@ -124,18 +103,11 @@ function enterSelectImageView(dir, img_type) {
 		);
 	}
 
-	$("#select-candidate-container > div > img").dblclick(function () {
-		enterDetailImageView($(this).attr("file_name"), $(this).attr("img_type"), this.src);
-	});
-
 	$("#select-candidate-container > div > img").click(function () {
 		$("#exhibit-img").attr("src", this.src)
 			.attr("img_type", $(this).attr("img_type"));
 	});
 
-	// $("#exhibit-img").click(function () {
-	// 	enterDetailImageView($(this).attr("file_name"), $(this).attr("img_type"), this.src);
-	// });
 }
 
 function enableZoomInSelectImageView(svg) {
@@ -154,39 +126,6 @@ function enableZoomInSelectImageView(svg) {
 	svg.call(zoom);
 
 }
-
-
-function exitSelectImageView() {
-	$("#select-candidate-container > *").remove();
-	$("#select-image-container > *").remove();
-	$("#select-image-view").css("display", "none");
-	$("#exit-image-select-view-btn").css("display", "none");
-
-	$("#overview-gallery").css("display", "flex");
-	$("#img-select-button").css("display", "");
-}
-
-
-function updateMultiSelectedImageView(file_names) {
-	ORIGINAL_CASE_LIST.forEach(function (d) {
-		if (file_names.indexOf(d) == -1) {
-			$("#" + ORIGINAL_CASE_DICT[d]["dom_id"]).css("display", "none");
-		} else {
-			$("#" + ORIGINAL_CASE_DICT[d]["dom_id"]).css("display", "flex");
-		}
-	});
-}
-
-
-function calculateHeight($div) {
-	var num_thumbs = DEFAULT_IMAGE_EXTENSIONS.length;
-	var max_width = Math.floor($div.width() / Math.ceil(num_thumbs / 2)) - 5;
-	var cor_height = Math.floor(max_width / $("#exhibit-img").width() * $("#exhibit-img").height());
-	var max_height = Math.floor($div.height() / 2) - 20;
-
-	return Math.min(max_height, cor_height);
-}
-
 
 function generateImgBlock(container, case_id, blk_class, file_name, img_type, compare_type, img_label, zoomValue, abortSignal) {
 
@@ -231,30 +170,13 @@ function generateImgBlock(container, case_id, blk_class, file_name, img_type, co
 
 function generateImgSrc(file_name, img_type_index, use_small) {
 	var image_extension = DEFAULT_IMAGE_EXTENSIONS[img_type_index];
-	if (use_small && image_extension != DEFAULT_IMAGE_EXTENSION) {
+	if (use_small) {
 		return `${window.location.origin}/image/${file_name}/${image_extension}/${SMALL_HEIGHT}`;
 	}
 	return `${window.location.origin}/image/${file_name}/${image_extension}`;
 }
 
-
-function enterDetailImageView(file_name, img_type, src) {
-	$("#detail-image-name > span").text(file_name);
-	$("#overlay-image > figure").css("width", "auto")
-		.css("background-image", "url(" + src + ")");
-	$("#overlay-image > figure > img").attr("src", src);
-	$("#overlay-container").css("pointer-events", "all")
-		.css("opacity", 1);
-	var figure_height = $("#overlay-image > figure").height(),
-		figure_width = $("#overlay-image > figure").width(),
-		img_height = $("#overlay-image > figure > img").height(),
-		img_width = $("#overlay-image > figure > img").width();
-	if (figure_height < img_height) {
-		$("#overlay-image > figure").width(img_width * (figure_height / img_height));
-	}
-}
-
-async function fetchImage(source, dom_id, firstlast, abortSignal) {
+function fetchImage(source, dom_id, firstlast, abortSignal) {
 	fetch(source, { signal: abortSignal })
 	.then(response => response.blob())
 	.then(blob => {
@@ -337,6 +259,8 @@ function setPageSize(dataView, n) {
 	dataView.setPagingOptions({ pageSize: n });
 }
 
-function zoomImages(zoomValue) {
-	d3.selectAll(".overview-image-block").style("zoom", zoomValue);
+function toggleImageDownsample() {
+	console.log("checked")
+	const checkbox = $("#downsample-checkbox");
+	USE_SMALL = checkbox.is(":checked");
 }

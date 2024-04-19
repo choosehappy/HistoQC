@@ -91,6 +91,15 @@
       z-index: 0;
     }
 
+    .control-group-element {
+      margin-left: 15px;
+      padding-left: 3px;
+      padding-right: 3px;
+      border: 1px solid black;
+      border-color: #000;
+      border-radius: 2px;
+    }
+
 
     #scatter-parent {
       position: relative;
@@ -162,7 +171,7 @@
       </span>
       <span>
         <button type="button" id="modal-toggle" class="btn btn-primary btn-lg">CohortFinder</button>
-        <button type="button" class="btn btn-primary btn-lg" onclick="exportResultsTsv()">Download</button>
+        <button type="button" class="btn btn-primary btn-lg" onclick="exportResultsTsv()">Download TSV</button>
       </span>
     </div>
   </nav>
@@ -278,10 +287,14 @@
                 <select id="comparison-select" class="selectpicker" data-size="5" data-style="btn-dark btn-sm"
                   data-width="150px"></select>
               </span>
-              <span id="pager"></span>
-              <span id="slider">
-                <label for="zoom-range" class="form-label">Image zoom</label>
+              <span class="control-group-element" id="pager"></span>
+              <span class="control-group-element" id="slider">
+                <label for="zoom-range" class="form-label">Image zoom: </label>
                 <input type="range" class="form-range" id="zoom-range" min="0.2" max="2.0" step="0.05">
+              </span>
+              <span class="control-group-element">
+                <label for="downsample-checkbox">downsample thumbnails:</label>
+                <input type="checkbox" id="downsample-checkbox" onclick="toggleImageDownsample()">
               </span>
             </div>
           </div>

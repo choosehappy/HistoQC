@@ -11,8 +11,6 @@ function renderScatterPlot(data) {
         handleModeChange();
     });
 
-
-
     // constants
     var subsetSize = 1000;
     var zoomEndDelay = 0;
@@ -34,9 +32,6 @@ function renderScatterPlot(data) {
     var scaled_polygon1 = [];
     var selected_indices = [];
 
-    // create a quadtree for fast hit detection
-    // var quadTree = d3.quadtree(data);
-
     // d3 only added randomInt in v6. However, we are using v5 https://stackoverflow.com/questions/61017839/d3-randomint-is-not-a-function
     d3.randomInt = d3.randomInt || (function sourceRandomInt(source) {
         function randomInt(min, max) {
@@ -53,8 +48,7 @@ function renderScatterPlot(data) {
         return randomInt;
     })(Math.random);
 
-    // selected subsetsize random numbers -- this is the subset of points
-    // drawn during 'zoom' events
+    // This is the subset of points drawn during 'zoom' events
     var randomIndex = [];
     for (var i = 0; i < subsetSize; i++) {
         randomIndex.push(d3.randomInt(0, numberPoints)());
@@ -153,7 +147,6 @@ function renderScatterPlot(data) {
         clearHighlightedPoints(highlightedCanvas);
     }
 
-
     function onZoom() {
         clearTimeout(zoomEndTimeout);
         console.log("polygon: " + polygon[0])
@@ -242,11 +235,6 @@ function renderScatterPlot(data) {
         return selected_indices;
     }
 
-
-
-
-
-
     function trackMouse(e, { start, move, out, end }) {
         const tracker = {},
             target = e.target;
@@ -274,7 +262,6 @@ function renderScatterPlot(data) {
 
         start && start(tracker);
     }
-
 
     function lasso() {
         const dispatch = d3.dispatch("start", "lasso", "end");
@@ -406,7 +393,6 @@ function renderScatterPlot(data) {
             .text('BE Info')
     }
 
-
     function handleModeChange() {
         var mode = $('#scatter-mode-selector input[type=radio]:checked').val();
         const lassoCanvas = d3.select("#lasso-canvas");
@@ -425,8 +411,6 @@ function renderScatterPlot(data) {
             polygon = [];
         }
     }
-
-
 
 }
 
