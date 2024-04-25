@@ -2,7 +2,7 @@ from typing import List, Dict, Union, Type, Tuple, Mapping  # Literal, get_args,
 from types import MappingProxyType
 # from shapely.strtree import STRtree
 # from shapely.geometry import box as shapely_box
-from histoqc.import_wrapper.typing import Literal, get_args
+from typing_extensions import Literal, get_args
 from lazy_property import LazyProperty
 from .annotation.base import Annotation, Region, TYPE_RAW_LABEL
 from .annotation.imagescope import ImageScopeAnnotation

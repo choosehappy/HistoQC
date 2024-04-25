@@ -56,6 +56,7 @@ def minimal_config(tmp_path_factory):
 
             [BaseImage.BaseImage]
             image_work_size = 1.25x
+            handles = openslide
 
             #three options: relative2mask, absolute, relative2image
             mask_statistics = relative2mask
@@ -87,7 +88,8 @@ def test_cli_multiprocess_batching(multi_svs_dir, tmp_path, minimal_config, tmp_
         '--symlink', os.fspath(spth),
         '*.svs'
     ]) == 0
-    assert _filenames_in(tmp_path) == _filenames_in(multi_svs_dir).union(['error.log', 'results_0.tsv', 'results_1.tsv'])
+    assert _filenames_in(tmp_path) == _filenames_in(multi_svs_dir).union(['error.log',
+                                                                          'results_0.tsv', 'results_1.tsv'])
 
 
 @pytest.fixture(scope='module')

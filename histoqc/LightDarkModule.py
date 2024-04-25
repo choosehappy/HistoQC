@@ -1,23 +1,21 @@
 import logging
 import os
 import numpy as np
-from histoqc.BaseImage import printMaskHelper
-from skimage import io, color, img_as_ubyte
+from histoqc.BaseImage import printMaskHelper, BaseImage
+from skimage import io, color
+from skimage.util import img_as_ubyte
 from distutils.util import strtobool
 from skimage.filters import threshold_otsu, rank
 from skimage.morphology import disk
 from sklearn.cluster import KMeans
 from skimage import exposure
 
-import matplotlib.pyplot as plt
 
-
-
-def getIntensityThresholdOtsu(s, params):
+def getIntensityThresholdOtsu(s: BaseImage, params):
     logging.info(f"{s['filename']} - \tLightDarkModule.getIntensityThresholdOtsu")
     name = params.get("name", "classTask")    
     local = strtobool(params.get("local", "False"))
-    radius = float(params.get("radius", 15))
+    radius = int(params.get("radius", 15))
     selem = disk(radius)
 
     img = s.getImgThumb(s["image_work_size"])
@@ -28,9 +26,9 @@ def getIntensityThresholdOtsu(s, params):
     else:
         thresh = threshold_otsu(img)
 
-    map = img < thresh
+    region_below_thresh = img < thresh
 
-    s["img_mask_" + name] = map > 0
+    s["img_mask_" + name] = region_below_thresh > 0
     if strtobool(params.get("invert", "False")):
         s["img_mask_" + name] = ~s["img_mask_" + name]
 
@@ -51,10 +49,9 @@ def getIntensityThresholdOtsu(s, params):
     return
 
 
-def getIntensityThresholdPercent(s, params):
+def getIntensityThresholdPercent(s: BaseImage, params):
     name = params.get("name", "classTask")
     logging.info(f"{s['filename']} - \tLightDarkModule.getIntensityThresholdPercent:\t {name}")
-
     lower_thresh = float(params.get("lower_threshold", "-inf"))
     upper_thresh = float(params.get("upper_threshold", "inf"))
 
@@ -70,13 +67,11 @@ def getIntensityThresholdPercent(s, params):
     map_std = np.bitwise_and(img_std > lower_std, img_std < upper_std)
 
     img = color.rgb2gray(img)
-    map = np.bitwise_and(img > lower_thresh, img < upper_thresh)
+    region_between_interval = np.bitwise_and(img > lower_thresh, img < upper_thresh)
 
-    map = np.bitwise_and(map, map_std)
+    region_between_interval = np.bitwise_and(region_between_interval, map_std)
 
-    s["img_mask_" + name] = map > 0
-
-
+    s["img_mask_" + name] = region_between_interval > 0
 
     if strtobool(params.get("invert", "False")):
         s["img_mask_" + name] = ~s["img_mask_" + name]
@@ -84,7 +79,8 @@ def getIntensityThresholdPercent(s, params):
     prev_mask = s["img_mask_use"]
     s["img_mask_use"] = s["img_mask_use"] & s["img_mask_" + name]
 
-    io.imsave(s["outdir"] + os.sep + s["filename"] + "_" + name + ".png", img_as_ubyte(prev_mask & ~s["img_mask_" + name]))
+    io.imsave(s["outdir"] + os.sep + s["filename"] + "_" + name + ".png",
+              img_as_ubyte(prev_mask & ~s["img_mask_" + name]))
 
     s.addToPrintList(name,
                      printMaskHelper(params.get("mask_statistics", s["mask_statistics"]), prev_mask, s["img_mask_use"]))
@@ -98,11 +94,7 @@ def getIntensityThresholdPercent(s, params):
     return
 
 
-
-
-
-
-def removeBrightestPixels(s, params):
+def removeBrightestPixels(s: BaseImage, params):
     logging.info(f"{s['filename']} - \tLightDarkModule.removeBrightestPixels")
 
     # lower_thresh = float(params.get("lower_threshold", -float("inf")))
@@ -115,12 +107,12 @@ def removeBrightestPixels(s, params):
     img = color.rgb2gray(img)
 
     kmeans = KMeans(n_clusters=3,  n_init=1).fit(img.reshape([-1, 1]))
+    # noinspection PyUnresolvedReferences
     brightest_cluster = np.argmax(kmeans.cluster_centers_)
+    # noinspection PyUnresolvedReferences
     darkest_point_in_brightest_cluster = (img.reshape([-1, 1])[kmeans.labels_ == brightest_cluster]).min()
 
     s["img_mask_bright"] = img > darkest_point_in_brightest_cluster
-
-
 
     if strtobool(params.get("invert", "False")):
         s["img_mask_bright"] = ~s["img_mask_bright"]
@@ -142,8 +134,7 @@ def removeBrightestPixels(s, params):
     return
 
 
-
-def minimumPixelIntensityNeighborhoodFiltering(s,params):
+def minimumPixelIntensityNeighborhoodFiltering(s: BaseImage, params):
     logging.info(f"{s['filename']} - \tLightDarkModule.minimumPixelNeighborhoodFiltering")
     disk_size = int(params.get("disk_size", 10000))
     threshold = int(params.get("upper_threshold", 200))
@@ -155,7 +146,6 @@ def minimumPixelIntensityNeighborhoodFiltering(s,params):
 
     imgfilt = rank.minimum(img, selem)
     s["img_mask_bright"] = imgfilt > threshold
-
 
     if strtobool(params.get("invert", "True")):
         s["img_mask_bright"] = ~s["img_mask_bright"]
@@ -176,7 +166,8 @@ def minimumPixelIntensityNeighborhoodFiltering(s,params):
 
     return
 
-def saveEqualisedImage(s,params):
+
+def saveEqualisedImage(s: BaseImage, params):
     logging.info(f"{s['filename']} - \tLightDarkModule.saveEqualisedImage")
 
     img = s.getImgThumb(s["image_work_size"])

@@ -14,6 +14,7 @@ wheels/
 *.egg-info/
 *.egg
 *.whl
+*.log
 .coverage*
 MANIFEST
 histoqc/tests/data/*
@@ -24,4 +25,9 @@ htmlcov/
 
 histoqc/_version.py
 environment.yml
+*.svs
+/histoqc/tests/data/
+.histoqc_pkg_data*
+.fuse_hidden*
+.pytest*
 

@@ -3,9 +3,10 @@ import numpy as np
 from skimage.filters import sobel
 from skimage.color import convert_colorspace, rgb2gray
 from distutils.util import strtobool
+from histoqc.BaseImage import BaseImage
 
 
-def getBrightnessGray(s, params):
+def getBrightnessGray(s: BaseImage, params):
     prefix = params.get("prefix", None)
     prefix = prefix+"_" if prefix else ""
     logging.info(f"{s['filename']} - \tgetContrast:{prefix}")
@@ -31,7 +32,7 @@ def getBrightnessGray(s, params):
     return
 
 
-def getBrightnessByChannelinColorSpace(s, params):
+def getBrightnessByChannelinColorSpace(s: BaseImage, params):
     prefix = params.get("prefix", None)
     prefix = prefix + "_" if prefix else ""
 
@@ -43,17 +44,16 @@ def getBrightnessByChannelinColorSpace(s, params):
 
     invert = strtobool(params.get("invert", "False"))
 
-
     img = s.getImgThumb(s["image_work_size"])
 
     suffix = ""
-    if (to_color_space != "RGB"):
+    if to_color_space != "RGB":
         img = convert_colorspace(img, "RGB", to_color_space)
         suffix = "_" + to_color_space
 
     for chan in range(0, 3):
         vals = img[:, :, chan]
-        if (limit_to_mask):
+        if limit_to_mask:
 
             mask = s[mask_name] if not invert else ~s[mask_name]
             vals = vals[mask]
@@ -67,7 +67,7 @@ def getBrightnessByChannelinColorSpace(s, params):
     return
 
 
-def getContrast(s, params):
+def getContrast(s: BaseImage, params):
     prefix = params.get("prefix", None)
     prefix = prefix + "_" if prefix else ""
 
@@ -77,10 +77,9 @@ def getContrast(s, params):
 
     invert = strtobool(params.get("invert", "False"))
 
-
     img = s.getImgThumb(s["image_work_size"])
     img = rgb2gray(img)
-
+    # noinspection PyTypeChecker
     sobel_img = sobel(img) ** 2
 
     if limit_to_mask:
@@ -90,13 +89,12 @@ def getContrast(s, params):
         sobel_img = sobel_img[mask]
         img = img[s["img_mask_use"]]
 
-    if img.size == 0: # need a check to ensure that mask wasn't empty AND limit_to_mask is true, still want to
-                      # produce metrics for completeness with warning
+    if img.size == 0:  # need a check to ensure that mask wasn't empty AND limit_to_mask is true, still want to
+        # produce metrics for completeness with warning
 
-        s.addToPrintList(f"{prefix}tenenGrad_contrast", str(-100))
+        s.addToPrintList(f"{prefix}tenen_grad_contrast", str(-100))
         s.addToPrintList(f"{prefix}michelson_contrast", str(-100))
         s.addToPrintList(f"{prefix}rms_contrast", str(-100))
-
 
         logging.warning(f"{s['filename']} - After BrightContrastModule.getContrast: NO tissue "
                         f"detected, statistics are impossible to compute, defaulting to -100 !")
@@ -105,10 +103,9 @@ def getContrast(s, params):
 
         return
 
-
     # tenenGrad - Note this must be performed on full image and then subsetted if limiting to mask
-    tenenGrad_contrast = np.sqrt(np.sum(sobel_img)) / img.size
-    s.addToPrintList(f"{prefix}tenenGrad_contrast", str(tenenGrad_contrast))
+    tenen_grad_contrast = np.sqrt(np.sum(sobel_img)) / img.size
+    s.addToPrintList(f"{prefix}tenen_grad_contrast", str(tenen_grad_contrast))
 
     # Michelson contrast
     max_img = img.max()

@@ -30,7 +30,9 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
 
-    parser = argparse.ArgumentParser(prog="histoqc", description='Run HistoQC main quality control pipeline for digital pathology images')
+    parser = argparse.ArgumentParser(prog="histoqc",
+                                     description='Run HistoQC main quality control pipeline'
+                                                 ' for digital pathology images')
     parser.add_argument('input_pattern',
                         help="input filename pattern (try: *.svs or target_path/*.svs ),"
                              " or tsv file containing list of files to analyze",
@@ -76,7 +78,7 @@ def main(argv=None):
         lm.logger.warning(f"Configuration file not set (--config), using default")
         config.read_string(read_config_template('default'))
     elif os.path.exists(args.config):
-        config.read(args.config) #Will read the config file
+        config.read(args.config)  # Will read the config file
     else:
         lm.logger.warning(f"Configuration file {args.config} assuming to be a template...checking.")
         config.read_string(read_config_template(args.config))
@@ -222,6 +224,7 @@ def main(argv=None):
                 f"Please create manually: ln -s {origin} {target}"
             )
     return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())

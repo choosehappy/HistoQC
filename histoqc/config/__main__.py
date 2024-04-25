@@ -9,7 +9,7 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
 
-    parser = argparse.ArgumentParser(prog="histoqc.config",description="Show example configuration files")
+    parser = argparse.ArgumentParser(prog="histoqc.config", description="Show example configuration files")
     parser.add_argument('--list',
                         action='store_true',
                         help='list available configs')

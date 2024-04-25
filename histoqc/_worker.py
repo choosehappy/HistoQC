@@ -62,13 +62,9 @@ def worker(idx, file_name, *,
         raise exc
 
     else:
-        # TODO:
-        #   the histoqc workaround below is due an implementation detail in BaseImage:
-        #   BaseImage keeps an OpenSlide instance stored under os_handle and leaks a
-        #   file handle. This will need fixing in BaseImage.
-        #   -> best solution would be to make BaseImage a contextmanager and close
-        #      and cleanup the OpenSlide handle on __exit__
-        s["os_handle"] = None  # need to get rid of handle because it can't be pickled
+        # So long as the gc is triggered to delete the handle, the close is called to release the resources,
+        # as documented in the openslide and cuimage's source code.
+        s.image_handle = None
         return s
 
 

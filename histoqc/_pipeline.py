@@ -17,6 +17,8 @@ from contextlib import nullcontext
 from importlib import import_module
 from logging.config import dictConfig
 from logging.handlers import QueueHandler
+from typing_extensions import Literal
+from typing import cast
 
 
 # --- logging helpers -------------------------------------------------
@@ -63,7 +65,8 @@ def setup_logging(*, capture_warnings, filter_warnings):
     })
 
     # configure warnings too...
-    warnings.filterwarnings(filter_warnings)
+    filter_type = Literal["default", "error", "ignore", "always", "module", "once"]
+    warnings.filterwarnings(cast(filter_type, filter_warnings))
     logging.captureWarnings(capture_warnings)
 
 
@@ -310,7 +313,7 @@ class BatchedResultFile:
 
         Parameters
         ----------
-        state : dict
+        state: dict
             the current histoqc implementation writes the outputs to
             the header files, so *args supports `state` for now.
             overwrite in subclass to control header output behavior

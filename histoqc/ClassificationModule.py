@@ -7,8 +7,9 @@ from ast import literal_eval as make_tuple
 
 from distutils.util import strtobool
 
-from histoqc.BaseImage import printMaskHelper
-from skimage import io, img_as_ubyte, img_as_bool
+from histoqc.BaseImage import printMaskHelper, BaseImage
+from skimage import io
+from skimage.util import img_as_ubyte, img_as_bool
 from skimage.filters import gabor_kernel, frangi, gaussian, median, laplace
 from skimage.color import rgb2gray
 from skimage.morphology import remove_small_objects, disk, dilation
@@ -21,10 +22,8 @@ from sklearn.ensemble import RandomForestClassifier
 
 import numpy as np
 
-import matplotlib.pyplot as plt
 
-
-def pixelWise(s, params):
+def pixelWise(s: BaseImage, params):
     name = params.get("name", "classTask")
     logging.info(f"{s['filename']} - \tpixelWise:\t", name)
 
@@ -34,7 +33,7 @@ def pixelWise(s, params):
     if fname == "":
         logging.error(f"{s['filename']} - tsv_file not set in ClassificationModule.pixelWise for ", name)
         sys.exit(1)
-        return
+
     model_vals = np.loadtxt(fname, delimiter="\t", skiprows=1)
 
     img = s.getImgThumb(s["image_work_size"])
@@ -90,15 +89,19 @@ def compute_gaussian(img, params):
     gaussian_sigma = int(params.get("gaussian_sigma", 1))
     gaussian_multichan = strtobool(params.get("gaussian_multichan", False))
 
-    if (gaussian_multichan):
-        return gaussian(img, sigma=gaussian_sigma, multichannel=gaussian_multichan)
+    # todo: forward compatibility
+    # todo: after 0.19 default multichannel behavior is fixed and explicitly setting channel_axis is preferred.
+    # todo: multichannel is also deprecated in later versions
+    if gaussian_multichan:
+        return gaussian(img, sigma=gaussian_sigma, channel_axis=-1)
     else:
         return gaussian(rgb2gray(img), sigma=gaussian_sigma)[:, :, None]
 
 
 def compute_median(img, params):
     median_disk_size = int(params.get("median_disk_size", 3))
-    return median(rgb2gray(img), selem=disk(median_disk_size))[:, :, None]
+    # starting from 0.19, selem is deprecated and footprint is preferred.
+    return median(rgb2gray(img), footprint=disk(median_disk_size))[:, :, None]
 
 
 def compute_gabor(img, params):
@@ -132,7 +135,8 @@ def compute_frangi(img, params):
     frangi_beta1 = float(params.get("frangi_beta1", .5))
     frangi_beta2 = float(params.get("frangi_beta2", 15))
     frangi_black_ridges = strtobool(params.get("frangi_black_ridges", "True"))
-    feat = frangi(rgb2gray(img), scale_range = frangi_scale_range, scale_step =frangi_scale_step, beta =frangi_beta1, gamma=frangi_beta2, black_ridges  =frangi_black_ridges)
+    sigmas = frangi_scale_range + (frangi_scale_step,)
+    feat = frangi(rgb2gray(img), sigmas=sigmas, beta=frangi_beta1, gamma=frangi_beta2, black_ridges=frangi_black_ridges)
     return feat[:, :, None]  # add singleton dimension
 
 
@@ -147,7 +151,7 @@ def compute_features(img, params):
     return np.concatenate(feats, axis=2)
 
 
-def byExampleWithFeatures(s, params):
+def byExampleWithFeatures(s: BaseImage, params):
     name = params.get("name", "classTask")
     logging.info(f"{s['filename']} - \tClassificationModule.byExample:\t{name}")
 
@@ -158,12 +162,10 @@ def byExampleWithFeatures(s, params):
     if examples == "":
         logging.error(f"{s['filename']} - No examples provided in ClassificationModule.byExample for {name} !!")
         sys.exit(1)
-        return
 
     if params.get("features", "") == "":
         logging.error(f"{s['filename']} - No features provided in ClassificationModule.byExample for {name} !!")
         sys.exit(1)
-        return
 
     with params["lock"]:  # this lock is shared across all threads such that only one thread needs to train the model
         # then it is shared with all other modules
@@ -192,12 +194,12 @@ def byExampleWithFeatures(s, params):
                 
                 mask = mask.reshape(-1, 1)
 
-                if nsamples_per_example != -1: #sub sambling required
-                    nitems = nsamples_per_example if nsamples_per_example > 1 else int(mask.shape[0]*nsamples_per_example)
+                if nsamples_per_example != -1:  # sub sampling required
+                    nitems = nsamples_per_example if nsamples_per_example > 1 else int(mask.shape[0]
+                                                                                       * nsamples_per_example)
                     idxkeep = np.random.choice(mask.shape[0], size=int(nitems))
                     eximg = eximg[idxkeep, :]
                     mask = mask[idxkeep]
-
 
                 model_vals.append(eximg)
                 model_labels = np.vstack((model_labels, mask))
@@ -216,14 +218,14 @@ def byExampleWithFeatures(s, params):
     cal = cal.reshape(img.shape[0], img.shape[1], 2)
 
     mask = cal[:, :, 1] > thresh
-
     area_thresh = int(params.get("area_threshold", "5"))
     if area_thresh > 0:
-        mask = remove_small_objects(mask, min_size=area_thresh, in_place=True)
+        # inplace=True is redundant and deprecated.
+        mask = remove_small_objects(mask, min_size=area_thresh, out=mask)
 
     dilate_kernel_size = int(params.get("dilate_kernel_size", "0"))
     if dilate_kernel_size > 0:
-        mask = dilation(mask, selem=np.ones((dilate_kernel_size, dilate_kernel_size)))
+        mask = dilation(mask, footprint=np.ones((dilate_kernel_size, dilate_kernel_size)))
 
     mask = s["img_mask_use"] & (mask > 0)
 

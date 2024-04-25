@@ -2,12 +2,10 @@ import logging
 import os
 import numpy as np
 from histoqc.BaseImage import printMaskHelper
-from skimage import io, morphology, img_as_ubyte, measure
-
+from skimage import io, morphology, measure
+from skimage.util import img_as_ubyte
 from scipy import ndimage as ndi
-
-import matplotlib.pyplot as plt  # these 2 are used for debugging
-from histoqc.SaveModule import blend2Images #for easier debugging
+from typing import cast
 
 
 def removeSmallObjects(s, params):
@@ -22,7 +20,6 @@ def removeSmallObjects(s, params):
     prev_mask = s["img_mask_use"]
     s["img_mask_use"] = img_reduced
 
-
     rps = measure.regionprops(morphology.label(img_small))
     if rps:
         areas = np.asarray([rp.area for rp in rps])
@@ -36,13 +33,8 @@ def removeSmallObjects(s, params):
     s.addToPrintList("small_tissue_removed_mean_area", str(area_mean))
     s.addToPrintList("small_tissue_removed_max_area", str(area_max))
 
-
-
-
-
     s.addToPrintList("small_tissue_removed_percent",
                      printMaskHelper(params.get("mask_statistics", s["mask_statistics"]), prev_mask, s["img_mask_use"]))
-
 
     if len(s["img_mask_use"].nonzero()[0]) == 0:  # add warning in case the final tissue is empty
         logging.warning(f"{s['filename']} - After MorphologyModule.removeSmallObjects: NO tissue "
@@ -58,8 +50,8 @@ def remove_large_objects(img, max_size):
     selem = ndi.generate_binary_structure(img.ndim, 1)
     ccs = np.zeros_like(img, dtype=np.int32)
     ndi.label(img, selem, output=ccs)
-    component_sizes = np.bincount(ccs.ravel())
-    too_big = component_sizes > max_size
+    component_sizes: np.ndarray = np.bincount(ccs.ravel())
+    too_big: np.ndarray = cast(np.ndarray, component_sizes > max_size)
     too_big_mask = too_big[ccs]
     img_out = img.copy()
     img_out[too_big_mask] = 0
@@ -76,7 +68,7 @@ def removeFatlikeTissue(s, params):
     img_small = img_reduced & np.invert(s["img_mask_use"])
     img_small = ~morphology.remove_small_holes(~img_small, area_threshold=9)
 
-    mask_dilate = morphology.dilation(img_small, selem=np.ones((kernel_size, kernel_size)))
+    mask_dilate = morphology.dilation(img_small, footprint=np.ones((kernel_size, kernel_size)))
     mask_dilate_removed = remove_large_objects(mask_dilate, max_keep_size)
 
     mask_fat = mask_dilate & ~mask_dilate_removed
@@ -100,8 +92,6 @@ def removeFatlikeTissue(s, params):
     s.addToPrintList("fatlike_tissue_removed_mean_area", str(area_mean))
     s.addToPrintList("fatlike_tissue_removed_max_area", str(area_max))
 
-
-
     s.addToPrintList("fatlike_tissue_removed_percent",
                      printMaskHelper(params.get("mask_statistics", s["mask_statistics"]), prev_mask, s["img_mask_use"]))
 
@@ -117,7 +107,6 @@ def fillSmallHoles(s, params):
     min_size = int(params.get("min_size", 64))
     img_reduced = morphology.remove_small_holes(s["img_mask_use"], area_threshold=min_size)
     img_small = img_reduced & np.invert(s["img_mask_use"])
-
 
     io.imsave(s["outdir"] + os.sep + s["filename"] + "_small_fill.png", img_as_ubyte(img_small))
     s["img_mask_small_removed"] = (img_small * 255) > 0
