@@ -1,10 +1,56 @@
-body {
-  font-size: 14px;
-  font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
-  margin: 24px;
-  background: #fcfcfc;
-  line-height: 1.45em;
+body,
+html {
+  margin: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  font-size: 12px;
+  background-color: aliceblue;
 }
+
+body {
+  overflow-y: hidden;
+  overflow-x: hidden;
+}
+
+.plot {
+  position: absolute;
+}
+
+.card-header {
+  padding: 5px;
+}
+
+#scatter-card {
+  height: 25vh;
+  width: 15vw;
+}
+
+#parcoords-card {
+  height: 25vh;
+}
+
+#overview-gallery-card {
+  height: 45vh;
+}
+
+#plot-canvas {
+  z-index: 0;
+
+}
+
+#grid {
+  height: 15vh;
+}
+
+.slick-pager {
+  height: 100%;
+}
+
+.popover-header {
+  margin: 0;
+}
+
 a {
   color: #555;
 }
@@ -21,13 +67,7 @@ ul {
 p {
   width: 560px;
 }
-pre {
-  color: #444;
-  font-family: Ubuntu Mono, Monaco, monospace;
-  padding: 4px 8px;
-  background: #f2f2f2;
-  border: 1px solid #ccc;
-}
+
 h1 small {
   font-weight: normal;
   font-size: 0.5em;
@@ -49,11 +89,6 @@ input {
 }
 
 /*SlickGrid */
-#grid {
-  width: 100% !important;  /* vs jquery resizable */
-  height: 437px;
-  margin-top: 4px;
-}
 .slick-header-column {
   font-weight:bold;
   cursor: move;

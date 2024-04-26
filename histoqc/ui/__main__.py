@@ -2,17 +2,13 @@ from flask import Flask
 import argparse
 import os
 
-from HQC_html import html
+from histoqc.ui.HQC_html import html
 
 app = Flask(__name__)
 app.register_blueprint(html)
 app.logger_name = 'flask'
 
-# resultsfilepath = "/data/jjaco34/histoqc_results/tsv_run_no_exceptions/results_clean.tsv"
-# app.config['data_directory'] = os.path.dirname(resultsfilepath)
-# app.config['results_filename'] = os.path.basename(resultsfilepath)
-
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(prog="histoqc.ui",description="launch server for result viewing in user interface")
     parser.add_argument('--port', '-p', type=int, default=5000, help='Specify the port [default:5000]')
     parser.add_argument('resultsfilepath', type=str, help='Specify the full path to the results file. The user must specify this path.')
@@ -25,5 +21,8 @@ if __name__ == '__main__':
 
     app.logger.info('Starting Flask app')
     app.run(host='0.0.0.0', port=args.port, debug=True, threaded=True)
+
+if __name__ == '__main__':
+    main()
 
 

@@ -26,125 +26,15 @@
   <script src="{{url_for('static', filename='libs/slickgrid/js/controls/slick.pager.js')}}"></script>
   <script src="{{url_for('static', filename='libs/slickgrid/js/controls/slick.columnpicker.js')}}"></script>
 
+  <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='libs/bootstrap/css/bootstrap.css')}}">
   <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='libs/parcoords/css/parcoords.css')}}">
   <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/style.css')}}">
-  <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/index.css')}}">
-  <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='libs/bootstrap/css/bootstrap.css')}}">
+  <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/image-view.css')}}">
+  <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/scatterplot.css')}}">
+
 
   <style>
-    body,
-    html {
-      margin: 0;
-      height: 100%;
-      width: 100%;
-      overflow: hidden;
-      font-size: 12px;
-      background-color: aliceblue;
-    }
 
-    body {
-      overflow-y: hidden;
-      overflow-x: hidden;
-    }
-
-    .plot {
-      position: absolute;
-    }
-
-    #scatter-card {
-      height: 25vh;
-      width: 15vw;
-    }
-
-    #parcoords-card {
-      height: 25vh;
-    }
-
-    #overview-gallery-card {
-      height: 45vh;
-    }
-
-    #plot-canvas {
-      z-index: 0;
-
-    }
-
-    #grid {
-      height: 15vh;
-    }
-
-    .slick-pager {
-      height: 100%;
-    }
-
-    #lasso-canvas {
-      z-index: 2;
-      cursor: crosshair;
-    }
-
-    #highlighted-canvas {
-      z-index: 1;
-      cursor: grab;
-    }
-
-    #axis-svg {
-      z-index: 0;
-    }
-
-    .control-group-element {
-      margin-left: 15px;
-      padding-left: 3px;
-      padding-right: 3px;
-      border: 1px solid black;
-      border-color: #000;
-      border-radius: 2px;
-    }
-
-
-    #scatter-parent {
-      position: relative;
-    }
-
-    .axis path,
-    .axis line {
-      fill: none;
-      stroke: #000;
-      shape-rendering: crispEdges;
-    }
-
-    .tick line {
-      opacity: 0.2;
-    }
-
-    .tooltip {
-      box-sizing: border-box;
-      position: absolute;
-      display: none;
-      top: 0;
-      left: -100000000px;
-      padding: 8px 12px;
-      font-family: sans-serif;
-      font-size: 12px;
-      color: #333;
-      background-color: #fff;
-      border: 1px solid #333;
-      border-radius: 4px;
-      pointer-events: none;
-      z-index: 2;
-      opacity: unset;
-    }
-
-    #scatter-mode-selector * {
-      margin: 0px 2px 0px 2px;
-    }
-    
-    #scatter-mode-selector{
-      padding: 3px;
-      margin: 3px;
-      border: 1px solid black;
-      border-radius: 3%;
-      border-width: 1px;
-    }
   </style>
   <script src="{{url_for('static', filename='libs/d3/js/d3.min.js')}}"></script>
   <script src="{{url_for('static', filename='libs/parcoords/js/parcoords.standalone.js')}}"></script>
@@ -160,7 +50,6 @@
   <script src="{{url_for('static', filename='js/scatterplot.js')}}"></script>
   <script src="{{url_for('static', filename='js/histoqc.js')}}"></script>
   <script src="{{url_for('static', filename='js/cohortfinder.js')}}"></script>
-  <script src="{{url_for('static', filename='js/batcheffectinfo.js')}}"></script>
 </head>
 
 <body>
