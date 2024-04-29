@@ -1,0 +1,171 @@
+#image-view {
+	display: none;
+}
+
+.base-view-outer {
+	margin: 0.5rem;
+}
+
+.base-view-inner {
+	padding: 0.5rem;
+	border: 1px solid #dfdfdf;
+	border-radius: 3px;
+	box-shadow: #ccc 1px 1px 4px;
+}
+
+#format-tester {
+	display: none;
+}
+
+#result-table_wrapper {
+	display: flex !important;
+	padding: 0px;
+}
+
+.table-control {
+	/*padding-right: 0px;*/
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+}
+
+.table-control > div.dt-buttons {
+	width: 100%;
+	height: 100%;
+}
+
+.control-group {
+	position: relative;
+	padding-left: 0px;
+	padding-top: 0px;
+	z-index: 1;
+	opacity: 0.9;
+	height: 20px;
+}
+
+#exit-image-select-view-btn {
+	display: none;
+}
+
+#overview-gallery {
+	height: 100%;
+	display: flex;
+	flex-wrap: wrap;
+}
+
+.overview-image-block {
+	min-width: 120px;
+	height: 200px;
+	margin-right: 5px;
+	margin-bottom: 5px;
+	position: relative;
+	display: flex;
+	align-items: flex-end;
+	justify-content: center;
+	box-shadow: 1px 1px 2px #999;
+	cursor: pointer;
+}
+
+.overview-image-block > img {
+	border: solid 3px transparent;
+
+	height: 200px;
+}
+
+.overview-image-block > img:hover {
+	border-color: rgb(131, 161, 186);
+}
+
+.overview-image-block > img:nth-child(2) {
+	margin-left: 1px;
+}
+
+.overview-image-block > div {
+	position: absolute;
+}
+
+.overview-image-block > div > span {
+	font-size: 13px;
+	line-height: 1;
+	display: inherit;
+	color: white;
+	text-shadow: 1px 0px 2px #000;
+}
+
+#select-image-view {
+	height: 100%;
+	width: 100%;
+	align-items: center;
+	/*padding: 15px;*/
+	display: none;
+}
+
+
+#select-image-container {
+	order: 0;
+	height: 50vh;
+	width: 60%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	box-shadow: 1px 0px 4px #ccc;
+	margin-right: 30px;
+}
+
+#select-image-container > img {
+	max-height: 100%;
+	max-width: 100%;
+}
+
+
+#select-image-container > div {
+	position: absolute;
+	height: 15px;
+	align-self: flex-end;
+	}
+
+#select-image-container > div > span {
+	font-size: 13px;
+	line-height: 1;
+	display: inherit;
+	color: white;
+	text-shadow: 1px 0px 2px #000;
+}
+
+
+#select-candidate-container {
+	order: 1;
+	height: 50vh;
+	width: 70%;
+	display: flex;
+	flex-wrap: wrap;
+	overflow-y: scroll;
+}
+
+.candidate-image-block {
+	height: 150px;
+	margin-right: 5px;
+	margin-bottom: 5px;
+	position: relative;
+	display: flex;
+	align-items: flex-end;
+	justify-content: center;
+}
+
+.candidate-image-block > img {
+	height: 150px;
+}
+
+.candidate-image-block > div {
+	position: absolute;
+	height: 15px;
+	}
+
+.candidate-image-block > div > span {
+	font-size: 13px;
+	line-height: 1;
+	display: inherit;
+	color: white;
+	text-shadow: 1px 0px 2px #000;
+}
+

@@ -1,0 +1,201 @@
+<!doctype html>
+<html>
+
+<head>
+  <title>HistoQC UI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- SlickGrid -->
+  <link rel="stylesheet" href="{{url_for('static', filename='libs/slickgrid/css/slick.grid.css')}}" type="text/css" />
+  <link rel="stylesheet" href="{{url_for('static', filename='libs/slickgrid/css/slick.pager.css')}}" type="text/css" />
+  <link rel="stylesheet" href="{{url_for('static', filename='libs/slickgrid/css/slick-icons.css')}}" type="text/css" />
+  <link rel="stylesheet" href="{{url_for('static', filename='libs/slickgrid/css/example-demo.css')}}" type="text/css" />
+  <link rel="stylesheet" href="{{url_for('static', filename='libs/slickgrid/css/slick-alpine-theme.css')}}"
+    type="text/css" />
+  <!-- <link rel="stylesheet" href="{{url_for('static', filename='libs/slickgrid/css/columnpicker.css')}}" type="text/css"/> -->
+
+  <script src="{{url_for('static', filename='libs/jquery/js/jquery-1.7.min.js')}}"></script>
+  <script src="{{url_for('static', filename='libs/jquery/js/jquery.event.drag-2.0.min.js')}}"></script>
+
+  <script src="{{url_for('static', filename='libs/slickgrid/js/slick.core.js')}}"></script>
+  <script src="{{url_for('static', filename='libs/slickgrid/js/slick.interactions.js')}}"></script>
+  <script src="{{url_for('static', filename='libs/slickgrid/js/slick.grid.js')}}"></script>
+  <script src="{{url_for('static', filename='libs/slickgrid/js/slick.editors.js')}}"></script>
+  <script src="{{url_for('static', filename='libs/slickgrid/js/slick.dataview.js')}}"></script>
+
+
+  <script src="{{url_for('static', filename='libs/slickgrid/js/controls/slick.pager.js')}}"></script>
+  <script src="{{url_for('static', filename='libs/slickgrid/js/controls/slick.columnpicker.js')}}"></script>
+
+  <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='libs/bootstrap/css/bootstrap.css')}}">
+  <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='libs/parcoords/css/parcoords.css')}}">
+  <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/style.css')}}">
+  <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/image-view.css')}}">
+  <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/scatterplot.css')}}">
+
+
+  <style>
+
+  </style>
+  <script src="{{url_for('static', filename='libs/d3/js/d3.min.js')}}"></script>
+  <script src="{{url_for('static', filename='libs/parcoords/js/parcoords.standalone.js')}}"></script>
+  <script src="{{url_for('static', filename='js/image_init.js')}}"></script>
+  <script src="{{url_for('static', filename='libs/bootstrap/js/popper.min.js')}}"></script>
+  <script src="{{url_for('static', filename='libs/bootstrap/js/bootstrap.min.js')}}"></script>
+  
+
+  <script src="{{url_for('static', filename='js/global_config.js')}}"></script>
+  <script src="{{url_for('static', filename='js/global_vars.js')}}"></script>
+  <script src="{{url_for('static', filename='js/popovers.js')}}"></script>
+  <script src="{{url_for('static', filename='js/slickgrid.js')}}" id="brushing"></script>
+  <script src="{{url_for('static', filename='js/scatterplot.js')}}"></script>
+  <script src="{{url_for('static', filename='js/histoqc.js')}}"></script>
+  <script src="{{url_for('static', filename='js/cohortfinder.js')}}"></script>
+</head>
+
+<body>
+  <nav class="navbar bg-body-tertiary">
+    <div class="container-fluid">
+      <span class="navbar-brand mb-0 h1">
+        <h1>HistoQC</h1>
+      </span>
+      <span>
+        <button type="button" id="modal-toggle" class="btn btn-primary btn-lg">CohortFinder</button>
+        <button type="button" class="btn btn-primary btn-lg" onclick="exportResultsTsv()">Download TSV</button>
+      </span>
+    </div>
+  </nav>
+  <div class="container-fluid">
+    <!-- Modal -->
+    <div class="modal" id="cf-params-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+      aria-hidden="true">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <!-- Modal Header -->
+          <div class="modal-header">
+            <h5 class="modal-title" id="exampleModalLabel">CohortFinder Parameters</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <!-- Modal Body (Form) -->
+          <div class="modal-body">
+            <!-- Your form elements go here -->
+            <form>
+              <div class="form-group">
+                <label for="exampleFormControlInput1"># of clusters</label>
+                <input type="text" class="form-control" id="exampleFormControlInput1" placeholder="3" name="numClusters" value="3">
+              </div>
+              <!-- Add more form fields as needed -->
+              <!-- Add a slider from 0 to 100 -->
+              <div class="form-group">
+                <label for="slider">Test set percent</label>
+                <input type="range" class="form-control-range" id="slider" min="0" max="100" value="20"
+                  name="testSetPercent">
+              </div>
+              <div class="form-group">
+                <!-- Features selection checkboxes -->
+                <div id="features-select"></div>
+              </div>
+
+              <!-- Modal Footer with Submit button -->
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="submit" class="btn btn-primary">Submit</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal" id="select-image-modal" tabindex="-1" role="dialog" aria-labelledby="select-image-modal"
+      aria-hidden="true">
+      <div class="modal-dialog modal-lg" role="document" style="max-width: 95%;">
+        <div class="modal-content">
+          <!-- Modal Header -->
+          <div class="modal-header">
+            <h5 class="modal-title" id="select-image-modal-title"></h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <!-- Modal Body -->
+          <div class="modal-body">
+            <!-- Your form elements go here -->
+            <div id="select-image-view">
+              <div id="select-image-container">
+              </div>
+              <div id="select-candidate-container"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row mb-4">
+      <div class="col overflow-auto">
+        <div class="card">
+          <div class="card-body">
+            <!-- THE SLICK GRID -->
+            <div id="slick-parent">
+              <div id="grid"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row mb-4">
+      <div class="col" style="flex-grow: 1;">
+        <div class="card" id="parcoords-card">
+          <!-- THE PARALLEL COORDINATES PLOT -->
+          <div class="card-body">
+            <div id="parcoords-parent">
+              <div id="example" class="parcoords"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col" style="flex-grow: 0;">
+        <div class="card" id="scatter-card">
+          <div class="card-header" id="scatter-card-header" style="display: none; padding: 0.25rem;">
+          </div>
+          <div class="card-body" id="scatter-card-body">
+            <!-- THE SCATTER PLOT -->
+            <div id="scatter-parent">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row mb-4" style="flex-grow: 1;">
+      <div class="col-12">
+        <div class="card" id="overview-gallery-card">
+          <div class="card-header">
+            <div id="image-control-group" class="control-group btn-group btn-group-sm">
+              <span id="img-select-button" class="btn-group btn-group-sm">
+                <select id="img-select" class="selectpicker show-tick" data-size="5" data-style="btn-dark btn-sm"
+                  data-width="150px"></select>
+                <select id="comparison-select" class="selectpicker" data-size="5" data-style="btn-dark btn-sm"
+                  data-width="150px"></select>
+              </span>
+              <span class="control-group-element" id="pager"></span>
+              <span class="control-group-element" id="slider">
+                <label for="zoom-range" class="form-label">Image zoom: </label>
+                <input type="range" class="form-range" id="zoom-range" min="0.2" max="2.0" step="0.05">
+              </span>
+              <span class="control-group-element">
+                <label for="downsample-checkbox">downsample thumbnails:</label>
+                <input type="checkbox" id="downsample-checkbox" onclick="toggleImageDownsample()">
+              </span>
+            </div>
+          </div>
+          <div class="card-body" id="overview-gallery" style="overflow-y: scroll;">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+  </div>
+</body>
+
+</html>

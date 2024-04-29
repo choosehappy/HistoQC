@@ -1,0 +1,68 @@
+#lasso-canvas {
+    z-index: 2;
+    cursor: crosshair;
+  }
+
+#highlighted-canvas {
+    z-index: 1;
+    cursor: grab;
+}
+
+#axis-svg {
+    z-index: 0;
+}
+
+.control-group-element {
+    margin-left: 15px;
+    padding-left: 3px;
+    padding-right: 3px;
+    border: 1px solid black;
+    border-color: #000;
+    border-radius: 2px;
+}
+
+
+#scatter-parent {
+    position: relative;
+}
+
+.axis path,
+.axis line {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+}
+
+.tick line {
+    opacity: 0.2;
+}
+
+.tooltip {
+    box-sizing: border-box;
+    position: absolute;
+    display: none;
+    top: 0;
+    left: -100000000px;
+    padding: 8px 12px;
+    font-family: sans-serif;
+    font-size: 12px;
+    color: #333;
+    background-color: #fff;
+    border: 1px solid #333;
+    border-radius: 4px;
+    pointer-events: none;
+    z-index: 2;
+    opacity: unset;
+}
+
+#scatter-mode-selector * {
+    margin: 0px 2px 0px 2px;
+}
+
+#scatter-mode-selector{
+    padding: 3px;
+    margin: 3px;
+    border: 1px solid black;
+    border-radius: 3%;
+    border-width: 1px;
+}

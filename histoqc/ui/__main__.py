@@ -1,47 +1,28 @@
+from flask import Flask
+import argparse
 import os
-import sys
 
-from histoqc.data import package_resource_copytree
-from histoqc.ui import run_server
+from histoqc.ui.HQC_html import html
 
+app = Flask(__name__)
+app.register_blueprint(html)
+app.logger_name = 'flask'
 
-def main(argv=None):
-    import argparse
-
-    if argv is None:
-        argv = sys.argv[1:]
-
+def main():
     parser = argparse.ArgumentParser(prog="histoqc.ui",description="launch server for result viewing in user interface")
-    parser.add_argument('--bind', '-b', metavar='ADDRESS',
-                        default='0.0.0.0',
-                        help='Specify alternate bind address '
-                             '[default: all interfaces]')
-    parser.add_argument('data_directory',
-                        nargs='?',
-                        default=os.getcwd(),
-                        help='Specify the data directory '
-                             '[default:current directory]')
-    parser.add_argument('--port', type=int, default=8000,
-                        help='Specify alternate port [default: 8000]')
-    parser.add_argument('--deploy', metavar="OUT_DIR",
-                        default=None,
-                        help='Write UI to OUT_DIR')
-    parser.add_argument('--result', '-rs', 
-                        type=str,
-                        default=None,
-                        help='If provided the result file name, UI automatically load the fixed local result file. Especially useful for remote data viewing')
-    args = parser.parse_args(argv)
+    parser.add_argument('--port', '-p', type=int, default=5000, help='Specify the port [default:5000]')
+    parser.add_argument('resultsfilepath', type=str, help='Specify the full path to the results file. The user must specify this path.')
+    args = parser.parse_args()
 
-    if args.deploy:
-        if not os.path.isdir(args.deploy):
-            print(f"'{args.deploy}' not a directory", file=sys.stderr)
-            return -1
-        package_resource_copytree('histoqc.ui', 'UserInterface', args.deploy, args.result)
-        return 0
+    # split the path so that the histoqc data and filename can be accessed separately. 
+    # If resultsfilepath is an empty string (default), data_directory and results_filename will be empty strings.
+    app.config['data_directory'] = os.path.dirname(args.resultsfilepath)
+    app.config['results_filename'] = os.path.basename(args.resultsfilepath)
 
-    # serve the histoqc ui
-    run_server(args.data_directory, host=args.bind, port=args.port, result=args.result)
+    app.logger.info('Starting Flask app')
+    app.run(host='0.0.0.0', port=args.port, debug=True, threaded=True)
 
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
+
+
