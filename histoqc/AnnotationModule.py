@@ -1,6 +1,7 @@
 import logging
 from typing import List, Tuple
 from histoqc.BaseImage import printMaskHelper, BaseImage
+from histoqc.array_adapter import ArrayDevice, ArrayAdapter
 from skimage import io
 from skimage.util import img_as_ubyte
 import os
@@ -76,6 +77,8 @@ def getParams(s: BaseImage, params):
 
 def saveAnnotationMask(s: BaseImage, params):
     logging.info(f"{s['filename']} - \tgetAnnotationMask")
+    # quite pointless to enforce GPU acceleration here. Force to use CPU mode
+    adaptor = ArrayAdapter.build(input_device=ArrayDevice.CPU, output_device=ArrayDevice.CPU)
 
     (ann_format, file_path, suffix) = getParams(s, params)
 
@@ -107,13 +110,14 @@ def saveAnnotationMask(s: BaseImage, params):
     (off_x, off_y, ncol, nrow) = s["img_bbox"]
     resize_factor = np.shape(s["img_mask_use"])[1] / ncol
     height, width = s["img_mask_use"].shape
+
     annotationMask = annotation_to_mask(width, height, annot_collection, (off_x, off_y), resize_factor) > 0
 
     mask_file_name = f"{s['outdir']}{os.sep}{s['filename']}_annot_{ann_format.lower()}.png"
     io.imsave(mask_file_name, img_as_ubyte(annotationMask))
 
     prev_mask = s["img_mask_use"]
-    s["img_mask_use"] = prev_mask & annotationMask
+    s["img_mask_use"] = adaptor.and_(prev_mask, annotationMask)
     s.addToPrintList("getAnnotationMask",
                      printMaskHelper(params.get("mask_statistics", s["mask_statistics"]), prev_mask, s["img_mask_use"]))
 

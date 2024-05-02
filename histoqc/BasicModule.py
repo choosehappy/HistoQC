@@ -1,6 +1,7 @@
 import logging
 import os
 from histoqc.BaseImage import printMaskHelper
+from histoqc.array_adapter import ArrayAdapter, ArrayDevice
 from skimage.morphology import remove_small_objects, binary_opening, disk
 from skimage import io
 from skimage.util import img_as_ubyte
@@ -27,13 +28,23 @@ def finalComputations(s: BaseImage, params):
 
 def finalProcessingSpur(s: BaseImage, params):
     logging.info(f"{s['filename']} - \tfinalProcessingSpur")
-    disk_radius = int(params.get("disk_radius", "25"))
-    selem = disk(disk_radius)
-    mask = s["img_mask_use"]
-    mask_opened = binary_opening(mask, selem)
-    mask_spur = ~mask_opened & mask
 
-    io.imsave(s["outdir"] + os.sep + s["filename"] + "_spur.png", img_as_ubyte(mask_spur))
+    adapter = s.image_handle.adapter
+    disk_radius = int(params.get("disk_radius", "25"))
+
+    # selem = adapter(disk)(disk_radius)
+    mask = s["img_mask_use"]
+    mask_opened = adapter(binary_opening)(mask, footprint=disk(disk_radius))
+    # todo: it is safe to directly compare
+    # todo: ~mask_opened & mask directly as the device of both are synchronized by adapter.
+    # todo: but this assumes that an adapter is used in the module so
+    # todo: for now unless we implement an array proxy the best practice is to use explicit and_ method
+    # todo: to avoid mistakes
+    mask_spur = adapter.and_(~mask_opened, mask)
+    fname = os.path.join(s["outdir"], f"{s['filename']}_spur.png")
+    adapter.imsave(fname, adapter(img_as_ubyte)(mask_spur))
+    # io.imsave(s["outdir"] + os.sep + s["filename"] + "_spur.png", ArrayAdapter.move_to_device(mask_spur_ubyte,
+    #                                                                                           ArrayDevice.CPU))
 
     prev_mask = s["img_mask_use"]
     s["img_mask_use"] = mask_opened
@@ -52,13 +63,16 @@ def finalProcessingSpur(s: BaseImage, params):
 
 def finalProcessingArea(s: BaseImage, params):
     logging.info(f"{s['filename']} - \tfinalProcessingArea")
+
+    adapter = s.image_handle.adapter
     area_thresh = int(params.get("area_threshold", "1000"))
     mask = s["img_mask_use"]
 
-    mask_opened = remove_small_objects(mask, min_size=area_thresh)
-    mask_removed_area = ~mask_opened & mask
-
-    io.imsave(s["outdir"] + os.sep + s["filename"] + "_areathresh.png", img_as_ubyte(mask_removed_area))
+    mask_opened = adapter(remove_small_objects)(mask, min_size=area_thresh)
+    mask_removed_area = adapter.and_(~mask_opened, mask)
+    fname = os.path.join(s["outdir"], f"{s['filename']}_areathresh.png")
+    adapter.imsave(fname, adapter(img_as_ubyte)(mask_removed_area))
+    # io.imsave(s["outdir"] + os.sep + s["filename"] + "_areathresh.png", img_as_ubyte(mask_removed_area))
 
     prev_mask = s["img_mask_use"]
     s["img_mask_use"] = mask_opened > 0

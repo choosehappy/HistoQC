@@ -12,6 +12,7 @@ from histoqc.import_wrapper import dynamic_import
 
 def separateStains(s: BaseImage, params):
     logging.info(f"{s['filename']} - \tseparateStains")
+    adapter = s.image_handle.adapter
     stain = params.get("stain", "")
     use_mask = strtobool(params.get("use_mask", "True"))
 
@@ -25,13 +26,15 @@ def separateStains(s: BaseImage, params):
         logging.error(f"{s['filename']} - Unknown stain matrix specified in DeconolutionModule.separateStains")
         sys.exit(1)
 
-    mask = s["img_mask_use"]
+    adapter.sync(stain_matrix)
+    mask = adapter.sync(s["img_mask_use"])
 
     if use_mask and len(mask.nonzero()[0]) == 0:  # -- lets just error check at the top if mask is empty and abort early
         for c in range(3):
             s.addToPrintList(f"deconv_c{c}_std", str(-100))
             s.addToPrintList(f"deconv_c{c}_mean", str(-100))
-            io.imsave(s["outdir"] + os.sep + s["filename"] + f"_deconv_c{c}.png", img_as_ubyte(np.zeros(mask.shape)))
+            fname = os.path.join(s["outdir"], f"{s['filename']}_deconv_c{c}.png")
+            adapter.imsave(fname, img_as_ubyte(np.zeros(mask.shape)))
 
         logging.warning(f"{s['filename']} - DeconvolutionModule.separateStains: NO tissue "
                         f"remains detectable! Saving Black images")
@@ -41,11 +44,10 @@ def separateStains(s: BaseImage, params):
         return
 
     img = s.getImgThumb(s["image_work_size"])
-    dimg = separate_stains(img, stain_matrix)
+    dimg = adapter(separate_stains)(img, conv_matrix=stain_matrix)
 
     for c in range(0, 3):
         dc = dimg[:, :, c]
-
         clip_max_val = np.quantile(dc.flatten(), .99)
         dc = np.clip(dc, a_min=0, a_max=clip_max_val)
 
@@ -65,6 +67,6 @@ def separateStains(s: BaseImage, params):
             s.addToPrintList(f"deconv_c{c}_std", str(dc.std()))
 
         dc = (dc - dc_min) / float(dc_max - dc_min) * mask
-        io.imsave(s["outdir"] + os.sep + s["filename"] + f"_deconv_c{c}.png", img_as_ubyte(dc))
-
+        fname = os.path.join(s["outdir"], f"{s['filename']}_deconv_c{c}.png")
+        adapter.imsave(fname, adapter(img_as_ubyte)(dc))
     return

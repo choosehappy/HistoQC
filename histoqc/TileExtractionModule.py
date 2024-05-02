@@ -6,6 +6,7 @@ are open.
 import os
 import json
 from histoqc.BaseImage import BaseImage
+from histoqc.array_adapter import ArrayDevice
 from typing import Callable, Dict, Any, List, Tuple, Union
 import numpy as np
 from PIL import Image, ImageDraw
@@ -15,10 +16,7 @@ from distutils.util import strtobool
 import logging
 from typing_extensions import Literal, get_args
 from PIL.Image import Image as PILImage
-# from histoqc.import_wrapper.helper import dynamic_import
-# __TYPE_GET_ARGS = Callable[[Type, ], Tuple[Any, ...]]
-# Literal: TypeVar = dynamic_import("typing", "Literal", "typing_extensions")
-# get_args: __TYPE_GET_ARGS = dynamic_import("typing", "get_args", "typing_extensions")
+
 
 TYPE_TILE_SIZE = Literal['tile_size']
 TYPE_TILE_STRIDE = Literal['tile_stride']
@@ -554,7 +552,10 @@ class TileExtractor:
 
 
 def extract(s: BaseImage, params: Dict[PARAMS, Any]):
+
     logging.info(f"{s['filename']} - \textract")
+
+    adapter = s.image_handle.adapter
     with params['lock']:
         slide_out = s['outdir']
         tile_output_dir = params.get('tile_output', os.path.join(slide_out, 'tiles'))
@@ -568,9 +569,9 @@ def extract(s: BaseImage, params: Dict[PARAMS, Any]):
         tile_size = int(params.get('tile_size', 256))
         tile_stride = int(params.get('tile_stride', 256))
         tissue_thresh = float(params.get('tissue_ratio', 0.5))
-
-        img_use_for_tiles = s.getImgThumb(s["image_work_size"])
-        mask_use_for_tiles = s['img_mask_use']
+        # no added value from GPU acceleration (except for read_region) as the procedure is sequential
+        img_use_for_tiles = adapter.move_to_device(s.getImgThumb(s["image_work_size"]), ArrayDevice.CPU)
+        mask_use_for_tiles = adapter.move_to_device(s['img_mask_use'], ArrayDevice.CPU)
         image_handle = s.image_handle
         img_w, img_h = image_handle.dimensions
 

@@ -8,6 +8,7 @@ from typing import cast
 from PIL.Image import Image as PILImage
 from .utils import rgba2rgb_pil
 from PIL import Image
+from histoqc.array_adapter import ArrayDevice
 
 
 class OpenSlideHandle(WSIImageHandle[openslide.OpenSlide, PILImage, np.ndarray]):
@@ -143,3 +144,12 @@ class OpenSlideHandle(WSIImageHandle[openslide.OpenSlide, PILImage, np.ndarray])
     @staticmethod
     def array_shape(arr: np.ndarray) -> Tuple[int, ...]:
         return arr.shape
+
+    def close_handle(self):
+        if hasattr(self, "handle"):
+            self.handle.close()
+        self.handle = None
+
+    @property
+    def device(self) -> ArrayDevice:
+        return ArrayDevice.CPU

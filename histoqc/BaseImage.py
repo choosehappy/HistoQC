@@ -6,9 +6,10 @@ import zlib
 import dill
 from distutils.util import strtobool
 import re
-from typing import Union, Tuple, cast
+from typing import Union, Tuple, cast, Optional
 from histoqc.wsi_handles.base import WSIImageHandle
-from histoqc.wsi_handles.constants import KEY_OPENSLIDE
+from histoqc.wsi_handles.constants import KEY_OPENSLIDE, KEY_CUCIM
+from histoqc.array_adapter.typing import TYPE_ARRAY
 _REGEX_MAG = r"^(\d?\.?\d*X?)"
 _PATTERN_MAG: re.Pattern = re.compile(_REGEX_MAG, flags=re.IGNORECASE)
 MAG_NA = None
@@ -35,18 +36,21 @@ MAG_NA = None
 
 class BaseImage(dict):
 
-    __image_handle: WSIImageHandle
+    _image_handle: WSIImageHandle
 
     @property
     def image_handle(self) -> WSIImageHandle:
-        return self.__image_handle
+        return self._image_handle
 
     @image_handle.setter
     def image_handle(self, image_handle: WSIImageHandle):
-        self.__image_handle = image_handle
+        self._image_handle = image_handle
 
     def __init__(self, fname, fname_outdir, params):
         dict.__init__(self)
+        handles = params.get("handles", KEY_CUCIM)
+        # dynamically load wsi image handle
+        self.image_handle: WSIImageHandle = WSIImageHandle.build_handle(fname, handles)
 
         self.in_memory_compression = strtobool(params.get("in_memory_compression", "False"))
 
@@ -61,9 +65,6 @@ class BaseImage(dict):
         self["dir"] = os.path.dirname(fname)
 
         # get handles from config
-        handles = params.get("handles", KEY_OPENSLIDE)
-        # dynamically load wsi image handle
-        self.image_handle: WSIImageHandle = WSIImageHandle.build_handle(fname, handles)
 
         self["image_base_size"] = self.image_handle.dimensions
         self["enable_bounding_box"] = strtobool(params.get("enable_bounding_box", "False"))
@@ -95,16 +96,29 @@ class BaseImage(dict):
 
         self["completed"] = []
 
+    @staticmethod
+    def is_img_data(key: str) -> bool:
+        return key.startswith("img") and key != "img_bbox"
+
+    def _sync_to_handle(self, key, value):
+        if not self.__class__.is_img_data(key):
+            return value
+        if hasattr(self, "_image_handle") and self.image_handle is not None:
+            value = self.image_handle.adapter.sync(value)
+        return value
+
     def __getitem__(self, key):
         value = super(BaseImage, self).__getitem__(key)
-        if hasattr(self, "in_memory_compression") and self.in_memory_compression and key.startswith("img"):
+        if hasattr(self, "in_memory_compression") and self.in_memory_compression and self.__class__.is_img_data(key):
             value = dill.loads(zlib.decompress(value))
+
+        value = self._sync_to_handle(key, value)
         return value
 
     def __setitem__(self, key, value):
-        if hasattr(self, "in_memory_compression") and self.in_memory_compression and key.startswith("img"):
+        value = self._sync_to_handle(key, value)
+        if hasattr(self, "in_memory_compression") and self.in_memory_compression and self.__class__.is_img_data(key):
             value = zlib.compress(dill.dumps(value), level=5)
-
         return super(BaseImage, self).__setitem__(key, value)
 
     # setbounding box start coordinate and size
@@ -152,7 +166,7 @@ class BaseImage(dict):
         # for now just cast it to str
         return size
 
-    def getImgThumb(self, size: str):
+    def getImgThumb(self, size: str) -> Optional[TYPE_ARRAY]:
         # note that while size is annotated as str, a bunch of functions in process Modules like SaveModule doesn't
         # really handle it that way, and trace of previous coding also suggest that there actually lack a params
         # type protocol in xxxModules. I think an extra layer of data sanitizing is necessary here.

@@ -10,6 +10,7 @@ from typing import cast
 from lazy_property import LazyProperty
 import numpy as np
 from cucim import skimage as c_skimage
+from histoqc.array_adapter import ArrayDevice
 
 
 class CuImageHandle(WSIImageHandle[CuImage, CuImage, cp.ndarray]):
@@ -114,7 +115,9 @@ class CuImageHandle(WSIImageHandle[CuImage, CuImage, cp.ndarray]):
         aspect_ratio = self.dimensions[0] / self.dimensions[1]
 
         target_w, target_h = self.__class__.curate_to_max_dim(target_w, target_h, max(new_dim), aspect_ratio)
-        return c_skimage.transform.resize(thumb_cp, output_shape=(target_h, target_w))
+        resized = c_skimage.transform.resize(thumb_cp, output_shape=(target_h, target_w))
+
+        return c_skimage.util.img_as_ubyte(resized)
 
     def get_best_level_for_downsample(self, down_factor: float) -> int:
         """Return the largest level that's smaller than the target downsample factor, consistent with openslide.
@@ -164,8 +167,20 @@ class CuImageHandle(WSIImageHandle[CuImage, CuImage, cp.ndarray]):
 
     @staticmethod
     def backend_dim(region: CuImage) -> Tuple[int, int]:
-        return cast(Tuple[int, int], tuple(region.size()[:2]))
+        return cast(Tuple[int, int], tuple(region.size()[:2][::-1]))
 
     @staticmethod
     def array_shape(arr: cp.ndarray) -> Tuple[int, ...]:
         return arr.shape
+
+    def close_handle(self):
+        if hasattr(self, "handle") and self.handle is not None:
+            self.handle.close()
+            self.handle = None
+        if self.dummy_handle is not None:
+            self.dummy_handle.close()
+            self.dummy_handle = None
+
+    @property
+    def device(self) -> ArrayDevice:
+        return ArrayDevice.CUDA

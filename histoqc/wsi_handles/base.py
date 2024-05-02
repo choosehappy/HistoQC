@@ -1,10 +1,13 @@
+from __future__ import annotations
 from abc import ABC, abstractmethod
+
 from histoqc.import_wrapper import dynamic_import
 import logging
 from typing import Sequence, TypeVar, Tuple, List, Union, Dict, Callable, Mapping, Generic
 import numpy as np
 from PIL.Image import Image as PILImage
 from typing_extensions import final
+from histoqc.array_adapter import ArrayDevice, ArrayAdapter
 import os
 
 from histoqc.wsi_handles.constants import WSI_HANDLES, HANDLE_DELIMITER
@@ -18,6 +21,7 @@ class WSIImageHandle(ABC, Generic[T, Backend, ARRAY]):
 
     handle: T
     fname: str
+    _adapter: ArrayAdapter
 
     @staticmethod
     def curate_shorter_edge(width, height, limit, aspect_ratio):
@@ -314,6 +318,7 @@ class WSIImageHandle(ABC, Generic[T, Backend, ARRAY]):
             # noinspection PyBroadException
             try:
                 image_handle = handle_class(fname)
+                break
             except Exception:
                 # current wsi handle class doesn't support this file
                 msg = f"WSIImageHandle: \"{handle_class}\" doesn't support {fname}"
@@ -337,4 +342,24 @@ class WSIImageHandle(ABC, Generic[T, Backend, ARRAY]):
 
     def __init__(self, fname: str):
         self.fname = fname
+        self._adapter = ArrayAdapter.build(input_device=self.device, output_device=self.device)
 
+    @abstractmethod
+    def close_handle(self):
+        ...
+
+    def close(self):
+        self.close_handle()
+        self.handle = None
+
+    def is_closed(self):
+        return not hasattr(self, "handle") or self.handle is None
+
+    @property
+    @abstractmethod
+    def device(self) -> ArrayDevice:
+        raise NotImplementedError
+
+    @property
+    def adapter(self) -> ArrayAdapter:
+        return self._adapter

@@ -7,6 +7,7 @@ from skimage import io, morphology, measure
 from skimage.util import img_as_ubyte
 from skimage.color import rgb2gray
 import numpy as np
+from histoqc.array_adapter import ArrayAdapter, FUNC_MAP, ArrayDevice
 
 # Analysis of focus measure operators for shape-from-focus
 # Said Pertuza,, Domenec Puiga, Miguel Angel Garciab, 2012
@@ -15,35 +16,41 @@ import numpy as np
 
 def identifyBlurryRegions(s: BaseImage, params):
     logging.info(f"{s['filename']} - \tidentifyBlurryRegions")
-
+    adapter = s.image_handle.adapter
     blur_radius = int(params.get("blur_radius", 7))
     blur_threshold = float(params.get("blur_threshold", .1))
-
     img = s.getImgThumb(params.get("image_work_size", "2.5x"))
-    img = rgb2gray(img)
-    img_laplace = np.abs(skimage.filters.laplace(img))
-    mask = skimage.filters.gaussian(img_laplace, sigma=blur_radius) <= blur_threshold
+    img = adapter(rgb2gray)(img)
+    # use the __abs__ interface
 
+    img_laplace = abs(adapter(skimage.filters.laplace)(img))
+    mask = adapter(skimage.filters.gaussian)(img_laplace, sigma=blur_radius) <= blur_threshold
     # for some reason resize takes a grayscale and produces a 3chan
-    mask = skimage.transform.resize(mask, s.getImgThumb(s["image_work_size"]).shape, order=0)[:, :, 1]
+    # Note: the reason you obtain a 3chan is that you specified a 3chan output shape
+    mask_resized_shape = s.getImgThumb(s["image_work_size"]).shape[:2]
+    mask = adapter(skimage.transform.resize)(mask, output_shape=mask_resized_shape, order=0)
 
-    mask = s["img_mask_use"] & (mask > 0)
+    mask = adapter.and_(s["img_mask_use"], mask > 0)
 
-    io.imsave(s["outdir"] + os.sep + s["filename"] + "_blurry.png", img_as_ubyte(mask))
+    fname = os.path.join(s["outdir"], f"{s['filename']}_blurry.png")
+    adapter.imsave(fname, adapter(img_as_ubyte)(mask))
     s["img_mask_blurry"] = (mask * 255) > 0
 
     prev_mask = s["img_mask_use"]
-    s["img_mask_use"] = s["img_mask_use"] & ~s["img_mask_blurry"]
+    s["img_mask_use"] = adapter.and_(s["img_mask_use"], ~s["img_mask_blurry"])
 
-    rps = measure.regionprops(morphology.label(mask))
+    labeled_mask = adapter(morphology.label)(mask)
+    rps = adapter(measure.regionprops)(labeled_mask)
+
     if rps:
-        areas = np.asarray([rp.area for rp in rps])
+        # scalar stats --> CPU is sufficient.
+        # use float to cast cp.array(scalar) to python's float
+        areas = np.asarray([float(rp.area) for rp in rps])
         nobj = len(rps)
         area_max = areas.max()
         area_mean = areas.mean()
     else:
         nobj = area_max = area_mean = 0
-
     s.addToPrintList("blurry_removed_num_regions", str(nobj))
     s.addToPrintList("blurry_removed_mean_area", str(area_mean))
     s.addToPrintList("blurry_removed_max_area", str(area_max))

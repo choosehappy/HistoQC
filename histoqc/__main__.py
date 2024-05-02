@@ -22,6 +22,7 @@ from histoqc._worker import worker_success
 from histoqc._worker import worker_error
 from histoqc.config import read_config_template
 from histoqc.data import managed_pkg_data
+from histoqc.wsi_handles.constants import KEY_CUCIM
 
 
 @managed_pkg_data
@@ -66,7 +67,8 @@ def main(argv=None):
     args = parser.parse_args(argv)
 
     # --- multiprocessing and logging setup -----------------------------------
-
+    # todo: move config parsing above the mpm initialization and set the start method accordingly
+    # multiprocessing.set_start_method("spawn")
     setup_logging(capture_warnings=True, filter_warnings='ignore')
     mpm = multiprocessing.Manager()
     lm = MultiProcessingLogManager('histoqc', manager=mpm)
@@ -83,6 +85,12 @@ def main(argv=None):
         lm.logger.warning(f"Configuration file {args.config} assuming to be a template...checking.")
         config.read_string(read_config_template(args.config))
 
+    # todo: for cuda --> must use spawn method if CUDA is enabled.
+    # todo: however a better memory management scheme should be tested.
+    # todo: since the single-processing cucim already outperforms multi-cpu counterpart in terms of runtime
+    # todo: at this moment we simply override the args.nprocesses
+    if config["BaseImage.BaseImage"].get("handles") == KEY_CUCIM:
+        args.nprocesses = 0
     # --- provide models, pen and templates as fallbacks from package data ----
 
     managed_pkg_data.inject_pkg_data_fallback(config)

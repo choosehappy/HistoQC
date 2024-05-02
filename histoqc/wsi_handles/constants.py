@@ -14,7 +14,7 @@ CLASS_CUCIM: str = "CuImageHandle"
 WSI_HANDLES: Dict[str, Tuple[str, str]] = {
     KEY_OPENSLIDE: (MODULE_OPENSLIDE, CLASS_OPENSLIDE),
     # todo: add unified interface
-    # KEY_CUCIM: (MODULE_CUCIM, CLASS_CUCIM),
+    KEY_CUCIM: (MODULE_CUCIM, CLASS_CUCIM),
 }
 
 HANDLE_DELIMITER = ','
