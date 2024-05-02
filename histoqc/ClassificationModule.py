@@ -181,8 +181,6 @@ def compute_features(img, params):
 
 
 def byExampleWithFeatures(s: BaseImage, params):
-    device = s.image_handle.device
-    adapter = ArrayAdapter.build(input_device=device, output_device=device)
     name = params.get("name", "classTask")
     logging.info(f"{s['filename']} - \tClassificationModule.byExample:\t{name}")
 

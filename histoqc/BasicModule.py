@@ -17,7 +17,8 @@ def getBasicStats(s: BaseImage, params):
     s.addToPrintList("width", osh.dimensions[0] if len(osh.dimensions) >= 2 else "NA")
     s.addToPrintList("mpp_x", osh.mpp_x)
     s.addToPrintList("mpp_y", osh.mpp_y)
-    s.addToPrintList("comment", osh.comment.replace("\n", " ").replace("\r", " "))
+    comment = osh.comment if osh.comment else ""
+    s.addToPrintList("comment", comment.replace("\n", " ").replace("\r", " "))
     return
 
 

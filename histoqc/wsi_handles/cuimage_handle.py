@@ -11,6 +11,7 @@ from lazy_property import LazyProperty
 import numpy as np
 from cucim import skimage as c_skimage
 from histoqc.array_adapter import ArrayDevice
+import gc
 
 
 class CuImageHandle(WSIImageHandle[CuImage, CuImage, cp.ndarray]):
@@ -173,13 +174,20 @@ class CuImageHandle(WSIImageHandle[CuImage, CuImage, cp.ndarray]):
     def array_shape(arr: cp.ndarray) -> Tuple[int, ...]:
         return arr.shape
 
+    def release(self):
+        cp.get_default_memory_pool().free_all_blocks()
+        cp.get_default_pinned_memory_pool().free_all_blocks()
+
     def close_handle(self):
         if hasattr(self, "handle") and self.handle is not None:
             self.handle.close()
+            del self.handle
             self.handle = None
+            gc.collect()
         if self.dummy_handle is not None:
             self.dummy_handle.close()
             self.dummy_handle = None
+        self.release()
 
     @property
     def device(self) -> ArrayDevice:
