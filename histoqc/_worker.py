@@ -1,7 +1,7 @@
 """histoqc worker functions"""
 import os
 import shutil
-
+import numpy as np
 from histoqc.BaseImage import BaseImage
 from histoqc._pipeline import load_pipeline
 from histoqc._pipeline import setup_plotting_backend
@@ -18,7 +18,9 @@ def worker_setup(c):
 def worker(idx, file_name, *,
            process_queue, config, outdir, log_manager, lock, shared_dict, num_files, force, seed):
     """pipeline worker function"""
-
+    # set the seed
+    if seed is not None:
+        np.random.seed(seed)
     # --- output directory preparation --------------------------------
     fname_outdir = os.path.join(outdir, os.path.basename(file_name))
     if os.path.isdir(fname_outdir):  # directory exists
