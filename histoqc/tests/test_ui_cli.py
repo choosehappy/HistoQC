@@ -1,8 +1,6 @@
 import os
 import threading
 import time
-from http.server import HTTPServer
-from typing import Optional
 
 import pytest
 import requests

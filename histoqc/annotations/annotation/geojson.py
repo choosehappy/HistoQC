@@ -1,5 +1,5 @@
 from typing import List, Dict, Callable, Any  # Literal, get_args
-from histoqc.import_wrapper.typing import Literal, get_args
+from typing_extensions import Literal, get_args
 from ..io_utils.json import load_json
 from .base import Annotation, TYPE_POINT_SET, TYPE_RAW_LABEL, TYPE_POINT, TYPE_HOLED_SET
 

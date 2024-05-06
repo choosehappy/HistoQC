@@ -1,7 +1,9 @@
 import logging
 from typing import List, Tuple
-from histoqc.BaseImage import printMaskHelper
-from skimage import io, img_as_ubyte
+from histoqc.BaseImage import printMaskHelper, BaseImage
+from histoqc.array_adapter import ArrayAdapter, Device
+from skimage import io
+from skimage.util import img_as_ubyte
 import os
 from pathlib import PurePosixPath, Path
 from shapely.geometry import Polygon
@@ -47,13 +49,13 @@ def annotation_to_mask(width: int, height: int, annot_collection: AnnotCollectio
     return np.array(mask)
 
 
-def getParams(s, params):
+def getParams(s: BaseImage, params):
     # read params - format: xml, json; file_path; suffix; 
     ann_format = params.get("format", None)
     file_path = params.get("file_path", None)
     suffix = params.get("suffix", "")
 
-    # try use default value if the params are not provided
+    # try using default value if the params are not provided
     if not ann_format:
         # set default format
         ann_format = "xml"
@@ -73,8 +75,12 @@ def getParams(s, params):
     return ann_format, file_path, suffix
 
 
-def saveAnnotationMask(s, params):
+def saveAnnotationMask(s: BaseImage, params):
     logging.info(f"{s['filename']} - \tgetAnnotationMask")
+    # quite pointless to enforce GPU acceleration here. Force to use CPU mode
+    adaptor = ArrayAdapter.build(input_device=Device.build(Device.DEVICE_CPU),
+                                 output_device=Device.build(Device.DEVICE_CPU),
+                                 contingent_device=Device.build(Device.DEVICE_CPU))
 
     (ann_format, file_path, suffix) = getParams(s, params)
 
@@ -106,13 +112,14 @@ def saveAnnotationMask(s, params):
     (off_x, off_y, ncol, nrow) = s["img_bbox"]
     resize_factor = np.shape(s["img_mask_use"])[1] / ncol
     height, width = s["img_mask_use"].shape
+
     annotationMask = annotation_to_mask(width, height, annot_collection, (off_x, off_y), resize_factor) > 0
 
     mask_file_name = f"{s['outdir']}{os.sep}{s['filename']}_annot_{ann_format.lower()}.png"
     io.imsave(mask_file_name, img_as_ubyte(annotationMask))
 
     prev_mask = s["img_mask_use"]
-    s["img_mask_use"] = prev_mask & annotationMask
+    s["img_mask_use"] = adaptor.and_(prev_mask, annotationMask)
     s.addToPrintList("getAnnotationMask",
                      printMaskHelper(params.get("mask_statistics", s["mask_statistics"]), prev_mask, s["img_mask_use"]))
 

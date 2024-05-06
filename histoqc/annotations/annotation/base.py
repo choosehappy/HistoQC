@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Generic, TypeVar, Dict, Union, List, Tuple, TypedDict
+from typing import TypeVar, Dict, Union, List, Tuple, Generic
+from typing_extensions import TypedDict
 from lazy_property import LazyProperty
 from shapely.geometry import Polygon, MultiPolygon
 import logging

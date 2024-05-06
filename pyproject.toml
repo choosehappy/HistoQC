@@ -24,3 +24,7 @@ exclude_lines = [
   "if MYPY:",
   "except ImportError:",
 ]
+
+[options.extras_require]
+cucim = ["cupy", "cucim"]
+dicom = ["wsidicom"]

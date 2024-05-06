@@ -4,9 +4,9 @@ Coordinates are saved in the half-open 4-tuple convention of (left, top, right, 
 are open.
 """
 import os
-import openslide
 import json
 from histoqc.BaseImage import BaseImage
+from histoqc.array_adapter import Device
 from typing import Callable, Dict, Any, List, Tuple, Union
 import numpy as np
 from PIL import Image, ImageDraw
@@ -14,11 +14,9 @@ from skimage.measure import regionprops
 from contextlib import contextmanager
 from distutils.util import strtobool
 import logging
-from histoqc.import_wrapper.typing import Literal, get_args
-# from histoqc.import_wrapper.helper import dynamic_import
-# __TYPE_GET_ARGS = Callable[[Type, ], Tuple[Any, ...]]
-# Literal: TypeVar = dynamic_import("typing", "Literal", "typing_extensions")
-# get_args: __TYPE_GET_ARGS = dynamic_import("typing", "get_args", "typing_extensions")
+from typing_extensions import Literal, get_args
+from PIL.Image import Image as PILImage
+
 
 TYPE_TILE_SIZE = Literal['tile_size']
 TYPE_TILE_STRIDE = Literal['tile_stride']
@@ -38,6 +36,7 @@ TYPE_BBOX_FLOAT = Tuple[float, float, float, float]
 TYPE_BBOX_INT = Tuple[int, int, int, int]
 
 
+# noinspection PyUnusedLocal
 def default_screen_identity(img: np.ndarray):
     return True
 
@@ -269,10 +268,10 @@ class MaskTileWindows:
         tile_max_left = left_rp + max_step_horiz * work_stride
         tile_max_top = top_rp + max_step_vert * work_stride
 
-        assert round(tile_max_left + work_tile_size) <= right_rp,\
+        assert round(tile_max_left + work_tile_size) <= right_rp, \
             f"left + size check" \
             f" {tile_max_left + work_tile_size} = {tile_max_left} + {work_tile_size} <= {right_rp} fail"
-        assert round(tile_max_top + work_tile_size) <= bottom_rp,\
+        assert round(tile_max_top + work_tile_size) <= bottom_rp, \
             f"top + size check" \
             f" {tile_max_top + work_tile_size} = {tile_max_top} + {work_tile_size} <= {bottom_rp} fail"
         return int(tile_max_top), int(tile_max_left)
@@ -345,8 +344,6 @@ class TileExtractor:
 
         """
         mask = mask_use_for_tiles
-        # image_handle: openslide.OpenSlide = s["os_handle"]
-        # img_w, img_h = image_handle.dimensions
         assert mask is not None, f"{filename}: mask is not initialized"
         assert isinstance(mask, np.ndarray), f"The mask is expected to be a Numpy NDArray"
 
@@ -393,7 +390,7 @@ class TileExtractor:
         root_dict = self.__tile_window_cache
         entry = root_dict.get(key, None)
         if entry is None or force_rewrite:
-            # img_w, img_h = s['os_handle'].dimensions
+            # img_w, img_h = s.image_handle.dimensions
             root_dict[key] = TileExtractor._tile_windows_helper(mask_use_for_tiles, img_w, img_h,
                                                                 tile_size,
                                                                 tile_stride, tissue_thresh)
@@ -532,7 +529,7 @@ class TileExtractor:
         tw: MaskTileWindows = self.tile_windows(mask_use_for_tiles, img_w, img_h,
                                                 tile_size, tile_stride, tissue_thresh, force_rewrite=force_rewrite)
         window_list_of_regions = tw.windows_on_original_image
-        image_handle: openslide.OpenSlide = s["os_handle"]
+        image_handle = s.image_handle
         valid_window_list_all_regions: List[List[Tuple[int, int, int, int]]] = []
         for region_windows in window_list_of_regions:
             region_windows: List[Tuple[int, int, int, int]]
@@ -541,7 +538,7 @@ class TileExtractor:
                 window: Tuple[int, int, int, int]
                 # just to make the convention clear
                 location, size = TileExtractor.__window_convert(window)
-                region = image_handle.read_region(location, 0, size)
+                region: PILImage = image_handle.read_region(location, 0, size)
                 tile_np = np.array(region, copy=False)
                 valid_flag = screen_callbacks(tile_np)
                 if not valid_flag:
@@ -556,7 +553,10 @@ class TileExtractor:
 
 
 def extract(s: BaseImage, params: Dict[PARAMS, Any]):
+
     logging.info(f"{s['filename']} - \textract")
+
+    adapter = s.image_handle.adapter
     with params['lock']:
         slide_out = s['outdir']
         tile_output_dir = params.get('tile_output', os.path.join(slide_out, 'tiles'))
@@ -570,10 +570,11 @@ def extract(s: BaseImage, params: Dict[PARAMS, Any]):
         tile_size = int(params.get('tile_size', 256))
         tile_stride = int(params.get('tile_stride', 256))
         tissue_thresh = float(params.get('tissue_ratio', 0.5))
-
-        img_use_for_tiles = s.getImgThumb(s["image_work_size"])
-        mask_use_for_tiles = s['img_mask_use']
-        image_handle: openslide.OpenSlide = s['os_handle']
+        # no added value from GPU acceleration (except for read_region) as the procedure is sequential
+        img_use_for_tiles, mask_use_for_tiles = adapter.curate_arrays_device(s.getImgThumb(s["image_work_size"]),
+                                                                             s['img_mask_use'],
+                                                                             device=Device.build(Device.DEVICE_CPU))
+        image_handle = s.image_handle
         img_w, img_h = image_handle.dimensions
 
         tile_extractor = TileExtractor(s)

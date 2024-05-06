@@ -1,40 +1,40 @@
 import logging
 import os
 import numpy as np
-from histoqc.BaseImage import printMaskHelper
-from skimage import io, color, img_as_ubyte
+from histoqc.BaseImage import printMaskHelper, BaseImage
+from skimage import io, color
+from histoqc.array_adapter import ArrayAdapter, Device
+from skimage.util import img_as_ubyte
 from distutils.util import strtobool
 from skimage.filters import threshold_otsu, rank
 from skimage.morphology import disk
 from sklearn.cluster import KMeans
 from skimage import exposure
 
-import matplotlib.pyplot as plt
 
+def getIntensityThresholdOtsu(s: BaseImage, params):
 
-
-def getIntensityThresholdOtsu(s, params):
     logging.info(f"{s['filename']} - \tLightDarkModule.getIntensityThresholdOtsu")
+    adapter = s.image_handle.adapter
     name = params.get("name", "classTask")    
     local = strtobool(params.get("local", "False"))
-    radius = float(params.get("radius", 15))
-    selem = disk(radius)
+    radius = int(params.get("radius", 15))
 
     img = s.getImgThumb(s["image_work_size"])
-    img = color.rgb2gray(img)
+    img = adapter(color.rgb2gray)(img)
 
     if local:
-        thresh = rank.otsu(img, selem)
+        thresh = adapter(rank.otsu)(img, footprint=disk(radius))
     else:
-        thresh = threshold_otsu(img)
+        thresh = adapter(threshold_otsu)(img)
 
-    map = img < thresh
+    region_below_thresh = img < thresh
 
-    s["img_mask_" + name] = map > 0
+    s["img_mask_" + name] = region_below_thresh > 0
     if strtobool(params.get("invert", "False")):
         s["img_mask_" + name] = ~s["img_mask_" + name]
-
-    io.imsave(s["outdir"] + os.sep + s["filename"] + "_" + name + ".png", img_as_ubyte(s["img_mask_" + name]))
+    fname = os.path.join(s["outdir"], f"{s['filename']}_{name}.png")
+    adapter.imsave(fname, adapter(img_as_ubyte)(s["img_mask_" + name]))
 
     prev_mask = s["img_mask_use"]
     s["img_mask_use"] = s["img_mask_use"] & s["img_mask_" + name]
@@ -51,10 +51,11 @@ def getIntensityThresholdOtsu(s, params):
     return
 
 
-def getIntensityThresholdPercent(s, params):
+def getIntensityThresholdPercent(s: BaseImage, params):
+
+    adapter = s.image_handle.adapter
     name = params.get("name", "classTask")
     logging.info(f"{s['filename']} - \tLightDarkModule.getIntensityThresholdPercent:\t {name}")
-
     lower_thresh = float(params.get("lower_threshold", "-inf"))
     upper_thresh = float(params.get("upper_threshold", "inf"))
 
@@ -69,22 +70,21 @@ def getIntensityThresholdPercent(s, params):
 
     map_std = np.bitwise_and(img_std > lower_std, img_std < upper_std)
 
-    img = color.rgb2gray(img)
-    map = np.bitwise_and(img > lower_thresh, img < upper_thresh)
+    img = adapter(color.rgb2gray)(img)
+    region_between_interval = np.bitwise_and(img > lower_thresh, img < upper_thresh)
+    region_between_interval = np.bitwise_and(region_between_interval, map_std)
 
-    map = np.bitwise_and(map, map_std)
-
-    s["img_mask_" + name] = map > 0
-
-
+    s["img_mask_" + name] = region_between_interval > 0
 
     if strtobool(params.get("invert", "False")):
         s["img_mask_" + name] = ~s["img_mask_" + name]
 
     prev_mask = s["img_mask_use"]
-    s["img_mask_use"] = s["img_mask_use"] & s["img_mask_" + name]
-
-    io.imsave(s["outdir"] + os.sep + s["filename"] + "_" + name + ".png", img_as_ubyte(prev_mask & ~s["img_mask_" + name]))
+    s["img_mask_use"] = adapter.and_(s["img_mask_use"], s["img_mask_" + name])
+    fname = os.path.join(s["outdir"], f"{s['filename']}_{name}.png")
+    mask_out = adapter.and_(prev_mask, ~s["img_mask_" + name])
+    mask_out = adapter(img_as_ubyte)(mask_out)
+    adapter.imsave(fname, mask_out)
 
     s.addToPrintList(name,
                      printMaskHelper(params.get("mask_statistics", s["mask_statistics"]), prev_mask, s["img_mask_use"]))
@@ -98,11 +98,8 @@ def getIntensityThresholdPercent(s, params):
     return
 
 
-
-
-
-
-def removeBrightestPixels(s, params):
+def removeBrightestPixels(s: BaseImage, params):
+    adapter = s.image_handle.adapter
     logging.info(f"{s['filename']} - \tLightDarkModule.removeBrightestPixels")
 
     # lower_thresh = float(params.get("lower_threshold", -float("inf")))
@@ -112,23 +109,26 @@ def removeBrightestPixels(s, params):
     # upper_var = float(params.get("upper_variance", float("inf")))
 
     img = s.getImgThumb(s["image_work_size"])
-    img = color.rgb2gray(img)
+    img = adapter(color.rgb2gray)(img)
 
-    kmeans = KMeans(n_clusters=3,  n_init=1).fit(img.reshape([-1, 1]))
+    kmc = KMeans(n_clusters=3,  n_init=1)
+    kmeans = adapter(kmc.fit)(img.reshape([-1, 1]))
+    # noinspection PyUnresolvedReferences
     brightest_cluster = np.argmax(kmeans.cluster_centers_)
+    # noinspection PyUnresolvedReferences
     darkest_point_in_brightest_cluster = (img.reshape([-1, 1])[kmeans.labels_ == brightest_cluster]).min()
 
     s["img_mask_bright"] = img > darkest_point_in_brightest_cluster
-
-
 
     if strtobool(params.get("invert", "False")):
         s["img_mask_bright"] = ~s["img_mask_bright"]
 
     prev_mask = s["img_mask_use"]
-    s["img_mask_use"] = s["img_mask_use"] & s["img_mask_bright"]
-
-    io.imsave(s["outdir"] + os.sep + s["filename"] + "_bright.png", img_as_ubyte(prev_mask & ~s["img_mask_bright"]))
+    s["img_mask_use"] = adapter.and_(s["img_mask_use"], s["img_mask_bright"])
+    fname = os.path.join(s["outdir"], f"{s['filename']}_bright.png.png")
+    bright_out = adapter.and_(prev_mask, ~s["img_mask_bright"])
+    bright_out = adapter(img_as_ubyte)(bright_out)
+    adapter.imsave(fname, bright_out)
 
     s.addToPrintList("brightestPixels",
                      printMaskHelper(params.get("mask_statistics", s["mask_statistics"]), prev_mask, s["img_mask_use"]))
@@ -142,28 +142,28 @@ def removeBrightestPixels(s, params):
     return
 
 
-
-def minimumPixelIntensityNeighborhoodFiltering(s,params):
+def minimumPixelIntensityNeighborhoodFiltering(s: BaseImage, params):
     logging.info(f"{s['filename']} - \tLightDarkModule.minimumPixelNeighborhoodFiltering")
+    adapter = s.image_handle.adapter
     disk_size = int(params.get("disk_size", 10000))
     threshold = int(params.get("upper_threshold", 200))
 
     img = s.getImgThumb(s["image_work_size"])
-    img = color.rgb2gray(img)
-    img = (img * 255).astype(np.uint8)
-    selem = disk(disk_size)
+    img = adapter(color.rgb2gray)(img)
+    img = adapter(img_as_ubyte)(img)
+    # note - for uint type, CPU's rank.minimum is >>> faster than GPU's erosion
+    imgfilt = adapter(rank.minimum)(img, footprint=disk(disk_size))
 
-    imgfilt = rank.minimum(img, selem)
     s["img_mask_bright"] = imgfilt > threshold
-
 
     if strtobool(params.get("invert", "True")):
         s["img_mask_bright"] = ~s["img_mask_bright"]
 
     prev_mask = s["img_mask_use"]
-    s["img_mask_use"] = s["img_mask_use"] & s["img_mask_bright"]
-
-    io.imsave(s["outdir"] + os.sep + s["filename"] + "_bright.png", img_as_ubyte(prev_mask & ~s["img_mask_bright"]))
+    s["img_mask_use"] = adapter.and_(s["img_mask_use"], s["img_mask_bright"])
+    fname = os.path.join(s["outdir"], f"{s['filename']}_bright.png")
+    mask_out = adapter.and_(prev_mask, ~s["img_mask_bright"])
+    adapter.imsave(fname, adapter(img_as_ubyte)(mask_out))
 
     s.addToPrintList("brightestPixels",
                      printMaskHelper(params.get("mask_statistics", s["mask_statistics"]), prev_mask, s["img_mask_use"]))
@@ -176,13 +176,16 @@ def minimumPixelIntensityNeighborhoodFiltering(s,params):
 
     return
 
-def saveEqualisedImage(s,params):
+
+def saveEqualisedImage(s: BaseImage, params):
     logging.info(f"{s['filename']} - \tLightDarkModule.saveEqualisedImage")
-
+    adapter = s.image_handle.adapter
     img = s.getImgThumb(s["image_work_size"])
-    img = color.rgb2gray(img)
-
-    out = exposure.equalize_hist((img*255).astype(np.uint8))
-    io.imsave(s["outdir"] + os.sep + s["filename"] + "_equalized_thumb.png", img_as_ubyte(out))
+    img = adapter(color.rgb2gray)(img)
+    img_u8 = adapter(img_as_ubyte)(img)
+    out = adapter(exposure.equalize_hist)(img_u8)
+    out_u8 = ArrayAdapter.curate_arrays_device(adapter(img_as_ubyte)(out),
+                                               device=Device.build(Device.DEVICE_CPU))
+    io.imsave(s["outdir"] + os.sep + s["filename"] + "_equalized_thumb.png", out_u8)
 
     return

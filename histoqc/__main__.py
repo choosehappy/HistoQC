@@ -8,6 +8,7 @@ import os
 import sys
 import time
 from functools import partial
+from typing import Tuple, Optional, List
 
 from histoqc._pipeline import BatchedResultFile
 from histoqc._pipeline import MultiProcessingLogManager
@@ -20,8 +21,55 @@ from histoqc._worker import worker
 from histoqc._worker import worker_setup
 from histoqc._worker import worker_success
 from histoqc._worker import worker_error
+from histoqc._worker import PARAM_SHARE, device_assign, KEY_ASSIGN
 from histoqc.config import read_config_template
 from histoqc.data import managed_pkg_data
+from histoqc.wsi_handles.constants import KEY_CUCIM
+from histoqc.array_adapter.adapter import cupy_installed
+from histoqc.import_wrapper.cupy_extra import cp
+
+
+def parse_config(args: argparse.Namespace) -> Tuple[configparser.ConfigParser, Optional[str]]:
+    config = configparser.ConfigParser()
+    msg = None
+    if not args.config:
+        msg = f"Configuration file not set (--config), using default"
+        config.read_string(read_config_template('default'))
+    elif os.path.exists(args.config):
+        config.read(args.config)  # Will read the config file
+    else:
+        msg = f"Configuration file {args.config} assuming to be a template...checking."
+        config.read_string(read_config_template(args.config))
+    return config, msg
+
+
+def _get_device_list(n_proc: int):
+    return list(range(n_proc)) if n_proc > 0 else [0]
+
+
+def parse_multiprocessing(args: argparse.Namespace,
+                          config: configparser.ConfigParser) -> Tuple[argparse.Namespace, List[int]]:
+    is_multiproc = args.nprocesses >= 0
+    is_cuda = KEY_CUCIM in config["BaseImage.BaseImage"].get("handles", "")
+
+    # if use cuda but without installation of dependencies - return
+    if not is_cuda or not cupy_installed():
+        return args, _get_device_list(args.nprocesses)
+    # guard
+    assert is_cuda and cp is not None, f"Enable CUDA but cupy is not installed"
+    # set spawn
+    if is_multiproc:
+        multiprocessing.set_start_method("spawn", force=True)
+    num_devices = cp.cuda.runtime.getDeviceCount()
+    # n_proc cannot exceed num of GPUs.
+    assert num_devices > 0, f"Fail to detect usable CUDA devices"
+    if args.nprocesses > num_devices:
+        logging.warning(f"{__name__}: CUDA enabled but number of processes is greater than number of devices:"
+                        f"{args.nprocesses} > {num_devices}. Cutoff the number of processes to {num_devices}")
+    args.nprocesses = min(args.nprocesses, num_devices)
+    # device list --> if
+    device_list = _get_device_list(args.nprocesses)
+    return args, device_list
 
 
 @managed_pkg_data
@@ -30,7 +78,9 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
 
-    parser = argparse.ArgumentParser(prog="histoqc", description='Run HistoQC main quality control pipeline for digital pathology images')
+    parser = argparse.ArgumentParser(prog="histoqc",
+                                     description='Run HistoQC main quality control pipeline'
+                                                 ' for digital pathology images')
     parser.add_argument('input_pattern',
                         help="input filename pattern (try: *.svs or target_path/*.svs ),"
                              " or tsv file containing list of files to analyze",
@@ -64,22 +114,18 @@ def main(argv=None):
     args = parser.parse_args(argv)
 
     # --- multiprocessing and logging setup -----------------------------------
+    # todo: move config parsing above the mpm initialization and set the start method accordingly
+    # multiprocessing.set_start_method("spawn")
 
     setup_logging(capture_warnings=True, filter_warnings='ignore')
-    mpm = multiprocessing.Manager()
-    lm = MultiProcessingLogManager('histoqc', manager=mpm)
 
     # --- parse the pipeline configuration ------------------------------------
-
-    config = configparser.ConfigParser()
-    if not args.config:
-        lm.logger.warning(f"Configuration file not set (--config), using default")
-        config.read_string(read_config_template('default'))
-    elif os.path.exists(args.config):
-        config.read(args.config) #Will read the config file
-    else:
-        lm.logger.warning(f"Configuration file {args.config} assuming to be a template...checking.")
-        config.read_string(read_config_template(args.config))
+    config, conf_warn_msg = parse_config(args)
+    args, device_list = parse_multiprocessing(args, config)
+    mpm = multiprocessing.Manager()
+    lm = MultiProcessingLogManager('histoqc', manager=mpm)
+    if conf_warn_msg:
+        lm.logger.warning(conf_warn_msg)
 
     # --- provide models, pen and templates as fallbacks from package data ----
 
@@ -155,21 +201,27 @@ def main(argv=None):
         'outdir': args.outdir,
         'log_manager': lm,
         'lock': mpm.Lock(),
-        'shared_dict': mpm.dict(),
+        PARAM_SHARE: mpm.dict(),
         'num_files': num_files,
         'force': args.force,
     }
+    # init the dict of device assignment
+    _shared_state[PARAM_SHARE][KEY_ASSIGN] = mpm.dict()
     failed = mpm.list()
     setup_plotting_backend(lm.logger)
 
     try:
-        if args.nprocesses > 1:
+        # todo: for cuda --> must use spawn method if CUDA is enabled.
+        # todo: however a better memory management scheme should be tested.
+        # todo: since the single-processing cucim already outperforms multi-cpu counterpart in terms of runtime
+        # todo: at this moment we simply override the args.nprocesses
+
+        if args.nprocesses > 0:
 
             with lm.logger_thread():
-                print(args.nprocesses)
                 with multiprocessing.Pool(processes=args.nprocesses,
                                           initializer=worker_setup,
-                                          initargs=(config,)) as pool:
+                                          initargs=(config, device_list, _shared_state)) as pool:
                     try:
                         for idx, file_name in enumerate(files):
                             _ = pool.apply_async(
@@ -187,6 +239,7 @@ def main(argv=None):
         else:
             for idx, file_name in enumerate(files):
                 try:
+                    device_assign(device_list, _shared_state[PARAM_SHARE])
                     _success = worker(idx, file_name, **_shared_state)
                 except Exception as exc:
                     worker_error(exc, failed)
@@ -222,6 +275,7 @@ def main(argv=None):
                 f"Please create manually: ln -s {origin} {target}"
             )
     return 0
+
 
 if __name__ == "__main__":
     sys.exit(main())
