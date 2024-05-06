@@ -344,7 +344,3 @@ def getDimensionsByOneDim(s: BaseImage, dim: int) -> Tuple[int, int]:
     
 def saveCompressedMask(f_path, img_mask):
     io.imsave(f_path, img_as_ubyte(img_mask), bits=1, optimize=True)
-    # io.imsave(f'{file_name}_image{file_extension}', img_as_ubyte(img_mask), bits=1)
-    # io.imsave(f'{f_path}_9', img_mask, compress_level=9)
-    # io.imsave(f'{f_path}_19', img_mask, bits=1, compress_level=9)
-    # io.imsave(f'{f_path}_1', img_mask, bits=1)
