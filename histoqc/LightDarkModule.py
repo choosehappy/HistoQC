@@ -1,8 +1,8 @@
 import logging
 import os
 import numpy as np
-from histoqc.BaseImage import printMaskHelper
-from skimage import io, color, img_as_ubyte
+from histoqc.BaseImage import printMaskHelper, saveCompressedMask
+from skimage import io, color
 from distutils.util import strtobool
 from skimage.filters import threshold_otsu, rank
 from skimage.morphology import disk
@@ -34,7 +34,8 @@ def getIntensityThresholdOtsu(s, params):
     if strtobool(params.get("invert", "False")):
         s["img_mask_" + name] = ~s["img_mask_" + name]
 
-    io.imsave(s["outdir"] + os.sep + s["filename"] + "_" + name + ".png", img_as_ubyte(s["img_mask_" + name]))
+    # saving compressed mask
+    saveCompressedMask(s["outdir"] + os.sep + s["filename"] + "_" + name + ".png", s["img_mask_" + name])
 
     prev_mask = s["img_mask_use"]
     s["img_mask_use"] = s["img_mask_use"] & s["img_mask_" + name]
@@ -84,7 +85,8 @@ def getIntensityThresholdPercent(s, params):
     prev_mask = s["img_mask_use"]
     s["img_mask_use"] = s["img_mask_use"] & s["img_mask_" + name]
 
-    io.imsave(s["outdir"] + os.sep + s["filename"] + "_" + name + ".png", img_as_ubyte(prev_mask & ~s["img_mask_" + name]))
+    # saving compressed mask
+    saveCompressedMask(s["outdir"] + os.sep + s["filename"] + "_" + name + ".png", prev_mask & ~s["img_mask_" + name])
 
     s.addToPrintList(name,
                      printMaskHelper(params.get("mask_statistics", s["mask_statistics"]), prev_mask, s["img_mask_use"]))
@@ -128,7 +130,8 @@ def removeBrightestPixels(s, params):
     prev_mask = s["img_mask_use"]
     s["img_mask_use"] = s["img_mask_use"] & s["img_mask_bright"]
 
-    io.imsave(s["outdir"] + os.sep + s["filename"] + "_bright.png", img_as_ubyte(prev_mask & ~s["img_mask_bright"]))
+    # saving compressed mask
+    saveCompressedMask(s["outdir"] + os.sep + s["filename"] + "_bright.png", prev_mask & ~s["img_mask_bright"])
 
     s.addToPrintList("brightestPixels",
                      printMaskHelper(params.get("mask_statistics", s["mask_statistics"]), prev_mask, s["img_mask_use"]))
@@ -163,7 +166,8 @@ def minimumPixelIntensityNeighborhoodFiltering(s,params):
     prev_mask = s["img_mask_use"]
     s["img_mask_use"] = s["img_mask_use"] & s["img_mask_bright"]
 
-    io.imsave(s["outdir"] + os.sep + s["filename"] + "_bright.png", img_as_ubyte(prev_mask & ~s["img_mask_bright"]))
+    # saving compressed mask
+    saveCompressedMask(s["outdir"] + os.sep + s["filename"] + "_bright.png", prev_mask & ~s["img_mask_bright"])
 
     s.addToPrintList("brightestPixels",
                      printMaskHelper(params.get("mask_statistics", s["mask_statistics"]), prev_mask, s["img_mask_use"]))
@@ -183,6 +187,7 @@ def saveEqualisedImage(s,params):
     img = color.rgb2gray(img)
 
     out = exposure.equalize_hist((img*255).astype(np.uint8))
-    io.imsave(s["outdir"] + os.sep + s["filename"] + "_equalized_thumb.png", img_as_ubyte(out))
+    # saving compressed mask
+    saveCompressedMask(s["outdir"] + os.sep + s["filename"] + "_equalized_thumb.png", out)
 
     return

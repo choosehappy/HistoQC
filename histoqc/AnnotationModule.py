@@ -1,6 +1,6 @@
 import logging
 from typing import List, Tuple
-from histoqc.BaseImage import printMaskHelper
+from histoqc.BaseImage import printMaskHelper, saveCompressedMask
 from skimage import io, img_as_ubyte
 import os
 from pathlib import PurePosixPath, Path
@@ -108,8 +108,9 @@ def saveAnnotationMask(s, params):
     height, width = s["img_mask_use"].shape
     annotationMask = annotation_to_mask(width, height, annot_collection, (off_x, off_y), resize_factor) > 0
 
-    mask_file_name = f"{s['outdir']}{os.sep}{s['filename']}_annot_{ann_format.lower()}.png"
-    io.imsave(mask_file_name, img_as_ubyte(annotationMask))
+    # saving compressed mask
+    saveCompressedMask(f"{s['outdir']}{os.sep}{s['filename']}_annot_{ann_format.lower()}.png", annotationMask)
+
 
     prev_mask = s["img_mask_use"]
     s["img_mask_use"] = prev_mask & annotationMask
