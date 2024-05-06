@@ -6,7 +6,7 @@ are open.
 import os
 import json
 from histoqc.BaseImage import BaseImage
-from histoqc.array_adapter import ArrayDevice
+from histoqc.array_adapter import Device
 from typing import Callable, Dict, Any, List, Tuple, Union
 import numpy as np
 from PIL import Image, ImageDraw
@@ -36,6 +36,7 @@ TYPE_BBOX_FLOAT = Tuple[float, float, float, float]
 TYPE_BBOX_INT = Tuple[int, int, int, int]
 
 
+# noinspection PyUnusedLocal
 def default_screen_identity(img: np.ndarray):
     return True
 
@@ -570,8 +571,9 @@ def extract(s: BaseImage, params: Dict[PARAMS, Any]):
         tile_stride = int(params.get('tile_stride', 256))
         tissue_thresh = float(params.get('tissue_ratio', 0.5))
         # no added value from GPU acceleration (except for read_region) as the procedure is sequential
-        img_use_for_tiles = adapter.move_to_device(s.getImgThumb(s["image_work_size"]), ArrayDevice.CPU)
-        mask_use_for_tiles = adapter.move_to_device(s['img_mask_use'], ArrayDevice.CPU)
+        img_use_for_tiles, mask_use_for_tiles = adapter.curate_arrays_device(s.getImgThumb(s["image_work_size"]),
+                                                                             s['img_mask_use'],
+                                                                             device=Device.build(Device.DEVICE_CPU))
         image_handle = s.image_handle
         img_w, img_h = image_handle.dimensions
 

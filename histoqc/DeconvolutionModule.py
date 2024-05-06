@@ -2,7 +2,6 @@ import logging
 import os
 import sys
 import numpy as np
-from skimage import io
 from skimage.util import img_as_ubyte
 from histoqc.BaseImage import BaseImage
 from skimage.color import separate_stains

@@ -1,5 +1,6 @@
 import scipy.ndimage
 import skimage
+import sklearn
 from typing import Callable, Mapping
 from scipy import ndimage as sci_ndi
 import numpy as np
@@ -9,7 +10,13 @@ try:
     from cupyx.scipy import signal as cu_signal
     from cucim import skimage as cu_skimage
     from cupyx.scipy import ndimage as cu_ndi
+    from sklearn import naive_bayes as sk_naive_bayes
+    from cuml import naive_bayes as cuml_naive_bayes
+    import cuml
+    from cuml import ensemble as cuml_ensemble
+    from sklearn import ensemble as sk_ensemble
 
+    # noinspection PyUnresolvedReferences
     FUNC_MAP: Mapping[Callable, Callable] = {
         skimage.color.convert_colorspace: cu_skimage.color.convert_colorspace,
         skimage.color.rgb2gray: cu_skimage.color.rgb2gray,
@@ -45,7 +52,9 @@ try:
         skimage.filters.rank.minimum: None,  # cu_skimage.morphology.erosion,
         sci_signal.convolve2d: cu_signal.convolve2d,
         sci_ndi.generate_binary_structure: cu_ndi.generate_binary_structure,
-        np.digitize: cp.digitize
+        np.digitize: cp.digitize,
+        # sk_naive_bayes.GaussianNB: cuml_naive_bayes.GaussianNB,
+        # sk_ensemble.RandomForestClassifier: cuml_ensemble.RandomForestClassifier,
     }
 except ImportError:
     FUNC_MAP = dict()

@@ -3,11 +3,11 @@ from abc import ABC, abstractmethod
 
 from histoqc.import_wrapper import dynamic_import
 import logging
-from typing import Sequence, TypeVar, Tuple, List, Union, Dict, Callable, Mapping, Generic
+from typing import Sequence, TypeVar, Tuple, List, Union, Dict, Callable, Mapping, Generic, Optional, cast
 import numpy as np
 from PIL.Image import Image as PILImage
 from typing_extensions import final
-from histoqc.array_adapter import ArrayDevice, ArrayAdapter
+from histoqc.array_adapter import ArrayDeviceType, ArrayAdapter, Device
 import os
 
 from histoqc.wsi_handles.constants import WSI_HANDLES, HANDLE_DELIMITER
@@ -22,6 +22,11 @@ class WSIImageHandle(ABC, Generic[T, Backend, ARRAY]):
     handle: T
     fname: str
     _adapter: ArrayAdapter
+    _device: Device
+
+    @property
+    def device(self) -> Device:
+        return self._device
 
     @staticmethod
     def curate_shorter_edge(width, height, limit, aspect_ratio):
@@ -188,7 +193,7 @@ class WSIImageHandle(ABC, Generic[T, Backend, ARRAY]):
 
     @staticmethod
     @abstractmethod
-    def backend_to_array(region: Union[Backend, ARRAY]) -> ARRAY:
+    def backend_to_array(region: Union[Backend, ARRAY], device: Optional[Device]) -> ARRAY:
         ...
     
     def read_region(self, location, level, size, **kwargs) -> PILImage:
@@ -205,7 +210,7 @@ class WSIImageHandle(ABC, Generic[T, Backend, ARRAY]):
 
     @classmethod
     @abstractmethod
-    def region_resize_arr(cls, data: ARRAY, new_size_wh: Tuple[int, int]) -> ARRAY:
+    def region_resize_arr(cls, data: ARRAY, new_size_wh: Tuple[int, int], device: Optional[Device]) -> ARRAY:
         ...
 
     @abstractmethod
@@ -216,12 +221,12 @@ class WSIImageHandle(ABC, Generic[T, Backend, ARRAY]):
         relative_down_factors_idx = [np.isclose(i / downsample_factor, 1, atol=.01) for i in self.level_downsamples]
         level = np.where(relative_down_factors_idx)[0]
         if level.size:
-            return level[0], True
+            return cast(int, level[0]), True
         return self.get_best_level_for_downsample(downsample_factor), False
 
     @staticmethod
     @abstractmethod
-    def grid_stack(grid: List[List[ARRAY]]):
+    def grid_stack(grid: List[List[ARRAY]], device: Optional[device]) -> ARRAY:
         ...
 
     def resize_tile_downward(self, target_downsampling_factor, level,
@@ -260,15 +265,16 @@ class WSIImageHandle(ABC, Generic[T, Backend, ARRAY]):
                                                      **read_region_kwargs)
                 if np.shape(closest_region)[-1] == 4:
                     closest_region = self.backend_rgba2rgb(closest_region)
-                closest_region_arr = self.__class__.backend_to_array(closest_region)
+                closest_region_arr = self.__class__.backend_to_array(closest_region, self.device)
                 target_region = self.__class__.region_resize_arr(closest_region_arr,
-                                                                 (win_down_width, win_down_height))
+                                                                 (win_down_width, win_down_height),
+                                                                 device=self.device)
                 row_piece.append(target_region)
             # row_piece = np.concatenate(row_piece, axis=0)
             grid.append(row_piece)
         # grid = np.concatenate(output, axis=1)
         #
-        return self.__class__.grid_stack(grid)
+        return self.__class__.grid_stack(grid, device=self.device)
 
     def best_thumb(self, x: int, y: int, dims: Tuple[int, int],
                    target_sampling_factor: float, **read_region_kwargs) -> ARRAY:
@@ -276,15 +282,15 @@ class WSIImageHandle(ABC, Generic[T, Backend, ARRAY]):
         # get thumb from og
         if not self.has_bounding_box:
             max_dim = dims[0] if dims[0] > dims[1] else dims[1]
-            return self.__class__.backend_to_array(self.get_thumbnail((max_dim, max_dim)))
+            return self.__class__.backend_to_array(self.get_thumbnail((max_dim, max_dim)), device=self.device)
 
         (level, is_exact_level) = self.curated_best_level_for_downsample(target_sampling_factor)
 
         # check if to get the existing level
         if is_exact_level:
             backend: Backend = self.read_region((x, y), level, dims)
-            return self.__class__.backend_to_array(self.backend_rgba2rgb(backend)) \
-                if np.shape(backend)[-1] == 4 else self.__class__.backend_to_array(backend)
+            return self.__class__.backend_to_array(self.backend_rgba2rgb(backend), device=self.device) \
+                if np.shape(backend)[-1] == 4 else self.__class__.backend_to_array(backend, device=self.device)
         # scale down the thumb img from the next high level
         else:
             return self.resize_tile_downward(target_sampling_factor, level, win_size=2048, **read_region_kwargs)
@@ -311,13 +317,14 @@ class WSIImageHandle(ABC, Generic[T, Backend, ARRAY]):
 
     @classmethod
     def __create_handle(cls, fname: str,
-                        handle_class_list: List[Callable[[str], "WSIImageHandle"]]) -> "WSIImageHandle":
+                        handle_class_list: List[Callable[[str, Optional[int]], "WSIImageHandle"]],
+                        device_id: Optional[int]) -> "WSIImageHandle":
         image_handle = None
         assert fname is None or os.path.exists(fname), f"fname should either be None or point to an existing file"
         for handle_class in handle_class_list:
             # noinspection PyBroadException
             try:
-                image_handle = handle_class(fname)
+                image_handle = handle_class(fname, device_id)
                 break
             except Exception:
                 # current wsi handle class doesn't support this file
@@ -333,16 +340,18 @@ class WSIImageHandle(ABC, Generic[T, Backend, ARRAY]):
 
     @classmethod
     @final
-    def build_handle(cls, fname: str, handles: str) -> "WSIImageHandle":
+    def build_handle(cls, fname: str, handles: str, device_id: Optional[int]) -> "WSIImageHandle":
         # get handles list
         module_list, attr_list = cls.parse_wsi_handles(handles, delimiter=HANDLE_DELIMITER, wsi_handle_dict=WSI_HANDLES)
         handle_class_list = dynamic_import(module_list, attr_list, return_first=False)
-        image_handle = cls.__create_handle(fname, handle_class_list)
+        image_handle = cls.__create_handle(fname, handle_class_list, device_id)
         return image_handle
 
-    def __init__(self, fname: str):
+    def __init__(self, fname: str, device_id: Optional[int]):
         self.fname = fname
-        self._adapter = ArrayAdapter.build(input_device=self.device, output_device=self.device)
+        self._device = Device(self.device_type, device_id)
+        self._adapter = ArrayAdapter.build(input_device=self._device, output_device=self._device,
+                                           contingent_device=self._device)
 
     @abstractmethod
     def close_handle(self):
@@ -357,9 +366,13 @@ class WSIImageHandle(ABC, Generic[T, Backend, ARRAY]):
 
     @property
     @abstractmethod
-    def device(self) -> ArrayDevice:
+    def device_type(self) -> ArrayDeviceType:
         raise NotImplementedError
 
     @property
     def adapter(self) -> ArrayAdapter:
         return self._adapter
+
+    @abstractmethod
+    def release(self):
+        ...

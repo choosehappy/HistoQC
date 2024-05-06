@@ -3,7 +3,7 @@ import os
 import numpy as np
 from histoqc.BaseImage import printMaskHelper, BaseImage
 from skimage import io, color
-from histoqc.array_adapter import ArrayAdapter, ArrayDevice
+from histoqc.array_adapter import ArrayAdapter, Device
 from skimage.util import img_as_ubyte
 from distutils.util import strtobool
 from skimage.filters import threshold_otsu, rank
@@ -184,7 +184,8 @@ def saveEqualisedImage(s: BaseImage, params):
     img = adapter(color.rgb2gray)(img)
     img_u8 = adapter(img_as_ubyte)(img)
     out = adapter(exposure.equalize_hist)(img_u8)
-    out_u8 = adapter.move_to_device(adapter(img_as_ubyte)(out), ArrayDevice.CPU)
+    out_u8 = ArrayAdapter.curate_arrays_device(adapter(img_as_ubyte)(out),
+                                               device=Device.build(Device.DEVICE_CPU))
     io.imsave(s["outdir"] + os.sep + s["filename"] + "_equalized_thumb.png", out_u8)
 
     return

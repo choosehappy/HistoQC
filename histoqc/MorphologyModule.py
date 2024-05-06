@@ -4,10 +4,8 @@ import numpy as np
 from histoqc.BaseImage import printMaskHelper, BaseImage
 from histoqc.array_adapter import ArrayAdapter
 from histoqc.array_adapter.typing import TYPE_ARRAY
-from skimage import io, morphology, measure
+from skimage import morphology, measure
 from skimage.util import img_as_ubyte
-from scipy import ndimage as ndi
-from typing import cast
 
 
 def removeSmallObjects(s: BaseImage, params):
@@ -108,6 +106,7 @@ def removeFatlikeTissue(s, params):
         s["warnings"].append(f"After MorphologyModule.removeFatlikeTissue: NO tissue remains "
                              f"detectable! Downstream modules likely to be incorrect/fail")
     return
+
 
 def fillSmallHoles(s, params):
     logging.info(f"{s['filename']} - \tfillSmallHoles")

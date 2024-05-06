@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from distutils.util import strtobool
 from histoqc.BaseImage import BaseImage
 from typing import Union
-from histoqc.array_adapter import ArrayAdapter, ArrayDevice
+from histoqc.array_adapter import ArrayAdapter, Device
 from histoqc.array_adapter.typing import TYPE_ARRAY
 # todo: beware that because there is no lock, it is likely that each worker will compute the template of their own.
 # this holds a local copy of the histograms of the template images so that they need only be computed once
@@ -15,15 +15,16 @@ global_holder = {}
 
 def getHistogram(s: BaseImage, params):
     logging.info(f"{s['filename']} - \tgetHistogram")
-    adapter = s.image_handle.adapter
+    # adapter = s.image_handle.adapter
     limit_to_mask = strtobool(params.get("limit_to_mask", True))
     bins = int(params.get("bins", 20))
 
     img = s.getImgThumb(s["image_work_size"])
     tissue_mask = s["img_mask_use"]
     # matplotlib --> pointless to use GPU here even if a corresponding API exists
-    img = adapter.move_to_device(img, ArrayDevice.CPU)
-    tissue_mask = adapter.move_to_device(tissue_mask, ArrayDevice.CPU)
+    img, tissue_mask = ArrayAdapter.curate_arrays_device(img, tissue_mask,
+                                                         device=Device.build(Device.DEVICE_CPU))
+    # tissue_mask = adapter.move_to_device(tissue_mask, ArrayDevice.CPU)
     if limit_to_mask:
         img = img[tissue_mask]
     else:

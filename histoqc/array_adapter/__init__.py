@@ -1,2 +1,2 @@
 from .func_mapping import FUNC_MAP
-from .adapter import ArrayAdapter, ArrayDevice
+from .adapter import ArrayAdapter, ArrayDeviceType, Device

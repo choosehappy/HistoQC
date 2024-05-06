@@ -3,7 +3,7 @@ import numpy as np
 from skimage import color
 from distutils.util import strtobool
 from skimage.feature import graycomatrix, graycoprops
-from histoqc.array_adapter import ArrayAdapter, ArrayDevice
+from histoqc.array_adapter import ArrayAdapter, Device
 from histoqc.BaseImage import BaseImage
 
 
@@ -31,7 +31,7 @@ def estimateGreyComatrixFeatures(s: BaseImage, params):
         return
 
     maskidx = mask.nonzero()
-    maskidx = ArrayAdapter.new_array(maskidx, array_device=ArrayDevice.CPU).transpose()
+    maskidx = ArrayAdapter.new_array(maskidx, array_device=Device.build(Device.DEVICE_CPU)).transpose()
     idx = np.random.choice(maskidx.shape[0], npatches)
 
     results = []

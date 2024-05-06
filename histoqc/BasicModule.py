@@ -1,9 +1,7 @@
 import logging
 import os
 from histoqc.BaseImage import printMaskHelper
-from histoqc.array_adapter import ArrayAdapter, ArrayDevice
 from skimage.morphology import remove_small_objects, binary_opening, disk
-from skimage import io
 from skimage.util import img_as_ubyte
 from histoqc.BaseImage import BaseImage
 

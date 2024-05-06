@@ -1,7 +1,7 @@
 import logging
 from typing import List, Tuple
 from histoqc.BaseImage import printMaskHelper, BaseImage
-from histoqc.array_adapter import ArrayDevice, ArrayAdapter
+from histoqc.array_adapter import ArrayAdapter, Device
 from skimage import io
 from skimage.util import img_as_ubyte
 import os
@@ -78,7 +78,9 @@ def getParams(s: BaseImage, params):
 def saveAnnotationMask(s: BaseImage, params):
     logging.info(f"{s['filename']} - \tgetAnnotationMask")
     # quite pointless to enforce GPU acceleration here. Force to use CPU mode
-    adaptor = ArrayAdapter.build(input_device=ArrayDevice.CPU, output_device=ArrayDevice.CPU)
+    adaptor = ArrayAdapter.build(input_device=Device.build(Device.DEVICE_CPU),
+                                 output_device=Device.build(Device.DEVICE_CPU),
+                                 contingent_device=Device.build(Device.DEVICE_CPU))
 
     (ann_format, file_path, suffix) = getParams(s, params)
 

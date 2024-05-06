@@ -1,15 +1,19 @@
 from __future__ import annotations
 import logging
 import os
+import sys
+
 import numpy as np
 import zlib
+import traceback
 import dill
 from distutils.util import strtobool
 import re
 from typing import Union, Tuple, cast, Optional
 from histoqc.wsi_handles.base import WSIImageHandle
-from histoqc.wsi_handles.constants import KEY_OPENSLIDE, KEY_CUCIM
+from histoqc.wsi_handles.constants import KEY_CUCIM
 from histoqc.array_adapter.typing import TYPE_ARRAY
+from histoqc.array_adapter import ArrayDeviceType
 _REGEX_MAG = r"^(\d?\.?\d*X?)"
 _PATTERN_MAG: re.Pattern = re.compile(_REGEX_MAG, flags=re.IGNORECASE)
 MAG_NA = None
@@ -36,22 +40,33 @@ MAG_NA = None
 
 class BaseImage(dict):
 
-    _image_handle: WSIImageHandle
+    _image_handle: Optional[WSIImageHandle]
+    _device_id: Optional[int]
 
     @property
-    def image_handle(self) -> WSIImageHandle:
-        return self._image_handle
+    def image_handle(self) -> Optional[WSIImageHandle]:
+        if hasattr(self, "_image_handle"):
+            return self._image_handle
+        return None
 
     @image_handle.setter
     def image_handle(self, image_handle: WSIImageHandle):
         self._image_handle = image_handle
 
-    def __init__(self, fname, fname_outdir, params):
+    def __init__(self, fname, fname_outdir, params, device_id: Optional[int] = None):
         dict.__init__(self)
+        # init
+        self._device_id = device_id
+        self._image_handle = None
         handles = params.get("handles", KEY_CUCIM)
-        # dynamically load wsi image handle
-        self.image_handle: WSIImageHandle = WSIImageHandle.build_handle(fname, handles)
 
+        # dynamically load wsi image handle
+        try:
+            self.image_handle: WSIImageHandle = WSIImageHandle.build_handle(fname, handles, device_id=device_id)
+        except Exception:
+            trace_string = traceback.format_exc()
+            logging.error(f"{__name__}: {fname} -- Error Creating Handle - Traceback: {trace_string}")
+            sys.exit(1)
         self.in_memory_compression = strtobool(params.get("in_memory_compression", "False"))
 
         self["warnings"] = ['']  # this needs to be first key in case anything else wants to add to it
@@ -100,11 +115,13 @@ class BaseImage(dict):
     def is_img_data(key: str) -> bool:
         return key.startswith("img") and key != "img_bbox"
 
-    def _sync_to_handle(self, key, value):
+    def _sync_to_handle(self, key, value, device: Optional[ArrayDeviceType] = None):
         if not self.__class__.is_img_data(key):
             return value
         if hasattr(self, "_image_handle") and self.image_handle is not None:
-            value = self.image_handle.adapter.sync(value)
+            device = device if device is not None else self.image_handle.device
+            value = self.image_handle.adapter.__class__.curate_arrays_device(value,
+                                                                             device=device, copy=False)
         return value
 
     def __getitem__(self, key):
@@ -149,7 +166,7 @@ class BaseImage(dict):
         relative_down_factors_idx = [np.isclose(i / downsample_factor, 1, atol=.01) for i in osh.level_downsamples]
         level = np.where(relative_down_factors_idx)[0]
         if level.size:
-            return level[0], True
+            return cast(int, level[0]), True
         else:
             return osh.get_best_level_for_downsample(downsample_factor), False
 
@@ -234,9 +251,11 @@ class BaseImage(dict):
                 logging.info(
                     f"{self['filename']} - \t\tloading image from level {target_level} of size"
                     f" {image_handle.level_dimensions[target_level]}")
+                # PILLOW
                 tile = image_handle.read_region((bx, by), target_level, size)
+
                 self[key] = (np.asarray(self.image_handle.backend_rgba2rgb(tile))
-                             if np.shape(tile)[-1] == 4
+                             if len(tile.getbands()) == 4
                              else np.asarray(tile))
 
                 # specifies a desired size of thumbnail

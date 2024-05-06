@@ -3,11 +3,10 @@ import os
 
 import skimage
 from histoqc.BaseImage import printMaskHelper, BaseImage
-from skimage import io, morphology, measure
+from skimage import morphology, measure
 from skimage.util import img_as_ubyte
 from skimage.color import rgb2gray
 import numpy as np
-from histoqc.array_adapter import ArrayAdapter, FUNC_MAP, ArrayDevice
 
 # Analysis of focus measure operators for shape-from-focus
 # Said Pertuza,, Domenec Puiga, Miguel Angel Garciab, 2012

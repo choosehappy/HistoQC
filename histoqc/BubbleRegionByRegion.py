@@ -9,7 +9,7 @@ from skimage.filters import frangi
 from skimage.color import rgb2gray
 from skimage.morphology import remove_small_objects
 from histoqc.BaseImage import BaseImage
-from skimage import io, color
+from skimage import color
 import numpy as np
 
 
@@ -47,7 +47,7 @@ def roiWise(s: BaseImage, params):
             # todo: confirm -- the original level is hardcoded to be 1, shouldn't it be the level variable?
 
             region = osh.region_backend((x, y), level, (win_size, win_size))
-            region = osh.backend_to_array(region)[..., :3]
+            region = osh.backend_to_array(region, osh.device)[..., :3]
             g = adapter(rgb2gray)(region)
             # todo -- forward compatibility. Later version of frangi alters the signatures
             sigmas = frangi_scale_range + (frangi_scale_step,)
@@ -114,4 +114,3 @@ def detectSmoothness(s: BaseImage, params):
         s["warnings"].append(f"After BubbleRegionByRegion.detectSmoothness: NO tissue remains "
                              f"detectable! Downstream modules likely to be incorrect/fail")
     return
-

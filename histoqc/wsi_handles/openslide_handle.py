@@ -3,12 +3,12 @@ import numpy as np
 
 from .base import WSIImageHandle
 from histoqc.import_wrapper.openslide import openslide
-from typing import Union, Tuple, Sequence, List, Mapping
-from typing import cast
+from typing import Union, Tuple, Sequence, List, Mapping, cast, Optional
 from PIL.Image import Image as PILImage
 from .utils import rgba2rgb_pil
 from PIL import Image
-from histoqc.array_adapter import ArrayDevice
+from histoqc.array_adapter import ArrayDeviceType, Device
+import logging
 
 
 class OpenSlideHandle(WSIImageHandle[openslide.OpenSlide, PILImage, np.ndarray]):
@@ -16,17 +16,25 @@ class OpenSlideHandle(WSIImageHandle[openslide.OpenSlide, PILImage, np.ndarray])
     _magnification_factor: str
     _has_bounding_box: bool
     fname: str
-    handle: openslide.OpenSlide
+    handle: Optional[openslide.OpenSlide]
+
+    @classmethod
+    def sanitize_device(cls, device: Optional[Device]):
+        if device is None:
+            return
+        if device.device_type is not ArrayDeviceType.CPU:
+            logging.warning(f"Expect CPU but got {device.device_type}. No effect."
+                            f"Check upstream device settings")
 
     def backend_rgba2rgb(self, img) -> PILImage:
         return rgba2rgb_pil(img, self.background_color)
 
-    def __init__(self, fname):
-        super().__init__(fname)
+    def __init__(self, fname: str, device_id: Optional[int] = None):
+        super().__init__(fname, device_id)
         self.handle = openslide.OpenSlide(fname)
         self._has_bounding_box = True
         self._bounding_box = self.__get_bounding_box()
-        
+
         # get magnification factor from wsi slide
         self._magnification_factor = self.handle.properties.get("openslide.objective-power") or \
             self.handle.properties.get("aperio.AppMag")
@@ -97,7 +105,8 @@ class OpenSlideHandle(WSIImageHandle[openslide.OpenSlide, PILImage, np.ndarray])
         return self.handle.properties.get("openslide.comment", "NA")
 
     @classmethod
-    def region_resize_arr(cls, data: np.ndarray, new_size_wh: Tuple[int, int]):
+    def region_resize_arr(cls, data: np.ndarray, new_size_wh: Tuple[int, int], device: Optional[Device]):
+        cls.sanitize_device(device)
         return np.array(Image.fromarray(data).resize(new_size_wh), copy=False)
 
     def get_thumbnail(self, new_dim):
@@ -116,7 +125,8 @@ class OpenSlideHandle(WSIImageHandle[openslide.OpenSlide, PILImage, np.ndarray])
         return region
 
     @staticmethod
-    def backend_to_array(region: PILImage) -> np.ndarray:
+    def backend_to_array(region: PILImage, device: Optional[Device]) -> np.ndarray:
+        OpenSlideHandle.sanitize_device(device)
         return np.array(region)
 
     @staticmethod
@@ -134,7 +144,8 @@ class OpenSlideHandle(WSIImageHandle[openslide.OpenSlide, PILImage, np.ndarray])
         return self.handle.associated_images
 
     @staticmethod
-    def grid_stack(grid: List[List[np.ndarray]]):
+    def grid_stack(grid: List[List[np.ndarray]], device: Optional[Device]) -> np.ndarray:
+        OpenSlideHandle.sanitize_device(device)
         return np.concatenate([np.concatenate(row, axis=0) for row in grid], axis=1)
 
     @staticmethod
@@ -151,5 +162,8 @@ class OpenSlideHandle(WSIImageHandle[openslide.OpenSlide, PILImage, np.ndarray])
         self.handle = None
 
     @property
-    def device(self) -> ArrayDevice:
-        return ArrayDevice.CPU
+    def device_type(self) -> ArrayDeviceType:
+        return ArrayDeviceType.CPU
+
+    def release(self):
+        ...

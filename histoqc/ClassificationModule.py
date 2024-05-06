@@ -2,7 +2,7 @@ import logging
 import os
 import re
 import sys
-from histoqc.array_adapter import ArrayAdapter, ArrayDevice
+from histoqc.array_adapter import ArrayAdapter, Device
 from ast import literal_eval as make_tuple
 
 from distutils.util import strtobool
@@ -14,8 +14,6 @@ from skimage.filters import gabor, frangi, gaussian, median, laplace
 from skimage.color import rgb2gray
 from skimage.morphology import remove_small_objects, disk, dilation
 from skimage.feature import local_binary_pattern
-
-from scipy import ndimage as ndi
 
 from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import RandomForestClassifier
@@ -40,12 +38,13 @@ def pixelWise(s: BaseImage, params):
     # todo no formal support for GNB now
     # todo  Possible solution: sklearn with array-api-compat and implement a wrapper into the ArrayAdaptor
     # todo Also: need to rework the GaussianNB.fit interface into a wrapper.
-    device = s.image_handle.device
-    adapter = ArrayAdapter.build(input_device=device, output_device=device)
-    img = adapter.move_to_device(s.getImgThumb(s["image_work_size"]), ArrayDevice.CPU)
+    device = s.image_handle.device_type
+    adapter: ArrayAdapter = s.image_handle.adapter
+    img = adapter.curate_arrays_device(s.getImgThumb(s["image_work_size"]),
+                                       device=Device.build(Device.DEVICE_CPU))
 
     gnb = GaussianNB()
-    gnb.fit(model_vals[:, 1:], model_vals[:, 0])
+    adapter(gnb.fit)(model_vals[:, 1:], model_vals[:, 0])
     cal = adapter(gnb.predict_proba)(img.reshape(-1, 3))
 
     cal = cal.reshape(img.shape[0], img.shape[1], 2)
@@ -87,7 +86,6 @@ def compute_laplace(img, params):
     return adapter(laplace)(img_gray, ksize=laplace_ksize)[:, :, None]
 
 
-
 def compute_lbp(img, params):
     lbp_radius = float(params.get("lbp_radius", 3))
     lbp_points = int(params.get("lbp_points", 24))  # example sets radius * 8
@@ -97,7 +95,6 @@ def compute_lbp(img, params):
     img_gray = adapter(rgb2gray)(img)
     # return local_binary_pattern(rgb2gray(img), P=lbp_points, R=lbp_radius, method=lbp_method)[:, :, None]
     return adapter(local_binary_pattern)(img_gray, P=lbp_points, R=lbp_radius, method=lbp_method)[:, :, None]
-
 
 
 def compute_gaussian(img, params):
@@ -242,8 +239,8 @@ def byExampleWithFeatures(s: BaseImage, params):
             # do stuff here with model_vals
             model_vals = np.vstack(model_vals)
             clf = RandomForestClassifier(n_jobs=-1)
-            # adapter(clf.fit)(model_vals, model_labels.ravel())
             adapter(clf.fit)(model_vals, y=model_labels.ravel())
+            # clf.fit(model_vals, y=model_labels.ravel())
             params["shared_dict"]["model_" + name] = clf
             logging.info(f"{s['filename']} - Training model ClassificationModule.byExample:{name}....done")
 
