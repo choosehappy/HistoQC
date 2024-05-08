@@ -1,6 +1,6 @@
 import logging
 import os
-from histoqc.BaseImage import printMaskHelper
+from histoqc.BaseImage import printMaskHelper, getMaskReginsStats
 from skimage.morphology import remove_small_objects, binary_opening, disk
 from skimage import io, color, img_as_ubyte
 
@@ -69,3 +69,10 @@ def finalProcessingArea(s, params):
             f"{s['filename']} - After BasicModule.finalProcessingArea NO tissue remains detectable! Downstream modules likely to be incorrect/fail")
         s["warnings"].append(
             f"After BasicModule.finalProcessingArea NO tissue remains detectable! Downstream modules likely to be incorrect/fail")
+
+
+def countTissuePieces(s, params):
+    area_thresh = int(params.get("area_threshold", "1000"))
+    mask = s["img_mask_use"]
+    stats = getMaskReginsStats(mask, area_threshold=area_thresh)
+    s.addToPrintList("#pieces_of_tissue", str(stats.get('num', 0)))
