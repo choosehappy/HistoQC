@@ -26,7 +26,7 @@ setup(
     setup_requires=['setuptools_scm'],
     extras_require={
         "dicom": ["wsidicom"],
-        "cucim": ["cucim", "cupy"],
+        "cucim": ["cucim", "cupy", "dask-cuda"],
     },
     package_data={
         'histoqc.config': ['*.ini'],

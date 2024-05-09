@@ -13,3 +13,4 @@ requests~=2.28.1
 Pillow~=9.4.0
 setuptools~=65.6.3
 shapely~=2.0.1
+dask~=2024.1.1

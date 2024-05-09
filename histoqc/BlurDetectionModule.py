@@ -18,12 +18,19 @@ def identifyBlurryRegions(s: BaseImage, params):
     adapter = s.image_handle.adapter
     blur_radius = int(params.get("blur_radius", 7))
     blur_threshold = float(params.get("blur_threshold", .1))
-    img = s.getImgThumb(params.get("image_work_size", "2.5x"))
-    img = adapter(rgb2gray)(img)
+    img_thumb = s.getImgThumb(params.get("image_work_size", "2.5x"))
+
+    img = adapter(rgb2gray)(img_thumb)
     # use the __abs__ interface
 
+    logging.debug(f"{s['filename']} - \tidentifyBlurryRegions Gray:"
+                  f" {img.max(), img.min(), blur_radius, blur_threshold}")
+
     img_laplace = abs(adapter(skimage.filters.laplace)(img))
+
+    logging.debug(f"{s['filename']} - \tidentifyBlurryRegions img_laplace: {img_laplace.max(), img_laplace.min()}")
     mask = adapter(skimage.filters.gaussian)(img_laplace, sigma=blur_radius) <= blur_threshold
+
     # for some reason resize takes a grayscale and produces a 3chan
     # Note: the reason you obtain a 3chan is that you specified a 3chan output shape
     mask_resized_shape = s.getImgThumb(s["image_work_size"]).shape[:2]

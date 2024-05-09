@@ -5,21 +5,13 @@ import numpy as np
 from numbers import Number
 from typing import Callable, Mapping, Tuple, Optional, Any, Iterable, Dict
 from typing_extensions import Self, TypeGuard
-from histoqc.import_wrapper.cupy_extra import cupy as cp
+from histoqc.import_wrapper.cupy_extra import cupy as cp, cupy_installed
 from enum import Enum
 import logging
 import functools
 from operator import and_, or_, xor, add, mul, sub, matmul, floordiv, truediv
 import skimage
 import re
-
-
-def cupy_installed() -> bool:
-    try:
-        import cupy
-        return True
-    except ImportError:
-        return False
 
 
 class ArrayDeviceType(Enum):
@@ -134,6 +126,17 @@ class ArrayAdapter(Callable):
 
     id: int
 
+    @classmethod
+    def get_device(cls, arr: TYPE_ARRAY):
+        if not cls.is_array(arr):
+            logging.warning(f"{__name__} {type(arr)} is not an Array")
+            return None
+        if cls.is_numpy(arr):
+            return Device.build(Device.DEVICE_CPU)
+        assert cls.is_cupy(arr), f"Not a Cupy array: {type(arr)}"
+        device_id = arr.device.id
+        return Device(ArrayDeviceType.CUDA, device_id)
+
     @staticmethod
     def is_numpy(arr: TYPE_NP) -> TypeGuard[TYPE_NP]:
         return isinstance(arr, np.ndarray)
@@ -192,11 +195,16 @@ class ArrayAdapter(Callable):
                         device: Optional[Device], copy: bool = False) -> TYPE_ARRAY:
         # structural match > py3.10
         if device is None or not cls.is_array(arr):
+            logging.debug(f"Not Array")
             return arr
         assert device is not None
         if device.is_cpu():
+            logging.debug(f"Move to CPU. InputType: {type(arr)}. Input Device: {cls.get_device(arr)},"
+                          f" shape{arr.shape}")
             return ArrayAdapter.to_numpy(arr, copy=copy)
         elif device.is_cuda():
+            logging.debug(f"Move to GPU: {device}. InputType: {type(arr)}. Input Device: {cls.get_device(arr)}"
+                          f" shape{arr.shape}")
             return ArrayAdapter.to_cupy(arr, device, copy=copy)
         raise ValueError(f"Unsupported device: {device}")
 
@@ -276,12 +284,15 @@ class ArrayAdapter(Callable):
                      output_device: Optional[Device],
                      data: TYPE_ARRAY, *args, **kwargs) -> TYPE_ARRAY:
         # use input_device to override the current device, if not None
-        data = cls.curate_arrays_device(data, device=input_device, copy=False)
+        data = cls.curate_arrays_device(data, device=input_device, copy=True)
         # if data is None --> use input device.
         # if input_device is None, by default will invoke GPU interface
         input_type = cls.array_device_type(data) if data is not None else input_device
         # attempt to fetch the op, revert to CPU if GPU impl is not available (func=GPU impl, func_device=cuda
         func, func_device = cls.get_api(cpu_func, func_map, input_type)
+        logging.debug(f"{__name__}: Call Adapter for {cpu_func} with "
+                      f"In Device: {input_device}, Out Device: {output_device}."
+                      f"Mapped to: {func} and actual input device: {func_device}")
         func_in: TYPE_ARRAY = cls.curate_arrays_device(data, device=func_device, copy=True)
 
         curated_args = cls.curate_arrays_device(*args, device=func_device, copy=True)

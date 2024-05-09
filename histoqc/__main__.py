@@ -7,26 +7,29 @@ import multiprocessing
 import os
 import sys
 import time
-from functools import partial
+# from functools import partial
 from typing import Tuple, Optional, List
 
+import dask.distributed
+
 from histoqc._pipeline import BatchedResultFile
-from histoqc._pipeline import MultiProcessingLogManager
+# from histoqc._pipeline import MultiProcessingLogManager
+from copy import deepcopy
+from histoqc._logging import LoggingSetup, MAIN_CONF_BUILD, WORKER_CONF_BUILD, DEFAULT_LOG_FN, HDL_FILE, HDL_OUT_FIELD
 from histoqc._pipeline import load_pipeline
 from histoqc._pipeline import log_pipeline
 from histoqc._pipeline import move_logging_file_handler
-from histoqc._pipeline import setup_logging
+# from histoqc._pipeline import setup_logging
 from histoqc._pipeline import setup_plotting_backend
-from histoqc._worker import worker
-from histoqc._worker import worker_setup
-from histoqc._worker import worker_success
-from histoqc._worker import worker_error
-from histoqc._worker import PARAM_SHARE, device_assign, KEY_ASSIGN
+from histoqc._worker import (worker, worker_setup, worker_success, worker_error, worker_single_process,
+                             PARAM_SHARE, KEY_ASSIGN)
+
 from histoqc.config import read_config_template
 from histoqc.data import managed_pkg_data
 from histoqc.wsi_handles.constants import KEY_CUCIM
-from histoqc.array_adapter.adapter import cupy_installed
-from histoqc.import_wrapper.cupy_extra import cp
+from histoqc.import_wrapper.cupy_extra import cp, cupy_installed
+from histoqc.import_wrapper.dask_cuda import dask_cuda_installed, dask_cuda
+from dask.distributed import Client, as_completed
 
 
 def parse_config(args: argparse.Namespace) -> Tuple[configparser.ConfigParser, Optional[str]]:
@@ -48,15 +51,15 @@ def _get_device_list(n_proc: int):
 
 
 def parse_multiprocessing(args: argparse.Namespace,
-                          config: configparser.ConfigParser) -> Tuple[argparse.Namespace, List[int]]:
+                          config: configparser.ConfigParser) -> Tuple[argparse.Namespace, bool]:  # List[int],
     is_multiproc = args.nprocesses >= 0
     is_cuda = KEY_CUCIM in config["BaseImage.BaseImage"].get("handles", "")
 
     # if use cuda but without installation of dependencies - return
-    if not is_cuda or not cupy_installed():
-        return args, _get_device_list(args.nprocesses)
+    if not is_cuda or not (cupy_installed() and dask_cuda_installed()):
+        return args, False  # _get_device_list(args.nprocesses),
     # guard
-    assert is_cuda and cp is not None, f"Enable CUDA but cupy is not installed"
+    assert is_cuda and cp is not None and dask_cuda is not None, f"Enable CUDA but Dep is not installed"
     # set spawn
     if is_multiproc:
         multiprocessing.set_start_method("spawn", force=True)
@@ -68,8 +71,16 @@ def parse_multiprocessing(args: argparse.Namespace,
                         f"{args.nprocesses} > {num_devices}. Cutoff the number of processes to {num_devices}")
     args.nprocesses = min(args.nprocesses, num_devices)
     # device list --> if
-    device_list = _get_device_list(args.nprocesses)
-    return args, device_list
+    # device_list = _get_device_list(args.nprocesses)
+    return args, is_cuda
+
+
+def new_cluster(name: str, is_cuda: bool, nprocesses: int, gpu_ids: Optional[List[int]]):
+    assert nprocesses > 0, f"Expect number of processes > 0 to launch the cluster. Get {nprocesses}"
+    if not is_cuda:
+        return dask.distributed.LocalCluster(name=name, n_workers=nprocesses, )
+    assert cp is not None and dask_cuda is not None
+    return dask_cuda.LocalCUDACluster(name=name, CUDA_VISIBLE_DEVICES=gpu_ids, n_workers=nprocesses)
 
 
 @managed_pkg_data
@@ -111,21 +122,35 @@ def main(argv=None):
     parser.add_argument('--symlink', metavar="TARGET_DIR",
                         help="create symlink to outdir in TARGET_DIR",
                         default=None)
+    parser.add_argument('--gpu_ids',
+                        type=int,
+                        nargs='+',
+                        help="GPU Devices to use (None=use all). Default: None",
+                        default=None)
     args = parser.parse_args(argv)
 
     # --- multiprocessing and logging setup -----------------------------------
-    # todo: move config parsing above the mpm initialization and set the start method accordingly
-    # multiprocessing.set_start_method("spawn")
-
-    setup_logging(capture_warnings=True, filter_warnings='ignore')
 
     # --- parse the pipeline configuration ------------------------------------
     config, conf_warn_msg = parse_config(args)
-    args, device_list = parse_multiprocessing(args, config)
-    mpm = multiprocessing.Manager()
-    lm = MultiProcessingLogManager('histoqc', manager=mpm)
+    args, is_cuda = parse_multiprocessing(args, config)
+
+    # --- create output directory and move log --------------------------------
+    args.outdir = os.path.expanduser(args.outdir)
+    os.makedirs(args.outdir, exist_ok=True)
+    # move_logging_file_handler(logging.getLogger(), args.outdir)
+
+    logging_setup = LoggingSetup(deepcopy(MAIN_CONF_BUILD),
+                                 deepcopy(WORKER_CONF_BUILD),
+                                 capture_warnings=True, filter_warnings='ignore')
+    # setup main proc logger config and file handler.
+    logging_setup.setup_main_logger(output_dir=args.outdir, fname=DEFAULT_LOG_FN,
+                                    handler_name=HDL_FILE, out_field=HDL_OUT_FIELD)
+
+    # Inherit from the root logger.
+    main_logger = logging.getLogger(__name__)
     if conf_warn_msg:
-        lm.logger.warning(conf_warn_msg)
+        main_logger.warning(conf_warn_msg)
 
     # --- provide models, pen and templates as fallbacks from package data ----
 
@@ -133,27 +158,23 @@ def main(argv=None):
 
     # --- load the process queue (error early) --------------------------------
 
-    _steps = log_pipeline(config, log_manager=lm)
+    _steps = log_pipeline(config, logger=main_logger)
     process_queue = load_pipeline(config)
 
     # --- check symlink target ------------------------------------------------
-
     if args.symlink is not None:
         if not os.path.isdir(args.symlink):
-            lm.logger.error("error: --symlink {args.symlink} is not a directory")
+            main_logger.error("error: --symlink {args.symlink} is not a directory")
             return -1
-
-    # --- create output directory and move log --------------------------------
-    args.outdir = os.path.expanduser(args.outdir)
-    os.makedirs(args.outdir, exist_ok=True)
-    move_logging_file_handler(logging.getLogger(), args.outdir)
 
     if BatchedResultFile.results_in_path(args.outdir):
         if args.force:
-            lm.logger.info("Previous run detected....overwriting (--force set)")
+            main_logger.info("Previous run detected....overwriting (--force set)")
         else:
-            lm.logger.info("Previous run detected....skipping completed (--force not set)")
-
+            main_logger.info("Previous run detected....skipping completed (--force not set)")
+    # for writing the results after workers succeed.
+    mpm = multiprocessing.Manager()
+    # results only utilize the lock and sync list from mpm. mpm is not saved.
     results = BatchedResultFile(args.outdir,
                                 manager=mpm,
                                 batch_size=args.batch,
@@ -189,9 +210,9 @@ def main(argv=None):
         pth = os.path.join(args.basepath, args.input_pattern[0])
         files = glob.glob(pth, recursive=True)
 
-    lm.logger.info("-" * 80)
+    main_logger.info("-" * 80)
     num_files = len(files)
-    lm.logger.info(f"Number of files detected by pattern:\t{num_files}")
+    main_logger.info(f"Number of files detected by pattern:\t{num_files}")
 
     # --- start worker processes ----------------------------------------------
 
@@ -199,66 +220,52 @@ def main(argv=None):
         'process_queue': process_queue,
         'config': config,
         'outdir': args.outdir,
-        'log_manager': lm,
-        'lock': mpm.Lock(),
-        PARAM_SHARE: mpm.dict(),
+        'lock': mpm.Lock(),  # todo transit to Dask's Lock
+        PARAM_SHARE: mpm.dict(),  # todo transit to Dask's Variable
         'num_files': num_files,
         'force': args.force,
     }
     # init the dict of device assignment
     _shared_state[PARAM_SHARE][KEY_ASSIGN] = mpm.dict()
     failed = mpm.list()
-    setup_plotting_backend(lm.logger)
+    setup_plotting_backend(main_logger)
 
     try:
-        # todo: for cuda --> must use spawn method if CUDA is enabled.
-        # todo: however a better memory management scheme should be tested.
-        # todo: since the single-processing cucim already outperforms multi-cpu counterpart in terms of runtime
-        # todo: at this moment we simply override the args.nprocesses
 
         if args.nprocesses > 0:
+            local_cluster = new_cluster('histoqc', is_cuda=is_cuda,
+                                        nprocesses=args.nprocesses, gpu_ids=args.gpu_ids)
+            with Client(local_cluster) as client:
+                # register the worker side
+                logging_setup.setup_client(client, forward_name="root")
 
-            with lm.logger_thread():
-                with multiprocessing.Pool(processes=args.nprocesses,
-                                          initializer=worker_setup,
-                                          initargs=(config, device_list, _shared_state)) as pool:
+                # noinspection PyTypeChecker
+                futures_list = [client.submit(worker, idx, file_name, **_shared_state)
+                                for idx, file_name in enumerate(files)]
+
+                for future in as_completed(futures_list):
                     try:
-                        for idx, file_name in enumerate(files):
-                            _ = pool.apply_async(
-                                func=worker,
-                                args=(idx, file_name),
-                                kwds=_shared_state,
-                                callback=partial(worker_success, result_file=results),
-                                error_callback=partial(worker_error, failed=failed),
-                            )
-
-                    finally:
-                        pool.close()
-                        pool.join()
-
+                        base_img_finished = future.result()
+                    except Exception as exc:
+                        worker_error(exc, failed)
+                    else:
+                        worker_success(base_img_finished, result_file=results)
         else:
-            for idx, file_name in enumerate(files):
-                try:
-                    device_assign(device_list, _shared_state[PARAM_SHARE])
-                    _success = worker(idx, file_name, **_shared_state)
-                except Exception as exc:
-                    worker_error(exc, failed)
-                    continue
-                else:
-                    worker_success(_success, results)
+            worker_setup()
+            worker_single_process(files, failed, results, **_shared_state)
 
     except KeyboardInterrupt:
-        lm.logger.info("-----REQUESTED-ABORT-----\n")
+        main_logger.info("-----REQUESTED-ABORT-----\n")
 
     else:
-        lm.logger.info("----------Done-----------\n")
+        main_logger.info("----------Done-----------\n")
 
     finally:
-        lm.logger.info(f"There are {len(failed)} explicitly failed images (available also in error.log),"
-                       " warnings are listed in warnings column in output")
+        main_logger.info(f"There are {len(failed)} explicitly failed images (available also in error.log),"
+                         " warnings are listed in warnings column in output")
 
         for file_name, error, tb in failed:
-            lm.logger.info(f"{file_name}\t{error}\n{tb}")
+            main_logger.info(f"{file_name}\t{error}\n{tb}")
 
     if args.symlink is not None:
         origin = os.path.realpath(args.outdir)
@@ -268,9 +275,9 @@ def main(argv=None):
         )
         try:
             os.symlink(origin, target, target_is_directory=True)
-            lm.logger.info("Symlink to output directory created")
+            main_logger.info("Symlink to output directory created")
         except (FileExistsError, FileNotFoundError):
-            lm.logger.error(
+            main_logger.error(
                 f"Error creating symlink to output in '{args.symlink}', "
                 f"Please create manually: ln -s {origin} {target}"
             )

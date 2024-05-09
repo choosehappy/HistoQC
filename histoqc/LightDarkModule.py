@@ -68,11 +68,11 @@ def getIntensityThresholdPercent(s: BaseImage, params):
     img = s.getImgThumb(s["image_work_size"])
     img_std = img.std(axis=2)
 
-    map_std = np.bitwise_and(img_std > lower_std, img_std < upper_std)
+    map_std = adapter.and_(img_std > lower_std, img_std < upper_std)
 
     img = adapter(color.rgb2gray)(img)
-    region_between_interval = np.bitwise_and(img > lower_thresh, img < upper_thresh)
-    region_between_interval = np.bitwise_and(region_between_interval, map_std)
+    region_between_interval = adapter.and_(img > lower_thresh, img < upper_thresh)
+    region_between_interval = adapter.and_(region_between_interval, map_std)
 
     s["img_mask_" + name] = region_between_interval > 0
 

@@ -9,14 +9,11 @@ import multiprocessing
 import os
 import platform
 import shutil
-import threading
 import warnings
 from contextlib import ExitStack
-from contextlib import contextmanager
 from contextlib import nullcontext
 from importlib import import_module
 from logging.config import dictConfig
-from logging.handlers import QueueHandler
 from typing_extensions import Literal
 from typing import cast
 
@@ -47,7 +44,7 @@ def setup_logging(*, capture_warnings, filter_warnings):
         'handlers': {
             'console': {
                 'class': 'logging.StreamHandler',
-                'level': 'INFO',
+                'level': 'DEBUG',  # todo
                 'formatter': 'default',
             },
             'logfile': {
@@ -102,90 +99,21 @@ def move_logging_file_handler(logger, destination):
         logger.addHandler(new_handler)
 
 
-class MultiProcessingLogManager:
-
-    def __init__(self, logger_name, *, manager):
-        """create a MultiProcessingLogManager
-
-        Note: this uses a multiprocessing Queue to correctly transfer
-          logging information from worker processes to the main
-          process logging instance
-
-        Parameters
-        ----------
-        logger_name : str
-            the name of the logger instance
-        manager : multiprocessing.Manager
-            the mp Manager instance used for creating sharable context
-        """
-        self._logger_name = logger_name
-        self._log_queue = manager.Queue()
-        self._log_thread_active = False
-
-    @property
-    def is_main_process(self):
-        return multiprocessing.current_process().name == "MainProcess"
-
-    @property
-    def logger(self):
-        """returns the logger instance"""
-        if self.is_main_process:
-            return logging.getLogger(self._logger_name)
-        else:
-            root = logging.getLogger()
-            if not root.hasHandlers():
-                qh = QueueHandler(self._log_queue)
-                root.setLevel(logging.INFO)
-                root.addHandler(qh)
-                # note: this should be revisited and set by the main process
-                warnings.filterwarnings('ignore')
-                logging.captureWarnings(True)
-            return root
-
-    @contextmanager
-    def logger_thread(self):
-        """context manager for multiprocess logging
-
-        Note: this starts the thread responsible for handing the log records
-          emitted by child processes to the main logger instance
-        """
-        assert self.is_main_process
-        assert not self._log_thread_active  # not reentrant...
-        self._log_thread_active = True
-
-        def process_queue(q, ln):
-            main_logger = logging.getLogger(ln)
-            while True:
-                log_record = q.get()
-                if log_record is None:
-                    break
-                main_logger.handle(log_record)
-
-        lt = threading.Thread(target=process_queue, args=(self._log_queue, self._logger_name))
-        lt.start()
-        try:
-            yield
-        finally:
-            self._log_queue.put(None)
-            lt.join()
-            self._log_thread_active = False
-
-
-def log_pipeline(config, log_manager):
+def log_pipeline(config, logger: logging.Logger):
     """log the pipeline information
 
     Parameters
     ----------
     config : configparser.ConfigParser
-    log_manager : MultiProcessingLogManager
+    logger : logger obj to log the messages
     """
-    assert log_manager.is_main_process
+    assert multiprocessing.current_process().name == "MainProcess"
     steps = config.get(section='pipeline', option='steps').splitlines()
 
-    log_manager.logger.info("the pipeline will use these steps:")
+    logger.info("the pipeline will use these steps:")
     for process in steps:
         mod_name, func_name = process.split('.')
-        log_manager.logger.info(f"\t\t{mod_name}\t{func_name}")
+        logger.info(f"\t\t{mod_name}\t{func_name}")
     return steps
 
 

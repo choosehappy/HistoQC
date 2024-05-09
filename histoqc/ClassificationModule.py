@@ -4,7 +4,7 @@ import re
 import sys
 from histoqc.array_adapter import ArrayAdapter, Device
 from ast import literal_eval as make_tuple
-
+import traceback
 from distutils.util import strtobool
 
 from histoqc.BaseImage import printMaskHelper, BaseImage
@@ -81,9 +81,15 @@ def compute_rgb(img, params):
 def compute_laplace(img, params):
     laplace_ksize = int(params.get("laplace_ksize", 3))
     adapter = params["adapter"]
+    logging.debug(f"{__name__} - NaN check laplace img: {np.isnan(img).any()}")
+    # adapter.imsave(f"~/dbg/{params['filename']}_img_laplace.png", img)
     img_gray = adapter(rgb2gray)(img)
+    # adapter.imsave(f"~/dbg/{params['filename']}_gray_laplace.png", adapter(img_as_ubyte)(img_gray))
     #     return laplace(rgb2gray(img), ksize=laplace_ksize)[:, :, None]
-    return adapter(laplace)(img_gray, ksize=laplace_ksize)[:, :, None]
+    logging.debug(f"{__name__} - NaN check laplace gray: {np.isnan(img_gray).any()}, {type(img)}")
+    feat = adapter(laplace)(img_gray, ksize=laplace_ksize)
+    logging.debug(f"{__name__} - NaN check laplace feat: {np.isnan(feat).any()}")
+    return feat[:, :, None]
 
 
 def compute_lbp(img, params):
@@ -157,11 +163,16 @@ def compute_frangi(img, params):
     sigmas = frangi_scale_range + (frangi_scale_step,)
 
     adapter: ArrayAdapter = params["adapter"]
+    # adapter.imsave(f"~/dbg/{params['filename']}_img_frangi.png", img)
+    logging.debug(f"{__name__} - NaN check frangi img: {np.isnan(img).any()}")
     img_gray = adapter(rgb2gray)(img)
+    # adapter.imsave(f"~/dbg/{params['filename']}_gray_frangi.png", adapter(img_as_ubyte)(img_gray))
+    logging.debug(f"{__name__} - NaN check frangi gray: {np.isnan(img_gray).any()}")
     feat = adapter(frangi)(img_gray, sigmas=sigmas, beta=frangi_beta1, gamma=frangi_beta2,
                            black_ridges=frangi_black_ridges)
     # feat = frangi(rgb2gray(img), sigmas=sigmas, beta=frangi_beta1, gamma=frangi_beta2,
     #               black_ridges=frangi_black_ridges)
+    logging.debug(f"{__name__} - NaN check frangi feat: {np.isnan(feat).any()}")
     return feat[:, :, None]  # add singleton dimension
 
 
@@ -195,6 +206,7 @@ def byExampleWithFeatures(s: BaseImage, params):
 
     adapter = s.image_handle.adapter
     params['adapter'] = adapter
+    params['filename'] = s['filename']
     with params["lock"]:  # this lock is shared across all threads such that only one thread needs to train the model
         # then it is shared with all other modules
         if not params["shared_dict"].get("model_" + name, False):
@@ -239,6 +251,9 @@ def byExampleWithFeatures(s: BaseImage, params):
             # do stuff here with model_vals
             model_vals = np.vstack(model_vals)
             clf = RandomForestClassifier(n_jobs=-1)
+            # logging.warning(f"{__name__}: {s['filename']} - {np.unique(model_labels.ravel())}")
+            model_vals, model_labels = adapter.curate_arrays_device(model_vals, model_labels,
+                                                                    device=Device.build(Device.DEVICE_CPU), copy=True)
             adapter(clf.fit)(model_vals, y=model_labels.ravel())
             # clf.fit(model_vals, y=model_labels.ravel())
             params["shared_dict"]["model_" + name] = clf
@@ -247,7 +262,12 @@ def byExampleWithFeatures(s: BaseImage, params):
     clf = params["shared_dict"]["model_" + name]
     img = s.getImgThumb(s["image_work_size"])
     feats = compute_features(img, params)
-    cal = adapter(clf.predict_proba)(feats.reshape(-1, feats.shape[2]))
+    logging.debug(f"{__name__} - {s['filename']} - NaN check img: {np.isnan(img).any()}")
+    logging.debug(f"{__name__} - {s['filename']} - NaN check feats: {np.isnan(feats).any()}")
+
+    feats = feats.reshape(-1, feats.shape[2])
+    feats = adapter.curate_arrays_device(feats, device=Device.build(Device.DEVICE_CPU), copy=True)
+    cal = adapter(clf.predict_proba)(feats)
     cal = cal.reshape(img.shape[0], img.shape[1], 2)
 
     mask = cal[:, :, 1] > thresh

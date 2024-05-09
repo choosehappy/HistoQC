@@ -144,7 +144,7 @@ class WSIImageHandle(ABC, Generic[T, Backend, ARRAY]):
         ...
 
     @abstractmethod
-    def get_thumbnail(self, new_dim) -> Union[ARRAY, Backend]:
+    def get_thumbnail(self, new_dim) -> PILImage:
         ...
 
     @abstractmethod

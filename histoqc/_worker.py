@@ -1,52 +1,36 @@
 """histoqc worker functions"""
-import multiprocessing
+import logging
 import os
 import shutil
 import traceback
 from histoqc.BaseImage import BaseImage
-from histoqc._pipeline import load_pipeline
+from histoqc._pipeline import BatchedResultFile
 from histoqc._pipeline import setup_plotting_backend
-from typing import Dict, List, Optional
-from multiprocessing import managers
-
+from typing import List, Optional
 KEY_ASSIGN: str = 'device_assign'
 PARAM_SHARE: str = 'shared_dict'
 
 
 # --- worker functions --------------------------------------------------------
-def id_assign_helper(device_id_list: List[int], assign_dict: managers.DictProxy):
-    pid = os.getpid()
-    for device_id in device_id_list:
-        if device_id not in assign_dict.values():
-            assign_dict[pid] = device_id
-            return
 
-
-def device_assign(device_id_list: List[int], shared_dict: managers.DictProxy):
-    """Initializer to configure each worker with a specific GPU."""
-    shared_dict[KEY_ASSIGN] = shared_dict.get(KEY_ASSIGN, None)
-    assert shared_dict[KEY_ASSIGN] is not None
-    assert KEY_ASSIGN in shared_dict
-    id_assign_helper(device_id_list, shared_dict[KEY_ASSIGN])
-
-
-def worker_setup(c, device_id_list: List[int], state: Dict):
+# c: configparser.Parser, cuda: bool, device_id_list: List[int], state: Dict
+def worker_setup():
     """needed for multiprocessing worker setup"""
     setup_plotting_backend()
-    shared_dict = state[PARAM_SHARE]
-    load_pipeline(config=c)
-    device_assign(device_id_list, shared_dict)
+    # shared_dict = state[PARAM_SHARE]
+    # load_pipeline(config=c)
+    # device_assign(cuda, device_id_list, shared_dict)
 
 
 def worker(idx, file_name, *,
-           process_queue, config, outdir, log_manager, lock, shared_dict, num_files, force):
+           process_queue, config, outdir, lock, shared_dict, num_files, force):
     """pipeline worker function"""
-
+    logger = logging.getLogger()
     # --- output directory preparation --------------------------------
     fname_outdir = os.path.join(outdir, os.path.basename(file_name))
     if os.path.isdir(fname_outdir):  # directory exists
         if not force:
-            log_manager.logger.warning(
+            logger.warning(
                 f"{file_name} already seems to be processed (output directory exists),"
                 " skipping. To avoid this behavior use --force"
             )
@@ -57,11 +41,13 @@ def worker(idx, file_name, *,
     # create output dir
     os.makedirs(fname_outdir)
 
-    log_manager.logger.info(f"-----Working on:\t{file_name}\t\t{idx+1} of {num_files}")
-    device_id = shared_dict[KEY_ASSIGN].get(os.getpid(), None)
+    logger.info(f"-----Working on:\t{file_name}\t\t{idx+1} of {num_files}")
+    # let Dask handle the device visibility/assignment
+    device_id = 0  # shared_dict[KEY_ASSIGN].get(os.getpid(), None)
+    # logger.info(f"{__name__} - {file_name}: Device ID: {dict(shared_dict[KEY_ASSIGN])}")
     if device_id is None:
-        log_manager.logger.warning(f"{__name__}: {file_name}\t\t{idx+1} of {num_files}: Unspecified device_id."
-                                   f"Default: use 0 for CUDA devices.")
+        logger.warning(f"{__name__}: {file_name}\t\t{idx+1} of {num_files}: Unspecified device_id."
+                       f"Default: use 0 for CUDA devices.")
     s: Optional[BaseImage] = None
 
     try:
@@ -74,13 +60,15 @@ def worker(idx, file_name, *,
             s["completed"].append(process.__name__)
     except Exception as exc:
         # reproduce histoqc error string
+        logger.info(f"{file_name}: Error Block")
         if s is not None:
-            s.image_handle.release()
-        print(f"DBG: {__name__}: {exc}")
+            # s.image_handle.release()
+            s.image_handle.close()
+        # print(f"DBG: {__name__}: {exc}")
         _oneline_doc_str = exc.__doc__.replace('\n', '') if exc.__doc__ is not None else ''
         err_str = f"{exc.__class__} {_oneline_doc_str} {exc}"
         trace_string = traceback.format_exc()
-        log_manager.logger.error(
+        logger.error(
             f"{file_name} - Error analyzing file (skipping): \t {err_str}. Traceback: {trace_string}"
         )
         if exc.__traceback__.tb_next is not None:
@@ -114,7 +102,7 @@ def worker_success(s, result_file):
         result_file.write_line("\t".join([_fields, _warnings]))
 
 
-def worker_error(e, failed):
+def worker_error(e, failed: List):
     """error callback"""
     if hasattr(e, '__histoqc_err__'):
         file_name, err_str, tb = e.__histoqc_err__
@@ -124,3 +112,21 @@ def worker_error(e, failed):
         #   around the worker function
         file_name, err_str, tb = "N/A", f"error outside of pipeline {e!r}", None
     failed.append((file_name, err_str, tb))
+
+
+def worker_flow_for_file(idx: int, file_name: str,
+                         failed: List, results: BatchedResultFile, **kwargs) -> Optional[BaseImage]:
+    try:
+        base_image = worker(idx, file_name, **kwargs)
+    except Exception as exc:
+        base_image = None
+        worker_error(exc, failed)
+    else:
+        worker_success(base_image, results)
+    return base_image
+
+
+def worker_single_process(files, failed: List, results: BatchedResultFile, **kwargs) -> Optional[BaseImage]:
+    for idx, file_name in enumerate(files):
+        return worker_flow_for_file(idx, file_name, failed, results, **kwargs)
+

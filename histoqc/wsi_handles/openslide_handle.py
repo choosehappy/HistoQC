@@ -41,6 +41,7 @@ class OpenSlideHandle(WSIImageHandle[openslide.OpenSlide, PILImage, np.ndarray])
         
         # get background color 
         self._background_color = f"#{self.handle.properties.get(openslide.PROPERTY_NAME_BACKGROUND_COLOR, 'ffffff')}"
+        logging.info(f"{__name__}: {fname}: Create OpenSlideHandle at {device_id}. {self.device}")
 
     def __get_bounding_box(self) -> Tuple[int, int, int, int]:
         (dim_width, dim_height) = self.handle.dimensions
@@ -127,7 +128,7 @@ class OpenSlideHandle(WSIImageHandle[openslide.OpenSlide, PILImage, np.ndarray])
     @staticmethod
     def backend_to_array(region: PILImage, device: Optional[Device]) -> np.ndarray:
         OpenSlideHandle.sanitize_device(device)
-        return np.array(region)
+        return np.array(region, copy=False)
 
     @staticmethod
     def array_to_numpy(arr: np.ndarray) -> np.ndarray:
