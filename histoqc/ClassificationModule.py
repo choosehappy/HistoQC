@@ -4,7 +4,7 @@ import re
 import sys
 from histoqc.array_adapter import ArrayAdapter, Device
 from ast import literal_eval as make_tuple
-import traceback
+from dask.distributed import Lock
 from distutils.util import strtobool
 
 from histoqc.BaseImage import printMaskHelper, BaseImage
@@ -188,6 +188,86 @@ def compute_features(img, params):
     return np.concatenate(feats, axis=2)
 
 
+def new_clf_model(s: BaseImage, params):
+    name = params.get("name", "classTask")
+    logging.info(f"{s['filename']} - Training model ClassificationModule.byExample:{name}")
+    adapter = s.image_handle.adapter
+    model_vals = []
+    model_labels = adapter.sync(np.empty([0, 1]))
+    nsamples_per_example = float(params.get("nsamples_per_example", -1))
+
+    for ex in params["examples"].splitlines():
+        ex = re.split(r'(?<!\W[A-Za-z]):(?!\\)', ex)  # workaround for windows: don't split on i.e. C:\
+        img = io.imread(ex[0])
+        eximg = compute_features(img, params)
+        eximg = eximg.reshape(-1, eximg.shape[2])
+
+        # read mask as grayscale images
+        mask = io.imread(ex[1], as_gray=True)
+        mask = adapter.sync(mask)
+        # convert grayscale images into binary images if images are not binary format
+        if mask.dtype.kind != 'b':
+            # warning log
+            msg = f"Mask file '{ex[1]}' is not a binary image. Automatically converting to binary..."
+            logging.warning(s['filename'] + ' - ' + msg)
+            s["warnings"].append(msg)
+            # convert to binary
+            mask = adapter(img_as_bool)(mask)
+
+        mask = mask.reshape(-1, 1)
+
+        if nsamples_per_example != -1:  # sub sampling required
+            nitems = nsamples_per_example if nsamples_per_example > 1 else int(mask.shape[0]
+                                                                               * nsamples_per_example)
+            idxkeep = np.random.choice(mask.shape[0], size=int(nitems))
+            eximg = eximg[idxkeep, :]
+            mask = mask[idxkeep]
+
+        model_vals.append(eximg)
+        # again any component in vstack's input is cupy.ndarray will result in a cupy.ndarray
+        # but we explicitly sync the device of mask and model_labels anyway
+        model_labels = np.vstack((model_labels, mask))
+
+    model_vals = np.vstack(model_vals)
+    clf = RandomForestClassifier(n_jobs=-1)
+    # logging.warning(f"{__name__}: {s['filename']} - {np.unique(model_labels.ravel())}")
+    model_vals, model_labels = adapter.curate_arrays_device(model_vals, model_labels,
+                                                            device=Device.build(Device.DEVICE_CPU), copy=True)
+    adapter(clf.fit)(model_vals, y=model_labels.ravel())
+    # clf.fit(model_vals, y=model_labels.ravel()
+    logging.info(f"{s['filename']} - Training model ClassificationModule.byExample:{name}....done")
+    return clf
+
+
+def _cache_clf(s: BaseImage, params, var_name):  # f"model_{name}"
+    # name = params.get("name", "classTask")
+    # model_var = Variable(var_name)
+
+    with Lock(var_name):  # this lock is shared across all threads such that only one thread needs to train the model
+        # then it is shared with all other modules
+        if not params["shared_dict"].get(var_name, False):
+            clf = new_clf_model(s, params)
+            logging.info(f"{s['filename']} - saving to cache...")
+            params["shared_dict"][var_name] = clf
+            logging.info(f"{s['filename']} - cached...")
+
+    logging.info(f"{s['filename']} - Lock Released...")
+    # try:
+    #     clf = model_var.get()
+    # except ValueError:
+    #     clf = new_clf_model(s, params)
+    #     model_var.set(clf)
+
+
+def get_clf(s: BaseImage, params):
+    name = params.get("name", "classTask")
+    var_name = f"model_{name}"
+    _cache_clf(s, params, var_name)
+    # clf = Variable(var_name).get()  # params["shared_dict"]["model_" + name]
+    clf = params["shared_dict"]["model_" + name]
+    return clf
+
+
 def byExampleWithFeatures(s: BaseImage, params):
     name = params.get("name", "classTask")
     logging.info(f"{s['filename']} - \tClassificationModule.byExample:\t{name}")
@@ -207,59 +287,9 @@ def byExampleWithFeatures(s: BaseImage, params):
     adapter = s.image_handle.adapter
     params['adapter'] = adapter
     params['filename'] = s['filename']
-    with params["lock"]:  # this lock is shared across all threads such that only one thread needs to train the model
-        # then it is shared with all other modules
-        if not params["shared_dict"].get("model_" + name, False):
 
-            logging.info(f"{s['filename']} - Training model ClassificationModule.byExample:{name}")
-
-            model_vals = []
-            model_labels = adapter.sync(np.empty([0, 1]))
-
-            for ex in params["examples"].splitlines():
-                ex = re.split(r'(?<!\W[A-Za-z]):(?!\\)', ex)  # workaround for windows: don't split on i.e. C:\
-                img = io.imread(ex[0])
-                eximg = compute_features(img, params)
-                eximg = eximg.reshape(-1, eximg.shape[2])
-
-                # read mask as grayscale images
-                mask = io.imread(ex[1], as_gray=True)
-                mask = adapter.sync(mask)
-                # convert grayscale images into binary images if images are not binary format 
-                if mask.dtype.kind != 'b':
-                    # warning log
-                    msg = f"Mask file '{ex[1]}' is not a binary image. Automatically converting to binary..."
-                    logging.warning(s['filename'] + ' - ' + msg)
-                    s["warnings"].append(msg)
-                    # convert to binary
-                    mask = adapter(img_as_bool)(mask)
-
-                mask = mask.reshape(-1, 1)
-
-                if nsamples_per_example != -1:  # sub sampling required
-                    nitems = nsamples_per_example if nsamples_per_example > 1 else int(mask.shape[0]
-                                                                                       * nsamples_per_example)
-                    idxkeep = np.random.choice(mask.shape[0], size=int(nitems))
-                    eximg = eximg[idxkeep, :]
-                    mask = mask[idxkeep]
-
-                model_vals.append(eximg)
-                # again any component in vstack's input is cupy.ndarray will result in a cupy.ndarray
-                # but we explicitly sync the device of mask and model_labels anyway
-                model_labels = np.vstack((model_labels, mask))
-
-            # do stuff here with model_vals
-            model_vals = np.vstack(model_vals)
-            clf = RandomForestClassifier(n_jobs=-1)
-            # logging.warning(f"{__name__}: {s['filename']} - {np.unique(model_labels.ravel())}")
-            model_vals, model_labels = adapter.curate_arrays_device(model_vals, model_labels,
-                                                                    device=Device.build(Device.DEVICE_CPU), copy=True)
-            adapter(clf.fit)(model_vals, y=model_labels.ravel())
-            # clf.fit(model_vals, y=model_labels.ravel())
-            params["shared_dict"]["model_" + name] = clf
-            logging.info(f"{s['filename']} - Training model ClassificationModule.byExample:{name}....done")
-
-    clf = params["shared_dict"]["model_" + name]
+    clf = get_clf(s, params)
+    logging.info(f"{__name__} - {s['filename']} Infer with the trained model.")
     img = s.getImgThumb(s["image_work_size"])
     feats = compute_features(img, params)
     logging.debug(f"{__name__} - {s['filename']} - NaN check img: {np.isnan(img).any()}")

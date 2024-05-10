@@ -29,8 +29,8 @@ class OpenSlideHandle(WSIImageHandle[openslide.OpenSlide, PILImage, np.ndarray])
     def backend_rgba2rgb(self, img) -> PILImage:
         return rgba2rgb_pil(img, self.background_color)
 
-    def __init__(self, fname: str, device_id: Optional[int] = None):
-        super().__init__(fname, device_id)
+    def __init__(self, fname: str, device_id: Optional[int] = None, num_threads: Optional[int] = 1):
+        super().__init__(fname, device_id, num_threads=num_threads)
         self.handle = openslide.OpenSlide(fname)
         self._has_bounding_box = True
         self._bounding_box = self.__get_bounding_box()

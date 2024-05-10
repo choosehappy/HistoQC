@@ -5,7 +5,7 @@ import shutil
 import traceback
 from histoqc.BaseImage import BaseImage
 from histoqc._pipeline import BatchedResultFile
-from histoqc._pipeline import setup_plotting_backend
+from histoqc._worker_setup import setup_plotting_backend
 from typing import List, Optional
 KEY_ASSIGN: str = 'device_assign'
 PARAM_SHARE: str = 'shared_dict'

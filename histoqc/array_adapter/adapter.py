@@ -12,6 +12,13 @@ import functools
 from operator import and_, or_, xor, add, mul, sub, matmul, floordiv, truediv
 import skimage
 import re
+import asyncio
+
+
+async def async_write_image(filename, arr: np.ndarray, **kwargs):
+    loop = asyncio.get_running_loop()
+    # noinspection PyArgumentList
+    await loop.run_in_executor(None, skimage.io.imsave, filename, arr, **kwargs)
 
 
 class ArrayDeviceType(Enum):
@@ -142,7 +149,7 @@ class ArrayAdapter(Callable):
         return isinstance(arr, np.ndarray)
 
     @staticmethod
-    def is_cupy(arr: TYPE_CP) -> TypeGuard[TYPE_CP]:
+    def is_cupy(arr) -> TypeGuard[TYPE_CP]:
         return cupy_installed() and isinstance(arr, cp.ndarray)
 
     @staticmethod
@@ -150,6 +157,7 @@ class ArrayAdapter(Callable):
         if ArrayAdapter.is_numpy(arr) or isinstance(arr, Number):
             return np.array(arr, copy=copy)
         assert ArrayAdapter.is_cupy(arr)
+        # logging.debug(f"{__name__}: CUPY->NUMPY detected. Expect latency.")
         return arr.get()
 
     @staticmethod
@@ -157,6 +165,10 @@ class ArrayAdapter(Callable):
         assert isinstance(arr, Number) or (ArrayAdapter.is_array(arr) and cupy_installed()), \
             f"arr must be array and cupy must be installed. {type(arr)}, {cupy_installed()}"
         assert device is not None and isinstance(device, Device) and device.is_cuda(), f"{device} is not CUDA device"
+        if ArrayAdapter.is_cupy(arr) and arr.device.id == device.device_id and not copy:
+            # logging.warning(f"{__name__}: Same Device. Return self:"
+            #                 f" {device.device_id}. {cp.cuda.runtime.deviceGetPCIBusId(arr.device.id)}")
+            return arr
         with cp.cuda.Device(device.device_id):
             return cp.array(arr, copy=copy)
 
@@ -252,7 +264,7 @@ class ArrayAdapter(Callable):
                 func_map: Mapping[Callable, Callable],
                 device: Optional[Device]) -> Tuple[Callable, Device]:
         if device is None:
-            logging.warning(f"Device unspecified in both input data and input device. Try: gpu:0")
+            logging.debug(f"Device unspecified in both input data and input device. Try: gpu:0")
             device = Device.build(Device.DEVICE_CUDA)
         if device.is_cpu():
             return cpu_func, device
@@ -284,7 +296,7 @@ class ArrayAdapter(Callable):
                      output_device: Optional[Device],
                      data: TYPE_ARRAY, *args, **kwargs) -> TYPE_ARRAY:
         # use input_device to override the current device, if not None
-        data = cls.curate_arrays_device(data, device=input_device, copy=True)
+        data = cls.curate_arrays_device(data, device=input_device, copy=False)
         # if data is None --> use input device.
         # if input_device is None, by default will invoke GPU interface
         input_type = cls.array_device_type(data) if data is not None else input_device
@@ -293,18 +305,18 @@ class ArrayAdapter(Callable):
         logging.debug(f"{__name__}: Call Adapter for {cpu_func} with "
                       f"In Device: {input_device}, Out Device: {output_device}."
                       f"Mapped to: {func} and actual input device: {func_device}")
-        func_in: TYPE_ARRAY = cls.curate_arrays_device(data, device=func_device, copy=True)
+        func_in: TYPE_ARRAY = cls.curate_arrays_device(data, device=func_device, copy=False)
 
-        curated_args = cls.curate_arrays_device(*args, device=func_device, copy=True)
+        curated_args = cls.curate_arrays_device(*args, device=func_device, copy=False)
         curated_kwargs = dict()
         for k, v in kwargs.items():
-            curated_kwargs[k] = cls.curate_arrays_device(v, device=func_device, copy=True)
+            curated_kwargs[k] = cls.curate_arrays_device(v, device=func_device, copy=False)
 
         output = cls.call_helper(func_in, func_device, func, *curated_args, **curated_kwargs)
         # only move the output around if the output is an array
         if isinstance(output, tuple):
-            return cls.curate_arrays_device(*output, device=output_device, copy=True)
-        return cls.curate_arrays_device(output, device=output_device, copy=True)
+            return cls.curate_arrays_device(*output, device=output_device, copy=False)
+        return cls.curate_arrays_device(output, device=output_device, copy=False)
 
     @classmethod
     def _validate_device(cls, device: Optional[Device | str | int]) -> Optional[Device]:
@@ -454,8 +466,11 @@ class ArrayAdapter(Callable):
                                                op=xor)
 
     @classmethod
-    def imsave(cls, filename: str, arr: TYPE_ARRAY, **kwargs):
+    def imsave(cls, filename: str, arr: TYPE_ARRAY, asynch: bool = True, **kwargs):
         logging.debug(f"{__name__}: SHAPE DBG {arr.shape}")
         arr = cls.curate_arrays_device(arr, device=Device.build(Device.DEVICE_CPU), copy=True)
         logging.debug(f"{__name__}: TYPE DBG {type(arr)}")
-        return skimage.io.imsave(filename, arr, **kwargs)
+        if not asynch:
+            skimage.io.imsave(filename, arr, **kwargs)
+            return
+        asyncio.run(async_write_image(filename, arr, **kwargs))

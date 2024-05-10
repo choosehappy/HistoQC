@@ -23,6 +23,7 @@ class WSIImageHandle(ABC, Generic[T, Backend, ARRAY]):
     fname: str
     _adapter: ArrayAdapter
     _device: Device
+    _num_threads: int
 
     @property
     def device(self) -> Device:
@@ -317,14 +318,15 @@ class WSIImageHandle(ABC, Generic[T, Backend, ARRAY]):
 
     @classmethod
     def __create_handle(cls, fname: str,
-                        handle_class_list: List[Callable[[str, Optional[int]], "WSIImageHandle"]],
-                        device_id: Optional[int]) -> "WSIImageHandle":
+                        handle_class_list: List[Callable[[str, Optional[int], Optional[int]], "WSIImageHandle"]],
+                        device_id: Optional[int],
+                        num_threads: Optional[int]) -> "WSIImageHandle":
         image_handle = None
         assert fname is None or os.path.exists(fname), f"fname should either be None or point to an existing file"
         for handle_class in handle_class_list:
             # noinspection PyBroadException
             try:
-                image_handle = handle_class(fname, device_id)
+                image_handle = handle_class(fname, device_id, num_threads)
                 break
             except Exception:
                 # current wsi handle class doesn't support this file
@@ -340,18 +342,20 @@ class WSIImageHandle(ABC, Generic[T, Backend, ARRAY]):
 
     @classmethod
     @final
-    def build_handle(cls, fname: str, handles: str, device_id: Optional[int]) -> "WSIImageHandle":
+    def build_handle(cls, fname: str, handles: str, device_id: Optional[int],
+                     num_threads: Optional[int]) -> "WSIImageHandle":
         # get handles list
         module_list, attr_list = cls.parse_wsi_handles(handles, delimiter=HANDLE_DELIMITER, wsi_handle_dict=WSI_HANDLES)
         handle_class_list = dynamic_import(module_list, attr_list, return_first=False)
-        image_handle = cls.__create_handle(fname, handle_class_list, device_id)
+        image_handle = cls.__create_handle(fname, handle_class_list, device_id, num_threads)
         return image_handle
 
-    def __init__(self, fname: str, device_id: Optional[int]):
+    def __init__(self, fname: str, device_id: Optional[int], num_threads: Optional[int]):
         self.fname = fname
         self._device = Device(self.device_type, device_id)
         self._adapter = ArrayAdapter.build(input_device=self._device, output_device=self._device,
                                            contingent_device=self._device)
+        self._num_threads = num_threads if num_threads is not None else 1
 
     @abstractmethod
     def close_handle(self):

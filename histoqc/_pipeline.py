@@ -7,7 +7,6 @@ import glob
 import logging
 import multiprocessing
 import os
-import platform
 import shutil
 import warnings
 from contextlib import ExitStack
@@ -115,25 +114,6 @@ def log_pipeline(config, logger: logging.Logger):
         mod_name, func_name = process.split('.')
         logger.info(f"\t\t{mod_name}\t{func_name}")
     return steps
-
-
-# --- worker process helpers ------------------------------------------
-
-def setup_plotting_backend(logger=None):
-    """loads the correct matplotlib backend
-
-    Parameters
-    ----------
-    logger :
-        the logging.Logger instance
-    """
-    import matplotlib
-    if platform.system() != "Windows" and not os.environ.get('DISPLAY'):
-        if logger is not None:
-            logger.info('no display found. Using non-interactive Agg backend')
-        matplotlib.use('Agg')
-    else:
-        matplotlib.use('TkAgg')
 
 
 class BatchedResultFile:

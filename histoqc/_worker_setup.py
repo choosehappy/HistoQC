@@ -1,5 +1,7 @@
 from __future__ import annotations
 import multiprocessing
+import platform
+
 import dask
 import threading
 import os
@@ -19,14 +21,13 @@ HDL_CONSOLE = 'console'
 HDL_FILE = 'file'
 HDL_OUT_FIELD = 'filename'
 MAIN_CONF_BUILD = (LoggerConfigBuilder(version=1).add_formatter_by_type(formatter_type=FMT_DFT)
-                   .add_handler_by_type(handler_type=HDL_CONSOLE, level='DEBUG', formatter=FMT_DFT)
                    .add_handler_by_type(handler_type=HDL_FILE, level='WARNING', formatter=FMT_DFT)
-                   .add_root(level="INFO", handlers=[HDL_CONSOLE, HDL_FILE])
+                   .add_root(level="INFO", handlers=[HDL_FILE])
                    .set_handler_target(handler_name=HDL_FILE, out_field=HDL_OUT_FIELD, out_value=DEFAULT_LOG_FN))
 
 WORKER_CONF_BUILD = (LoggerConfigBuilder(version=1).add_formatter_by_type(formatter_type=FMT_DFT)
-                     .add_handler_by_type(handler_type=HDL_CONSOLE, level='DEBUG', formatter=FMT_DFT)
-                     .add_root(level="INFO", handlers=[HDL_CONSOLE]))
+                     .add_handler_by_type(handler_type=HDL_CONSOLE, level='INFO', formatter=FMT_DFT)
+                     .add_root(level="DEBUG", handlers=[HDL_CONSOLE]))  # HDL_CONSOLE
 
 
 def handle_warning(capture_warnings: bool = True, filter_warnings: str = 'ignore'):
@@ -34,6 +35,25 @@ def handle_warning(capture_warnings: bool = True, filter_warnings: str = 'ignore
     filter_type = Literal["default", "error", "ignore", "always", "module", "once"]
     warnings.filterwarnings(cast(filter_type, filter_warnings))
     logging.captureWarnings(capture_warnings)
+
+
+def setup_plotting_backend(logger=None, distributed: bool = False):
+    """loads the correct matplotlib backend
+
+    Parameters
+    ----------
+    logger :
+        the logging.Logger instance
+    distributed:
+        whether a distributed framework is applied, which forces to enable Agg
+    """
+    import matplotlib
+    if distributed or (platform.system() != "Windows" and not os.environ.get('DISPLAY')):
+        if logger is not None:
+            logger.info('no display found. Using non-interactive Agg backend')
+        matplotlib.use('Agg')
+    else:
+        matplotlib.use('TkAgg')
 
 
 class DaskLogHandler(logging.Handler):
@@ -68,6 +88,7 @@ class WorkerInitializer(WorkerPlugin):
     def setup(self, worker):
         logging.config.dictConfig(self.worker_config)
         handle_warning(capture_warnings=self.capture_warnings, filter_warnings=self.filter_warnings)
+        setup_plotting_backend(logging.getLogger(), distributed=True)
 
     @classmethod
     def build(cls, worker_config: Dict,
@@ -75,7 +96,7 @@ class WorkerInitializer(WorkerPlugin):
         return cls(worker_config, capture_warnings, filter_warnings)
 
 
-class LoggingSetup:
+class WorkerSetup:
     _plugin: WorkerPlugin
     _main_build: LoggerConfigBuilder
     _worker_build_list = List[LoggerConfigBuilder]
@@ -126,10 +147,10 @@ class LoggingSetup:
                                                                out_field=out_field, out_value=dest)
         return self._main_build
 
-    def setup_main_logger(self, *, output_dir: Optional[str],
-                          fname: Optional[str],
-                          handler_name: Optional[str],
-                          out_field: Optional[str]):
+    def setup_mainprocess_logger(self, *, output_dir: Optional[str],
+                                 fname: Optional[str],
+                                 handler_name: Optional[str],
+                                 out_field: Optional[str]):
         if not self.is_main_proc():
             return
         # main logger
@@ -148,7 +169,7 @@ class LoggingSetup:
               ):
         if not self.is_main_proc():
             return
-        self.setup_main_logger(output_dir=output_dir, fname=fname, handler_name=handler_name, out_field=out_field)
+        self.setup_mainprocess_logger(output_dir=output_dir, fname=fname, handler_name=handler_name, out_field=out_field)
         self.setup_client(client, forward_name)
 
 
@@ -224,3 +245,6 @@ class MultiProcessingLogManager:
             self._log_queue.put(None)
             lt.join()
             self._log_thread_active = False
+
+# --- worker process helpers ------------------------------------------
+

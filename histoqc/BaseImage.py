@@ -53,7 +53,7 @@ class BaseImage(dict):
     def image_handle(self, image_handle: WSIImageHandle):
         self._image_handle = image_handle
 
-    def __init__(self, fname, fname_outdir, params, device_id: Optional[int] = None):
+    def __init__(self, fname, fname_outdir, params, device_id: Optional[int] = None, num_threads: Optional[int] = 1):
         dict.__init__(self)
         # init
         self._device_id = device_id
@@ -62,7 +62,9 @@ class BaseImage(dict):
 
         # dynamically load wsi image handle
         try:
-            self.image_handle: WSIImageHandle = WSIImageHandle.build_handle(fname, handles, device_id=device_id)
+            self.image_handle: WSIImageHandle = WSIImageHandle.build_handle(fname,
+                                                                            handles, device_id=device_id,
+                                                                            num_threads=num_threads)
         except Exception:
             trace_string = traceback.format_exc()
             logging.error(f"{__name__}: {fname} -- Error Creating Handle - Traceback: {trace_string}")

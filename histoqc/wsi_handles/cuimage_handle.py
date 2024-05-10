@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-import sys
-
-# import skimage.util
+import skimage.util
 from PIL.Image import Image as PILImage
 from cucim.clara import CuImage
 from .base import WSIImageHandle
@@ -18,13 +16,16 @@ from cucim import skimage as c_skimage
 from histoqc.array_adapter import ArrayDeviceType, Device
 from types import MappingProxyType
 import logging
-import os
+# import os
 
 
 DEFAULT_DEVICE = Device.build(Device.DEVICE_CUDA)
 
 
 class CuImageHandle(WSIImageHandle[CuImage, CuImage, cp.ndarray]):
+
+    # todo: implement GPU-accelerated LANCZOS filter
+    USE_LANCZOS: bool = False
 
     handle: Optional[CuImage]
     fname: str
@@ -51,15 +52,16 @@ class CuImageHandle(WSIImageHandle[CuImage, CuImage, cp.ndarray]):
             arr = cp.array(data)
             return c_skimage.transform.resize(arr, output_shape=(h, w), order=3, anti_aliasing=True)
 
-    def __init__(self, fname: str, device_id: Optional[int]):
-        super().__init__(fname, device_id)
+    def __init__(self, fname: str, device_id: Optional[int], num_threads: Optional[int] = 2):
+        super().__init__(fname, device_id, num_threads)
         self._associated_images = None
         self.handle = CuImage(fname)
         # todo - this is only created for parsing the image header/metadata, as the CuCIM v24.02 does not have a
         # todo - native unified metadata interface for different vendors.
         # todo - workaround as memory spilling option
         self.dummy_handle_spill = openslide.OpenSlide(fname)
-        logging.info(f"{__name__}: {fname}: Create CuImageHandle at {device_id}. {self.device}")
+        logging.info(f"{__name__}: {fname}: Create CuImageHandle at {device_id}. {self.device}."
+                     f"Corresponding CUDA device PID: {cp.cuda.runtime.deviceGetPCIBusId(device_id)}")
 
     @LazyProperty
     def background_color(self):
@@ -119,6 +121,19 @@ class CuImageHandle(WSIImageHandle[CuImage, CuImage, cp.ndarray]):
     def comment(self):
         return self.dummy_handle_spill.properties.get("openslide.comment", "NA")
 
+    @staticmethod
+    def _resize_osh(thumb_cp: cp.ndarray, width: int, height: int) -> cp.ndarray:
+        resized_pil = Image.fromarray(thumb_cp.get()
+                                      ).convert("RGB").resize((width, height),
+                                                              resample=Image.Resampling.LANCZOS)
+        return c_skimage.util.img_as_ubyte(cp.array(resized_pil, copy=False), force_copy=False)
+
+    @staticmethod
+    def _resize_skimage(thumb_cp: cp.ndarray, width: int, height: int):
+
+        resized = c_skimage.transform.resize(thumb_cp, output_shape=(height, width), order=0)
+        return c_skimage.util.img_as_ubyte(resized)
+
     def get_thumbnail(self, new_dim) -> cp.ndarray:
         """Get thumbnail
 
@@ -134,31 +149,27 @@ class CuImageHandle(WSIImageHandle[CuImage, CuImage, cp.ndarray]):
             level = self.get_best_level_for_downsample(downsample)
             target_w, target_h = (x // int(downsample) for x in self.dimensions)
 
+            # aspect_ratio = self.dimensions[0] / self.dimensions[1]
+            # target_w, target_h = self.__class__.curate_to_max_dim(target_w, target_h, max(new_dim), aspect_ratio)
+
             # resize
-            thumb = self.backend_rgba2rgb(self.region_backend((0, 0), level, self.level_dimensions[level]))
+            # thumb = self.backend_rgba2rgb(self.region_backend(location=None, level=level))
+            #
+            # try:
+            thumb = self.region_backend(level=level)
+            thumb_cp: cp.ndarray = cp.array(thumb, copy=False)
             try:
-                thumb_cp: cp.ndarray = cp.array(thumb, copy=False)
-                # todo: for reproducibility -> openslide uses LANCZOS filter in PILLOW
-                #    but the exact detail of LANCZOS resampling (e.g., kernel size) is not specified in documentation.
-                #    need to implement our own LANCZOS resampling for cupy later.
-                # aspect_ratio = self.dimensions[0] / self.dimensions[1]
-                # target_w, target_h = self.__class__.curate_to_max_dim(target_w, target_h, max(new_dim), aspect_ratio)
-                # resized = c_skimage.transform.resize(thumb_cp, output_shape=(target_h, target_w), order=1,
-                #                                      anti_aliasing=False)
-                # return c_skimage.util.img_as_ubyte(resized)
-                resized_pil = Image.fromarray(thumb_cp.get()
-                                              ).convert("RGB").resize((target_w, target_h),
-                                                                      resample=Image.Resampling.LANCZOS)
+                if CuImageHandle.USE_LANCZOS:
+                    return CuImageHandle._resize_osh(thumb_cp, target_w, target_h)
+                else:
+                    return CuImageHandle._resize_skimage(thumb_cp, target_w, target_h)
             except Exception:
                 # self.reload()
                 logging.error(f"{__name__} - {self.fname}: OOM on {self.device.device_id}."
-                                f"Use CPU"
-                                f"Error Message Dumped: {traceback.format_exc()}")
-                # thumb_np = np.array(thumb, copy=True)
-                # thumb_np = skimage.util.img_as_ubyte(thumb_np)
-                # return Image.fromarray(thumb_np).resize((target_w, target_h)).convert("RGB")
+                              f"Use CPU"
+                              f"Error Message Dumped: {traceback.format_exc()}. Try CPU method...")
                 resized_pil = self.dummy_handle_spill.get_thumbnail(new_dim).convert("RGB")
-            return cp.array(resized_pil, copy=False)
+                return cp.array(resized_pil, copy=False)
 
     def get_best_level_for_downsample(self, down_factor: float) -> int:
         """Return the largest level that's smaller than the target downsample factor, consistent with openslide.
@@ -176,11 +187,15 @@ class CuImageHandle(WSIImageHandle[CuImage, CuImage, cp.ndarray]):
         # find the indices of the down_indices that points to the best downsample factor value
         return cast(int, down_indices[down_values.argmax()])
 
-    def region_backend(self, location, level, size, **kwargs) -> CuImage:
+    def region_backend(self, location=None, level=None, size=None, **kwargs) -> CuImage:
+        assert level is not None
         with cp.cuda.Device(self.device.device_id):
-            return self.handle.read_region(location=location, level=level, size=size,
-                                           num_workers=max(1, os.cpu_count() // 2),
-                                           **kwargs)
+            if location is not None and size is not None:
+                return self.handle.read_region(location=location, level=level, size=size,
+                                               num_workers=self._num_threads,
+                                               **kwargs)
+            assert location is None and size is None
+            return self.handle.read_region(level=level, num_workers=self._num_threads, **kwargs)
 
     @staticmethod
     def backend_to_array(region: Union[CuImage, cp.ndarray], device: Optional[Device]) -> cp.ndarray:

@@ -11,16 +11,16 @@ import time
 from typing import Tuple, Optional, List
 
 import dask.distributed
-
+from logging.config import dictConfig
 from histoqc._pipeline import BatchedResultFile
 # from histoqc._pipeline import MultiProcessingLogManager
 from copy import deepcopy
-from histoqc._logging import LoggingSetup, MAIN_CONF_BUILD, WORKER_CONF_BUILD, DEFAULT_LOG_FN, HDL_FILE, HDL_OUT_FIELD
+from histoqc._worker_setup import WorkerSetup, MAIN_CONF_BUILD, WORKER_CONF_BUILD, DEFAULT_LOG_FN, HDL_FILE, \
+    HDL_OUT_FIELD, setup_plotting_backend, LoggerConfigBuilder, FMT_DFT, HDL_CONSOLE
 from histoqc._pipeline import load_pipeline
 from histoqc._pipeline import log_pipeline
-from histoqc._pipeline import move_logging_file_handler
+# from histoqc._pipeline import move_logging_file_handler
 # from histoqc._pipeline import setup_logging
-from histoqc._pipeline import setup_plotting_backend
 from histoqc._worker import (worker, worker_setup, worker_success, worker_error, worker_single_process,
                              PARAM_SHARE, KEY_ASSIGN)
 
@@ -75,12 +75,19 @@ def parse_multiprocessing(args: argparse.Namespace,
     return args, is_cuda
 
 
-def new_cluster(name: str, is_cuda: bool, nprocesses: int, gpu_ids: Optional[List[int]]):
+def new_cluster(name: str, is_cuda: bool, nprocesses: int, gpu_ids: Optional[List[int]],
+                nvlink: bool, spill_limit, rmm_pool, num_threads: int):
     assert nprocesses > 0, f"Expect number of processes > 0 to launch the cluster. Get {nprocesses}"
     if not is_cuda:
-        return dask.distributed.LocalCluster(name=name, n_workers=nprocesses, )
+        return dask.distributed.LocalCluster(name=name, n_workers=nprocesses, threads_per_worker=num_threads)
     assert cp is not None and dask_cuda is not None
-    return dask_cuda.LocalCUDACluster(name=name, CUDA_VISIBLE_DEVICES=gpu_ids, n_workers=nprocesses)
+    return dask_cuda.LocalCUDACluster(name=name, CUDA_VISIBLE_DEVICES=gpu_ids,
+                                      jit_unspill=True,
+                                      threads_per_worker=num_threads,
+                                      device_memory_limit=spill_limit,
+                                      n_workers=nprocesses,
+                                      enable_nvlink=nvlink,
+                                      rmm_pool_size=rmm_pool, )  # rmm_maximum_pool_size="10GB"
 
 
 @managed_pkg_data
@@ -127,6 +134,14 @@ def main(argv=None):
                         nargs='+',
                         help="GPU Devices to use (None=use all). Default: None",
                         default=None)
+    parser.add_argument('--nvlink', action='store_true',
+                        help='whether to enable NVLINK. Only applied when CUDA cluster is launched')
+    parser.add_argument('--rmm_pool', type=str, default="10GB",
+                        help='Pool size. Only applied when CUDA cluster is launched')
+    parser.add_argument('--spill_limit', type=float, default=0.5,
+                        help='Percentage threshold of GPU memory before spill to host memory')
+    parser.add_argument('--num_threads', type=int, default=4,
+                        help='# of threads per worker.')
     args = parser.parse_args(argv)
 
     # --- multiprocessing and logging setup -----------------------------------
@@ -140,15 +155,18 @@ def main(argv=None):
     os.makedirs(args.outdir, exist_ok=True)
     # move_logging_file_handler(logging.getLogger(), args.outdir)
 
-    logging_setup = LoggingSetup(deepcopy(MAIN_CONF_BUILD),
-                                 deepcopy(WORKER_CONF_BUILD),
-                                 capture_warnings=True, filter_warnings='ignore')
+    logging_setup = WorkerSetup(deepcopy(MAIN_CONF_BUILD),
+                                deepcopy(WORKER_CONF_BUILD),
+                                capture_warnings=True, filter_warnings='ignore')
     # setup main proc logger config and file handler.
-    logging_setup.setup_main_logger(output_dir=args.outdir, fname=DEFAULT_LOG_FN,
-                                    handler_name=HDL_FILE, out_field=HDL_OUT_FIELD)
+    logging_setup.setup_mainprocess_logger(output_dir=args.outdir, fname=DEFAULT_LOG_FN,
+                                           handler_name=HDL_FILE, out_field=HDL_OUT_FIELD)
 
     # Inherit from the root logger.
+
     main_logger = logging.getLogger(__name__)
+    main_logger.addHandler(logging.StreamHandler(sys.stdout))
+
     if conf_warn_msg:
         main_logger.warning(conf_warn_msg)
 
@@ -220,7 +238,7 @@ def main(argv=None):
         'process_queue': process_queue,
         'config': config,
         'outdir': args.outdir,
-        'lock': mpm.Lock(),  # todo transit to Dask's Lock
+        'lock': dask.distributed.Lock('x'),  # mpm.Lock(),  # todo transit to Dask's Lock
         PARAM_SHARE: mpm.dict(),  # todo transit to Dask's Variable
         'num_files': num_files,
         'force': args.force,
@@ -231,29 +249,30 @@ def main(argv=None):
     setup_plotting_backend(main_logger)
 
     try:
-
         if args.nprocesses > 0:
             local_cluster = new_cluster('histoqc', is_cuda=is_cuda,
-                                        nprocesses=args.nprocesses, gpu_ids=args.gpu_ids)
-            with Client(local_cluster) as client:
-                # register the worker side
-                logging_setup.setup_client(client, forward_name="root")
+                                        nprocesses=args.nprocesses, gpu_ids=args.gpu_ids,
+                                        nvlink=args.nvlink, spill_limit=args.spill_limit,
+                                        rmm_pool=args.rmm_pool, num_threads=args.num_threads)
+            with local_cluster:
+                with Client(local_cluster) as client:
+                    # register the worker side
+                    logging_setup.setup_client(client, forward_name="root")
 
-                # noinspection PyTypeChecker
-                futures_list = [client.submit(worker, idx, file_name, **_shared_state)
-                                for idx, file_name in enumerate(files)]
+                    # noinspection PyTypeChecker
+                    futures_list = [client.submit(worker, idx, file_name, **_shared_state)
+                                    for idx, file_name in enumerate(files)]
 
-                for future in as_completed(futures_list):
-                    try:
-                        base_img_finished = future.result()
-                    except Exception as exc:
-                        worker_error(exc, failed)
-                    else:
-                        worker_success(base_img_finished, result_file=results)
+                    for future in as_completed(futures_list):
+                        try:
+                            base_img_finished = future.result()
+                        except Exception as exc:
+                            worker_error(exc, failed)
+                        else:
+                            worker_success(base_img_finished, result_file=results)
         else:
             worker_setup()
             worker_single_process(files, failed, results, **_shared_state)
-
     except KeyboardInterrupt:
         main_logger.info("-----REQUESTED-ABORT-----\n")
 
