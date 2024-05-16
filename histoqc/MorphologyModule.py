@@ -1,7 +1,7 @@
 import logging
 import os
 import numpy as np
-from histoqc.BaseImage import printMaskHelper, getMaskReginsStats
+from histoqc.BaseImage import printMaskHelper, getMaskRegionsStats
 from skimage import io, morphology, img_as_ubyte, measure
 
 from scipy import ndimage as ndi
@@ -31,7 +31,7 @@ def removeSmallObjects(s, params):
     #     area_mean = areas.mean()
     # else:
     #     nobj = area_max = area_mean = 0
-    stats = getMaskReginsStats(img_small)
+    stats = getMaskRegionsStats(img_small)
 
 
     # s.addToPrintList("small_tissue_removed_num_regions", str(nobj))
@@ -99,7 +99,7 @@ def removeFatlikeTissue(s, params):
     #     area_mean = areas.mean()
     # else:
     #     nobj = area_max = area_mean = 0
-    stats = getMaskReginsStats(mask_fat)
+    stats = getMaskRegionsStats(mask_fat)
 
     # s.addToPrintList("fatlike_tissue_removed_num_regions", str(nobj))
     # s.addToPrintList("fatlike_tissue_removed_mean_area", str(area_mean))
@@ -141,7 +141,7 @@ def fillSmallHoles(s, params):
     #     area_mean = areas.mean()
     # else:
     #     nobj = area_max = area_mean = 0
-    stats = getMaskReginsStats(img_small)
+    stats = getMaskRegionsStats(img_small)
 
     # s.addToPrintList("small_tissue_filled_num_regions", str(nobj))
     # s.addToPrintList("small_tissue_filled_mean_area", str(area_mean))

@@ -207,7 +207,7 @@ class BaseImage(dict):
         return self[key]
 
 '''
-the followings are helper functions 
+the following are helper functions 
 '''
 def getBestThumb(s: BaseImage, x: int, y: int, dims: Tuple[int, int], target_sampling_factor: float):
     osh = s["os_handle"]
@@ -344,11 +344,11 @@ def getDimensionsByOneDim(s: BaseImage, dim: int) -> Tuple[int, int]:
         return w, dim
 
 
-def getMaskReginsStats(img, area_threshold: int = 0)-> dict:
+def getMaskRegionsStats(img)-> dict:
 
     rps = measure.regionprops(morphology.label(img))
     if rps:
-        areas = np.asarray([rp.area for rp in rps if rp.area > area_threshold])
+        areas = np.asarray([rp.area for rp in rps])
         num = len(rps)
         area_min = areas.min()
         area_max = areas.max()

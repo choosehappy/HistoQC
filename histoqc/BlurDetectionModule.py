@@ -2,7 +2,7 @@ import logging
 import os
 
 import skimage
-from histoqc.BaseImage import printMaskHelper, getMaskReginsStats
+from histoqc.BaseImage import printMaskHelper, getMaskRegionsStats
 from skimage import io, img_as_ubyte, morphology, measure
 from skimage.color import rgb2gray
 from skimage.filters import rank
@@ -45,12 +45,12 @@ def identifyBlurryRegions(s, params):
     #     area_mean = areas.mean()
     # else:
     #     nobj = area_max = area_mean = 0
-    stat_rs = getMaskReginsStats(mask)
+    stat_rs = getMaskRegionsStats(mask)
 
-
-    # s.addToPrintList("blurry_removed_num_regions", str(nobj))
-    # s.addToPrintList("blurry_removed_mean_area", str(area_mean))
-    # s.addToPrintList("blurry_removed_max_area", str(area_max))
+    
+    s.addToPrintList("blurry_removed_num_regions", str(stat_rs.get('num', 0)))
+    s.addToPrintList("blurry_removed_mean_area", str(stat_rs.get('area_mean',0)))
+    s.addToPrintList("blurry_removed_max_area", str(stat_rs.get('area_max',0)))
 
 
     s.addToPrintList("blurry_removed_percent",
