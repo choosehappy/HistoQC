@@ -188,7 +188,7 @@ def log_pipeline(config, log_manager):
 
 # --- worker process helpers ------------------------------------------
 
-def setup_plotting_backend(logger=None):
+def setup_plotting_backend(logger=None, debug=False):
     """loads the correct matplotlib backend
 
     Parameters
@@ -197,12 +197,12 @@ def setup_plotting_backend(logger=None):
         the logging.Logger instance
     """
     import matplotlib
-    if platform.system() != "Windows" and not os.environ.get('DISPLAY'):
-        if logger is not None:
-            logger.info('no display found. Using non-interactive Agg backend')
-        matplotlib.use('Agg')
-    else:
+
+    if debug and (platform.system() == "Windows" or os.environ.get('DISPLAY')):
         matplotlib.use('TkAgg')
+
+    else:
+        matplotlib.use('Agg')
 
 
 class BatchedResultFile:
