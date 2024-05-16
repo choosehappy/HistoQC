@@ -9,6 +9,7 @@ from skimage.color import hed_from_rgb, hdx_from_rgb, fgx_from_rgb, bex_from_rgb
 from skimage.color import gdx_from_rgb, hax_from_rgb, bro_from_rgb, bpx_from_rgb, ahx_from_rgb, \
     hpx_from_rgb  # need to load all of these in case the user selects them
 from distutils.util import strtobool
+from histoqc.SaveModule import saveCompressedMask
 
 import matplotlib.pyplot as plt
 
@@ -36,7 +37,8 @@ def separateStains(s, params):
         for c in range(3):
             s.addToPrintList(f"deconv_c{c}_std", str(-100))
             s.addToPrintList(f"deconv_c{c}_mean", str(-100))
-            io.imsave(s["outdir"] + os.sep + s["filename"] + f"_deconv_c{c}.png", img_as_ubyte(np.zeros(mask.shape)))
+            # saving compressed mask
+            saveCompressedMask(s["outdir"] + os.sep + s["filename"] + f"_deconv_c{c}.png", np.zeros(mask.shape))
 
         logging.warning(f"{s['filename']} - DeconvolutionModule.separateStains: NO tissue "
                              f"remains detectable! Saving Black images")
@@ -71,6 +73,8 @@ def separateStains(s, params):
             s.addToPrintList(f"deconv_c{c}_std", str(dc.std()))
 
         dc = (dc - dc_min) / float(dc_max - dc_min) * mask
-        io.imsave(s["outdir"] + os.sep + s["filename"] + f"_deconv_c{c}.png", img_as_ubyte(dc))
+
+        # saving compressed mask
+        saveCompressedMask(s["outdir"] + os.sep + s["filename"] + f"_deconv_c{c}.png", dc)
 
     return

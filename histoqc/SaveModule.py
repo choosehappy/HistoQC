@@ -5,8 +5,6 @@ from distutils.util import strtobool
 from skimage import color
 import numpy as np
 
-import matplotlib.pyplot as plt
-
 
 def blend2Images(img, mask):
     if (img.ndim == 3):
@@ -26,12 +24,13 @@ def saveFinalMask(s, params):
     for mask_force in s["img_mask_force"]:
         mask[s[mask_force]] = 0
 
-    io.imsave(s["outdir"] + os.sep + s["filename"] + "_mask_use.png", img_as_ubyte(mask))
+    # saving compressed mask
+    saveCompressedMask(s["outdir"] + os.sep + s["filename"] + "_mask_use.png", mask)
 
     if strtobool(params.get("use_mask", "True")):  # should we create and save the fusion mask?
         img = s.getImgThumb(s["image_work_size"])
         out = blend2Images(img, mask)
-        io.imsave(s["outdir"] + os.sep + s["filename"] + "_fuse.png", img_as_ubyte(out))
+        saveCompressedMask(s["outdir"] + os.sep + s["filename"] + "_fuse.png" ,out)
 
     return
 
@@ -60,7 +59,7 @@ def saveAssociatedImage(s, key:str, dim:int):
     
     associated_img = associated_img.resize(size)
     associated_img = np.asarray(associated_img)[:, :, 0:3]
-    io.imsave(f"{s['outdir']}{os.sep}{s['filename']}_{key}.png", associated_img)
+    saveCompressedMask(f"{s['outdir']}{os.sep}{s['filename']}_{key}.png" ,associated_img)
 
 def saveMacro(s, params):
     dim = params.get("small_dim", 500)
@@ -78,14 +77,22 @@ def saveMask(s, params):
         return
 
     # save mask
-    io.imsave(f"{s['outdir']}{os.sep}{s['filename']}_{suffix}.png", img_as_ubyte(s["img_mask_use"]))
+    path = f"{s['outdir']}{os.sep}{s['filename']}_{suffix}.png"    
+    # saving mask with RLE
+    saveCompressedMask(path, s["img_mask_use"])
 
 def saveThumbnails(s, params):
     logging.info(f"{s['filename']} - \tsaveThumbnail")
     # we create 2 thumbnails for usage in the front end, one relatively small one, and one larger one
     img = s.getImgThumb(params.get("image_work_size", "1.25x"))
-    io.imsave(s["outdir"] + os.sep + s["filename"] + "_thumb.png", img)
+    saveCompressedMask(s["outdir"] + os.sep + s["filename"] + "_thumb.png" ,img)
 
     img = s.getImgThumb(params.get("small_dim", 500))
-    io.imsave(s["outdir"] + os.sep + s["filename"] + "_thumb_small.png", img)
+    saveCompressedMask(s["outdir"] + os.sep + s["filename"] + "_thumb.png" ,img)
     return
+
+def saveCompressedMask(f_path, img_mask, optimize: bool=True):
+    # Check if the image is binarized
+    unique_values = np.unique(img_mask)
+    bits = 1 if len(unique_values) == 2 else 8
+    io.imsave(f_path, img_as_ubyte(img_mask),bits=bits, optimize=optimize)

@@ -3,12 +3,11 @@ import os
 
 import skimage
 from histoqc.BaseImage import printMaskHelper
-from skimage import io, img_as_ubyte, morphology, measure
+from histoqc.SaveModule import saveCompressedMask
+from skimage import morphology, measure
 from skimage.color import rgb2gray
 from skimage.filters import rank
 import numpy as np
-
-import matplotlib.pyplot as plt
 
 
 # Analysis of focus measure operators for shape-from-focus
@@ -31,7 +30,8 @@ def identifyBlurryRegions(s, params):
            1]  # for some reason resize takes a grayscale and produces a 3chan
     mask = s["img_mask_use"] & (mask > 0)
 
-    io.imsave(s["outdir"] + os.sep + s["filename"] + "_blurry.png", img_as_ubyte(mask))
+    # saving compressed mask
+    saveCompressedMask(s["outdir"] + os.sep + s["filename"] + "_blurry.png", mask)
     s["img_mask_blurry"] = (mask * 255) > 0
 
     prev_mask = s["img_mask_use"]

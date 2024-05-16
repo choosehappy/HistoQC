@@ -2,7 +2,8 @@ import logging
 import os
 import numpy as np
 from histoqc.BaseImage import printMaskHelper
-from skimage import io, morphology, img_as_ubyte, measure
+from histoqc.SaveModule import saveCompressedMask
+from skimage import morphology, measure
 
 from scipy import ndimage as ndi
 
@@ -16,7 +17,8 @@ def removeSmallObjects(s, params):
     img_reduced = morphology.remove_small_objects(s["img_mask_use"], min_size=min_size)
     img_small = np.invert(img_reduced) & s["img_mask_use"]
 
-    io.imsave(s["outdir"] + os.sep + s["filename"] + "_small_remove.png", img_as_ubyte(img_small))
+    # saving commpresed mask
+    saveCompressedMask(s["outdir"] + os.sep + s["filename"] + "_small_remove.png", img_small)
     s["img_mask_small_filled"] = (img_small * 255) > 0
 
     prev_mask = s["img_mask_use"]
@@ -81,7 +83,8 @@ def removeFatlikeTissue(s, params):
 
     mask_fat = mask_dilate & ~mask_dilate_removed
 
-    io.imsave(s["outdir"] + os.sep + s["filename"] + "_fatlike.png", img_as_ubyte(mask_fat))
+    # saving compressed mask
+    saveCompressedMask(s["outdir"] + os.sep + s["filename"] + "_fatlike.png", mask_fat)
     s["img_mask_fatlike"] = (mask_fat * 255) > 0
 
     prev_mask = s["img_mask_use"]
@@ -118,8 +121,8 @@ def fillSmallHoles(s, params):
     img_reduced = morphology.remove_small_holes(s["img_mask_use"], area_threshold=min_size)
     img_small = img_reduced & np.invert(s["img_mask_use"])
 
-
-    io.imsave(s["outdir"] + os.sep + s["filename"] + "_small_fill.png", img_as_ubyte(img_small))
+    # saving compressed mask
+    saveCompressedMask(s["outdir"] + os.sep + s["filename"] + "_small_fill.png", img_small)
     s["img_mask_small_removed"] = (img_small * 255) > 0
 
     prev_mask = s["img_mask_use"]

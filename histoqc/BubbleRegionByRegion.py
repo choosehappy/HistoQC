@@ -1,33 +1,16 @@
 import logging
 import os
-import sys
-
-from ast import literal_eval as make_tuple
-
-from distutils.util import strtobool
 from histoqc.BaseImage import printMaskHelper
+from histoqc.SaveModule import saveCompressedMask
 
 import scipy.signal
-
-from skimage import io, img_as_ubyte
 from skimage.filters import gabor_kernel, frangi, gaussian, median, laplace
 from skimage.color import rgb2gray
-from skimage.morphology import remove_small_objects, disk, binary_opening
-from skimage.feature import local_binary_pattern
+from skimage.morphology import remove_small_objects
 
-from skimage.transform import rescale, resize, downscale_local_mean
-
-from math import ceil
-
-from sklearn.naive_bayes import GaussianNB
-from sklearn.ensemble import RandomForestClassifier
-
-from skimage import io, color
-
+from skimage import color
 
 import numpy as np
-
-import matplotlib.pyplot as plt
 
 global_holder = {}
 
@@ -85,7 +68,8 @@ def roiWise(s, params):
     #s.addToPrintList(name,
     #                 printMaskHelper(params.get("mask_statistics", s["mask_statistics"]), prev_mask, s["img_mask_use"]))
 
-    io.imsave(s["outdir"] + os.sep + s["filename"] + "_BubbleBounds.png", img_as_ubyte(mask)) #.astype(np.uint8) * 255)
+    # saving compressd mask
+    saveCompressedMask(s["outdir"] + os.sep + s["filename"] + "_BubbleBounds.png", mask) #.astype(np.uint8) * 255)
 
     return
 
@@ -108,8 +92,8 @@ def detectSmoothness(s, params):
 
         prev_mask = s["img_mask_use"]
         s["img_mask_flat"] = mask_flat
-
-        io.imsave(s["outdir"] + os.sep + s["filename"] + "_flat.png", img_as_ubyte(mask_flat & prev_mask))
+        # saving compressed mask
+        saveCompressedMask(s["outdir"] + os.sep + s["filename"] + "_flat.png", mask_flat & prev_mask)
 
         s["img_mask_use"] = s["img_mask_use"] & ~s["img_mask_flat"]
 

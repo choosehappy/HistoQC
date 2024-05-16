@@ -8,7 +8,8 @@ from ast import literal_eval as make_tuple
 from distutils.util import strtobool
 
 from histoqc.BaseImage import printMaskHelper
-from skimage import io, img_as_ubyte, img_as_bool
+from histoqc.SaveModule import saveCompressedMask
+from skimage import io, img_as_bool
 from skimage.filters import gabor_kernel, frangi, gaussian, median, laplace
 from skimage.color import rgb2gray
 from skimage.morphology import remove_small_objects, disk, dilation
@@ -20,8 +21,6 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import RandomForestClassifier
 
 import numpy as np
-
-import matplotlib.pyplot as plt
 
 
 def pixelWise(s, params):
@@ -50,7 +49,8 @@ def pixelWise(s, params):
 
     s.addToPrintList(name, str(mask.mean()))
 
-    io.imsave(s["outdir"] + os.sep + s["filename"] + "_" + name + ".png", img_as_ubyte(mask))
+    # saving compressed mask
+    saveCompressedMask(s["outdir"] + os.sep + s["filename"] + "_" + name + ".png", mask)
     s["img_mask_" + name] = (mask * 255) > 0
     prev_mask = s["img_mask_use"]
     s["img_mask_use"] = s["img_mask_use"] & ~s["img_mask_" + name]
@@ -232,7 +232,8 @@ def byExampleWithFeatures(s, params):
 
     mask = s["img_mask_use"] & (mask > 0)
 
-    io.imsave(s["outdir"] + os.sep + s["filename"] + "_" + name + ".png", img_as_ubyte(mask))
+    # saving compressed mask
+    saveCompressedMask(s["outdir"] + os.sep + s["filename"] + "_" + name + ".png", mask)
     s["img_mask_" + name] = (mask * 255) > 0
     prev_mask = s["img_mask_use"]
     s["img_mask_use"] = s["img_mask_use"] & ~s["img_mask_" + name]
