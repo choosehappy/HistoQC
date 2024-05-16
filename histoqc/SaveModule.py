@@ -4,9 +4,6 @@ from skimage import io, img_as_ubyte
 from distutils.util import strtobool
 from skimage import color
 import numpy as np
-from PIL import Image
-from histoqc.BaseImage import saveCompressedMask
-import matplotlib.pyplot as plt
 
 
 def blend2Images(img, mask):
@@ -33,7 +30,7 @@ def saveFinalMask(s, params):
     if strtobool(params.get("use_mask", "True")):  # should we create and save the fusion mask?
         img = s.getImgThumb(s["image_work_size"])
         out = blend2Images(img, mask)
-        io.imsave(s["outdir"] + os.sep + s["filename"] + "_fuse.png", img_as_ubyte(out), optimize=True)
+        saveCompressedMask(s["outdir"] + os.sep + s["filename"] + "_fuse.png" ,out)
 
     return
 
@@ -62,7 +59,7 @@ def saveAssociatedImage(s, key:str, dim:int):
     
     associated_img = associated_img.resize(size)
     associated_img = np.asarray(associated_img)[:, :, 0:3]
-    io.imsave(f"{s['outdir']}{os.sep}{s['filename']}_{key}.png", associated_img, optimize=True)
+    saveCompressedMask(f"{s['outdir']}{os.sep}{s['filename']}_{key}.png" ,associated_img)
 
 def saveMacro(s, params):
     dim = params.get("small_dim", 500)
@@ -88,8 +85,14 @@ def saveThumbnails(s, params):
     logging.info(f"{s['filename']} - \tsaveThumbnail")
     # we create 2 thumbnails for usage in the front end, one relatively small one, and one larger one
     img = s.getImgThumb(params.get("image_work_size", "1.25x"))
-    io.imsave(s["outdir"] + os.sep + s["filename"] + "_thumb.png", img, optimize=True)
+    saveCompressedMask(s["outdir"] + os.sep + s["filename"] + "_thumb.png" ,img)
 
     img = s.getImgThumb(params.get("small_dim", 500))
-    io.imsave(s["outdir"] + os.sep + s["filename"] + "_thumb_small.png", img, optimize=True)
+    saveCompressedMask(s["outdir"] + os.sep + s["filename"] + "_thumb.png" ,img)
     return
+
+def saveCompressedMask(f_path, img_mask, optimize: bool=True):
+    # Check if the image is binarized
+    unique_values = np.unique(img_mask)
+    bits = 1 if len(unique_values) == 2 else 8
+    io.imsave(f_path, img_as_ubyte(img_mask),bits=bits, optimize=optimize)

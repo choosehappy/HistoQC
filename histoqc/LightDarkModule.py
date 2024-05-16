@@ -1,8 +1,9 @@
 import logging
 import os
 import numpy as np
-from histoqc.BaseImage import printMaskHelper, saveCompressedMask
-from skimage import io, color
+from histoqc.BaseImage import printMaskHelper
+from histoqc.SaveModule import saveCompressedMask
+from skimage import color
 from distutils.util import strtobool
 from skimage.filters import threshold_otsu, rank
 from skimage.morphology import disk

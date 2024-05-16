@@ -1,8 +1,9 @@
 import logging
 import os
 import numpy as np
-from histoqc.BaseImage import printMaskHelper, saveCompressedMask
-from skimage import io, morphology, measure
+from histoqc.BaseImage import printMaskHelper
+from histoqc.SaveModule import saveCompressedMask
+from skimage import morphology, measure
 
 from scipy import ndimage as ndi
 

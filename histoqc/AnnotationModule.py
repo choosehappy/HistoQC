@@ -1,7 +1,7 @@
 import logging
 from typing import List, Tuple
-from histoqc.BaseImage import printMaskHelper, saveCompressedMask
-from skimage import io, img_as_ubyte
+from histoqc.BaseImage import printMaskHelper
+from histoqc.SaveModule import saveCompressedMask
 import os
 from pathlib import PurePosixPath, Path
 from shapely.geometry import Polygon

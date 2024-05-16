@@ -6,7 +6,6 @@ from distutils.util import strtobool
 from PIL import Image
 import re
 from typing import Union, Tuple
-from skimage import io, img_as_ubyte
 #os.environ['PATH'] = 'C:\\research\\openslide\\bin' + ';' + os.environ['PATH'] #can either specify openslide bin path in PATH, or add it dynamically
 from histoqc.import_wrapper.openslide import openslide
 
@@ -341,6 +340,3 @@ def getDimensionsByOneDim(s: BaseImage, dim: int) -> Tuple[int, int]:
     else:
         w = int(dim * width / height)
         return w, dim
-    
-def saveCompressedMask(f_path, img_mask):
-    io.imsave(f_path, img_as_ubyte(img_mask), bits=1, optimize=True)

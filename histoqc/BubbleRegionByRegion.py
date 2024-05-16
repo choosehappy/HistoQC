@@ -1,33 +1,16 @@
 import logging
 import os
-import sys
-
-from ast import literal_eval as make_tuple
-
-from distutils.util import strtobool
-from histoqc.BaseImage import printMaskHelper, saveCompressedMask
+from histoqc.BaseImage import printMaskHelper
+from histoqc.SaveModule import saveCompressedMask
 
 import scipy.signal
-
-from skimage import io
 from skimage.filters import gabor_kernel, frangi, gaussian, median, laplace
 from skimage.color import rgb2gray
-from skimage.morphology import remove_small_objects, disk, binary_opening
-from skimage.feature import local_binary_pattern
+from skimage.morphology import remove_small_objects
 
-from skimage.transform import rescale, resize, downscale_local_mean
-
-from math import ceil
-
-from sklearn.naive_bayes import GaussianNB
-from sklearn.ensemble import RandomForestClassifier
-
-from skimage import io, color
-
+from skimage import color
 
 import numpy as np
-
-import matplotlib.pyplot as plt
 
 global_holder = {}
 

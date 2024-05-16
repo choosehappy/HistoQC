@@ -2,13 +2,12 @@ import logging
 import os
 
 import skimage
-from histoqc.BaseImage import printMaskHelper, saveCompressedMask
-from skimage import io, morphology, measure
+from histoqc.BaseImage import printMaskHelper
+from histoqc.SaveModule import saveCompressedMask
+from skimage import morphology, measure
 from skimage.color import rgb2gray
 from skimage.filters import rank
 import numpy as np
-
-import matplotlib.pyplot as plt
 
 
 # Analysis of focus measure operators for shape-from-focus
