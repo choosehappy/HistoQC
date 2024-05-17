@@ -200,6 +200,7 @@ def setup_plotting_backend(logger=None, debug=False):
 
     if debug and (platform.system() == "Windows" or os.environ.get('DISPLAY')):
         matplotlib.use('TkAgg')
+        logger.info("Display found and debug mode enabled. Using TkAgg backend for matplotlib.")
 
     else:
         matplotlib.use('Agg')
