@@ -105,7 +105,7 @@ def main(argv=None):
     # --- create output directory and move log --------------------------------
     args.outdir = os.path.expanduser(args.outdir)
     os.makedirs(args.outdir, exist_ok=True)
-    move_logging_file_handler(logging.getLogger(), args.outdir)
+    move_logging_file_handler(logging.getLogger(), args.outdir, args.debug)
 
     if BatchedResultFile.results_in_path(args.outdir):
         if args.force:

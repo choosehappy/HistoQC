@@ -67,7 +67,7 @@ def setup_logging(*, capture_warnings, filter_warnings):
     logging.captureWarnings(capture_warnings)
 
 
-def move_logging_file_handler(logger, destination):
+def move_logging_file_handler(logger, destination, debug=False):
     """point the logging file handlers to the new destination
 
     Parameters
@@ -94,7 +94,7 @@ def move_logging_file_handler(logger, destination):
         new_filename = shutil.move(handler.baseFilename, destination)
 
         new_handler = logging.FileHandler(new_filename, mode='a')
-        new_handler.setLevel(handler.level)
+        new_handler.setLevel(logging.DEBUG if debug else handler.level)
         new_handler.setFormatter(handler.formatter)
         logger.addHandler(new_handler)
 
