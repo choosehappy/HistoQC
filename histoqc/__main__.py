@@ -65,6 +65,7 @@ def main(argv=None):
     parser.add_argument('--symlink', metavar="TARGET_DIR",
                         help="create symlink to outdir in TARGET_DIR",
                         default=None)
+    parser.add_argument('--debug', action='store_true', help="trigger debugging behavior")
     args = parser.parse_args(argv)
 
     # --- multiprocessing and logging setup -----------------------------------
@@ -104,7 +105,7 @@ def main(argv=None):
     # --- create output directory and move log --------------------------------
     args.outdir = os.path.expanduser(args.outdir)
     os.makedirs(args.outdir, exist_ok=True)
-    move_logging_file_handler(logging.getLogger(), args.outdir)
+    move_logging_file_handler(logging.getLogger(), args.outdir, args.debug)
 
     if BatchedResultFile.results_in_path(args.outdir):
         if args.force:
@@ -162,10 +163,11 @@ def main(argv=None):
         'shared_dict': mpm.dict(),
         'num_files': num_files,
         'force': args.force,
-        'seed': args.seed
+        'seed': args.seed,
+        'debug': args.debug
     }
     failed = mpm.list()
-    setup_plotting_backend(lm.logger)
+    setup_plotting_backend(lm.logger, debug=args.debug)
 
     try:
         if args.nprocesses > 1:

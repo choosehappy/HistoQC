@@ -67,7 +67,7 @@ def setup_logging(*, capture_warnings, filter_warnings):
     logging.captureWarnings(capture_warnings)
 
 
-def move_logging_file_handler(logger, destination):
+def move_logging_file_handler(logger, destination, debug=False):
     """point the logging file handlers to the new destination
 
     Parameters
@@ -94,7 +94,7 @@ def move_logging_file_handler(logger, destination):
         new_filename = shutil.move(handler.baseFilename, destination)
 
         new_handler = logging.FileHandler(new_filename, mode='a')
-        new_handler.setLevel(handler.level)
+        new_handler.setLevel(logging.DEBUG if debug else handler.level)
         new_handler.setFormatter(handler.formatter)
         logger.addHandler(new_handler)
 
@@ -188,7 +188,7 @@ def log_pipeline(config, log_manager):
 
 # --- worker process helpers ------------------------------------------
 
-def setup_plotting_backend(logger=None):
+def setup_plotting_backend(logger=None, debug=False):
     """loads the correct matplotlib backend
 
     Parameters
@@ -197,12 +197,13 @@ def setup_plotting_backend(logger=None):
         the logging.Logger instance
     """
     import matplotlib
-    if platform.system() != "Windows" and not os.environ.get('DISPLAY'):
-        if logger is not None:
-            logger.info('no display found. Using non-interactive Agg backend')
-        matplotlib.use('Agg')
-    else:
+
+    if debug and (platform.system() == "Windows" or os.environ.get('DISPLAY')):
         matplotlib.use('TkAgg')
+        logger.info("Display found and debug mode enabled. Using TkAgg backend for matplotlib.")
+
+    else:
+        matplotlib.use('Agg')
 
 
 class BatchedResultFile:
