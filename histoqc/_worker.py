@@ -16,7 +16,7 @@ def worker_setup(c):
 
 
 def worker(idx, file_name, *,
-           process_queue, config, outdir, log_manager, lock, shared_dict, num_files, force, seed):
+           process_queue, config, outdir, log_manager, lock, shared_dict, num_files, force, seed, debug):
     """pipeline worker function"""
     # set the seed
     if seed is not None:
