@@ -143,7 +143,6 @@ def saveMacro(s, params):
 def saveMask(s, params):
     logging.info(f"{s['filename']} - \tsaveMaskUse")
     suffix = params.get("suffix", None)
-    geojson = strtobool(params.get("geojson", "False")) 
     # check suffix param
     if not suffix:
         msg = f"{s['filename']} - \tPlease set the suffix for mask use."
