@@ -106,11 +106,15 @@ optional arguments:
   -f, --force           force overwriting of existing files
   -b BATCH, --batch BATCH
                         break results file into subsets of this size
-  -s SEED, --seed SEED,
+  -s SEED, --seed SEED
                         set a seed used to produce a random number in all modules                    
   -n NPROCESSES, --nprocesses NPROCESSES
                         number of processes to launch
+  -g GEOJSON, --geojson GEOJSON
+                        save binary mask as geojson format if set geojson True. The default value is False
   --symlink TARGET_DIR  create symlink to outdir in TARGET_DIR
+
+  
 
 ```
 
