@@ -62,10 +62,6 @@ def main(argv=None):
                         help="number of processes to launch",
                         type=int,
                         default=1)
-    parser.add_argument('-g', '--geojson',
-                        help="export binary mask as geojson format",
-                        type=bool,
-                        default=False)
     parser.add_argument('--symlink', metavar="TARGET_DIR",
                         help="create symlink to outdir in TARGET_DIR",
                         default=None)
@@ -170,8 +166,7 @@ def main(argv=None):
         'num_files': num_files,
         'force': args.force,
         'seed': args.seed,
-        'debug': args.debug,
-        'geojson': args.geojson
+        'debug': args.debug
     }
     failed = mpm.list()
     setup_plotting_backend(lm.logger, debug=args.debug)

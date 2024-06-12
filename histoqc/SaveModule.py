@@ -100,12 +100,6 @@ def saveFinalMask(s, params):
 
     io.imsave(s["outdir"] + os.sep + s["filename"] + "_mask_use.png", img_as_ubyte(mask))
 
-    if s['geojson']:
-        geojson = binaryMask2Geojson(s, mask)
-        # save as genjson file
-        with open(s["outdir"] + os.sep + s["filename"] + "_mask_use.geojson", 'w') as f:
-            json.dump(geojson, f)
-
 
     if strtobool(params.get("use_mask", "True")):  # should we create and save the fusion mask?
         img = s.getImgThumb(s["image_work_size"])
@@ -149,7 +143,7 @@ def saveMacro(s, params):
 def saveMask(s, params):
     logging.info(f"{s['filename']} - \tsaveMaskUse")
     suffix = params.get("suffix", None)
-    
+    geojson = strtobool(params.get("geojson", "False")) 
     # check suffix param
     if not suffix:
         msg = f"{s['filename']} - \tPlease set the suffix for mask use."
@@ -158,6 +152,25 @@ def saveMask(s, params):
 
     # save mask
     io.imsave(f"{s['outdir']}{os.sep}{s['filename']}_{suffix}.png", img_as_ubyte(s["img_mask_use"]))
+
+
+def saveMask2Geojson(s, params):
+    logging.info(f"{s['filename']} - \tsaveMaskUse2Geojson")
+    suffix = params.get("suffix", None)
+    # check suffix param
+    if not suffix:
+        msg = f"{s['filename']} - \tPlease set the suffix for mask use in geojson."
+        logging.error(msg)
+        return
+    
+    # convert mask to geojson
+    geojson = binaryMask2Geojson(s, s["img_mask_use"])
+    
+    # save mask as genjson file
+    with open(f"{s['outdir']}{os.sep}{s['filename']}_{suffix}.geojson", 'w') as f:
+        json.dump(geojson, f)
+
+
 
 def saveThumbnails(s, params):
     logging.info(f"{s['filename']} - \tsaveThumbnail")

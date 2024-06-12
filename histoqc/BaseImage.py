@@ -18,7 +18,7 @@ MAG_NA = None
 
 class BaseImage(dict):
 
-    def __init__(self, fname, fname_outdir, seed, geojson, params):
+    def __init__(self, fname, fname_outdir, seed, params):
         dict.__init__(self)
 
         self.in_memory_compression = strtobool(params.get("in_memory_compression", "False"))
@@ -32,7 +32,6 @@ class BaseImage(dict):
 
         self["outdir"] = fname_outdir
         self["seed"] = seed
-        self["geojson"] = geojson
         self["dir"] = os.path.dirname(fname)
 
         self["os_handle"] = openslide.OpenSlide(fname)
