@@ -7,7 +7,7 @@ from setuptools import setup
 # so we have to do it in setup.py
 ui_files = [
     os.path.relpath(f, "histoqc/ui/")
-    for f in glob.iglob("histoqc/ui/UserInterface/**/*", recursive=True)
+    for f in glob.iglob("histoqc/ui/**/*", recursive=True)
     if os.path.isfile(f)
 ]
 data_files = [
