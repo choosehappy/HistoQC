@@ -65,7 +65,10 @@ def main(argv=None):
     parser.add_argument('--symlink', metavar="TARGET_DIR",
                         help="create symlink to outdir in TARGET_DIR",
                         default=None)
+
     parser.add_argument('--debug', action='store_true', help="trigger debugging behavior")
+
+
     args = parser.parse_args(argv)
 
     # --- multiprocessing and logging setup -----------------------------------
@@ -75,7 +78,6 @@ def main(argv=None):
     lm = MultiProcessingLogManager('histoqc', manager=mpm)
 
     # --- parse the pipeline configuration ------------------------------------
-
     config = configparser.ConfigParser()
     if not args.config:
         lm.logger.warning(f"Configuration file not set (--config), using default")
