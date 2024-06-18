@@ -154,16 +154,23 @@ def saveMask(s, params):
 
 
 def saveMask2Geojson(s, params):
-    logging.info(f"{s['filename']} - \tsaveMaskUse2Geojson")
+    
+    mask_name = params.get('mask_name', 'img_mask_use')
     suffix = params.get("suffix", None)
+    logging.info(f"{s['filename']} - \tsaveMaskUse2Geojson: {mask_name}")
     # check suffix param
     if not suffix:
         msg = f"{s['filename']} - \tPlease set the suffix for mask use in geojson."
         logging.error(msg)
         return
-    
+
+    # check if the mask name exists
+    if s.get(mask_name, None) is None: 
+        msg = f"{s['filename']} - \tThe `{mask_name}` mask dosen't exist. Please use correct mask name."
+        logging.error(msg)        
+        return
     # convert mask to geojson
-    geojson = binaryMask2Geojson(s, s["img_mask_use"])
+    geojson = binaryMask2Geojson(s, s[mask_name])
     
     # save mask as genjson file
     with open(f"{s['outdir']}{os.sep}{s['filename']}_{suffix}.geojson", 'w') as f:
