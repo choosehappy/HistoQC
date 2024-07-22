@@ -1,12 +1,12 @@
 import logging
 import os
+import uuid
+import json
+import numpy as np
 from skimage import io, img_as_ubyte
 from distutils.util import strtobool
-from skimage import color
-import numpy as np
-
-import matplotlib.pyplot as plt
-
+from skimage import color, measure
+from copy import deepcopy
 
 def blend2Images(img, mask):
     if (img.ndim == 3):
@@ -19,6 +19,78 @@ def blend2Images(img, mask):
     return out
 
 
+'''
+the followings are helper functions for generating geojson
+'''
+
+feature_template = {
+    "type": "Feature",
+    "id": None,
+    "geometry": {
+        "type": None,
+        "coordinates": []
+    },
+    "properties": {
+        "objectType": "annotation"
+    }
+}
+
+feature_collection_template = {
+  "type": "FeatureCollection",
+  "features": []
+}
+
+
+
+
+
+
+
+def binaryMask2Geojson(s, mask):
+    # get the dimension of slide
+    (dim_width, dim_height) = s['os_handle'].dimensions
+    # get the dimension of mask
+    (mask_height, mask_width) = mask.shape
+
+    # convert binary mask to contours
+    contours = measure.find_contours(mask)
+    
+    # no contours detected
+    if not len(contours):
+        # set default format
+        ann_format = "xml"
+        # warning msg
+        msg = f"No contour detected at use mask image. Geojson annotation won't be generated."
+        logging.warning(f"{s['filename']} - {msg}")
+        s["warnings"].append(msg)
+        return None
+    
+    # copy feature collection template in geojson
+    feature_collection = deepcopy(feature_collection_template)
+    for contour in contours:
+        # copy feature template in geojson
+        new_feature = deepcopy(feature_template)
+        # set id
+        new_feature["id"] = uuid.uuid4().hex
+
+        # scale up the coordinate
+        points = np.asarray(np.flip(contour / [mask_height, mask_width] * [dim_height, dim_width]),dtype="int")
+        
+        # if first and last points has same coordinates then it is polygon
+        if (contour[0]==contour[-1]).all():
+            # polygon
+            new_feature['geometry']['type'] = 'Polygon'
+            new_feature['geometry']['coordinates'].append(points.tolist())
+        else:
+            # LineString
+            new_feature['geometry']['type'] = 'LineString'
+            new_feature['geometry']['coordinates'] = points.tolist()
+        
+        feature_collection['features'].append(new_feature)
+    
+    return feature_collection
+
+
 def saveFinalMask(s, params):
     logging.info(f"{s['filename']} - \tsaveUsableRegion")
 
@@ -27,6 +99,7 @@ def saveFinalMask(s, params):
         mask[s[mask_force]] = 0
 
     io.imsave(s["outdir"] + os.sep + s["filename"] + "_mask_use.png", img_as_ubyte(mask))
+
 
     if strtobool(params.get("use_mask", "True")):  # should we create and save the fusion mask?
         img = s.getImgThumb(s["image_work_size"])
@@ -70,7 +143,6 @@ def saveMacro(s, params):
 def saveMask(s, params):
     logging.info(f"{s['filename']} - \tsaveMaskUse")
     suffix = params.get("suffix", None)
-    
     # check suffix param
     if not suffix:
         msg = f"{s['filename']} - \tPlease set the suffix for mask use."
@@ -79,6 +151,32 @@ def saveMask(s, params):
 
     # save mask
     io.imsave(f"{s['outdir']}{os.sep}{s['filename']}_{suffix}.png", img_as_ubyte(s["img_mask_use"]))
+
+
+def saveMask2Geojson(s, params):
+    
+    mask_name = params.get('mask_name', 'img_mask_use')
+    suffix = params.get("suffix", None)
+    logging.info(f"{s['filename']} - \tsaveMaskUse2Geojson: {mask_name}")
+    # check suffix param
+    if not suffix:
+        msg = f"{s['filename']} - \tPlease set the suffix for mask use in geojson."
+        logging.error(msg)
+        return
+
+    # check if the mask name exists
+    if s.get(mask_name, None) is None: 
+        msg = f"{s['filename']} - \tThe `{mask_name}` mask dosen't exist. Please use correct mask name."
+        logging.error(msg)        
+        return
+    # convert mask to geojson
+    geojson = binaryMask2Geojson(s, s[mask_name])
+    
+    # save mask as genjson file
+    with open(f"{s['outdir']}{os.sep}{s['filename']}_{suffix}.geojson", 'w') as f:
+        json.dump(geojson, f)
+
+
 
 def saveThumbnails(s, params):
     logging.info(f"{s['filename']} - \tsaveThumbnail")
