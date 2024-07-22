@@ -1,7 +1,7 @@
 import logging
 import os
 import numpy as np
-from histoqc.BaseImage import printMaskHelper
+from histoqc.BaseImage import printMaskHelper, getMaskRegionsStats
 from skimage import io, morphology, img_as_ubyte, measure
 
 from scipy import ndimage as ndi
@@ -23,19 +23,23 @@ def removeSmallObjects(s, params):
     s["img_mask_use"] = img_reduced
 
 
-    rps = measure.regionprops(morphology.label(img_small))
-    if rps:
-        areas = np.asarray([rp.area for rp in rps])
-        nobj = len(rps)
-        area_max = areas.max()
-        area_mean = areas.mean()
-    else:
-        nobj = area_max = area_mean = 0
+    # rps = measure.regionprops(morphology.label(img_small))
+    # if rps:
+    #     areas = np.asarray([rp.area for rp in rps])
+    #     nobj = len(rps)
+    #     area_max = areas.max()
+    #     area_mean = areas.mean()
+    # else:
+    #     nobj = area_max = area_mean = 0
+    stats = getMaskRegionsStats(img_small)
 
-    s.addToPrintList("small_tissue_removed_num_regions", str(nobj))
-    s.addToPrintList("small_tissue_removed_mean_area", str(area_mean))
-    s.addToPrintList("small_tissue_removed_max_area", str(area_max))
 
+    # s.addToPrintList("small_tissue_removed_num_regions", str(nobj))
+    # s.addToPrintList("small_tissue_removed_mean_area", str(area_mean))
+    # s.addToPrintList("small_tissue_removed_max_area", str(area_max))
+    s.addToPrintList("small_tissue_removed_num_regions", str(stats.get('num',0)))
+    s.addToPrintList("small_tissue_removed_mean_area", str(stats.get('area_mean',0)))
+    s.addToPrintList("small_tissue_removed_max_area", str(stats.get('area_max',0)))
 
 
 
@@ -87,18 +91,22 @@ def removeFatlikeTissue(s, params):
     prev_mask = s["img_mask_use"]
     s["img_mask_use"] = prev_mask & ~mask_fat
 
-    rps = measure.regionprops(morphology.label(mask_fat))
-    if rps:
-        areas = np.asarray([rp.area for rp in rps])
-        nobj = len(rps)
-        area_max = areas.max()
-        area_mean = areas.mean()
-    else:
-        nobj = area_max = area_mean = 0
+    # rps = measure.regionprops(morphology.label(mask_fat))
+    # if rps:
+    #     areas = np.asarray([rp.area for rp in rps])
+    #     nobj = len(rps)
+    #     area_max = areas.max()
+    #     area_mean = areas.mean()
+    # else:
+    #     nobj = area_max = area_mean = 0
+    stats = getMaskRegionsStats(mask_fat)
 
-    s.addToPrintList("fatlike_tissue_removed_num_regions", str(nobj))
-    s.addToPrintList("fatlike_tissue_removed_mean_area", str(area_mean))
-    s.addToPrintList("fatlike_tissue_removed_max_area", str(area_max))
+    # s.addToPrintList("fatlike_tissue_removed_num_regions", str(nobj))
+    # s.addToPrintList("fatlike_tissue_removed_mean_area", str(area_mean))
+    # s.addToPrintList("fatlike_tissue_removed_max_area", str(area_max))
+    s.addToPrintList("fatlike_tissue_removed_num_regions", str(stats.get('num',0)))
+    s.addToPrintList("fatlike_tissue_removed_mean_area", str(stats.get('area_mean',0)))
+    s.addToPrintList("fatlike_tissue_removed_max_area", str(stats.get('area_max',0)))
 
 
 
@@ -125,18 +133,22 @@ def fillSmallHoles(s, params):
     prev_mask = s["img_mask_use"]
     s["img_mask_use"] = img_reduced
 
-    rps = measure.regionprops(morphology.label(img_small))
-    if rps:
-        areas = np.asarray([rp.area for rp in rps])
-        nobj = len(rps)
-        area_max = areas.max()
-        area_mean = areas.mean()
-    else:
-        nobj = area_max = area_mean = 0
+    # rps = measure.regionprops(morphology.label(img_small))
+    # if rps:
+    #     areas = np.asarray([rp.area for rp in rps])
+    #     nobj = len(rps)
+    #     area_max = areas.max()
+    #     area_mean = areas.mean()
+    # else:
+    #     nobj = area_max = area_mean = 0
+    stats = getMaskRegionsStats(img_small)
 
-    s.addToPrintList("small_tissue_filled_num_regions", str(nobj))
-    s.addToPrintList("small_tissue_filled_mean_area", str(area_mean))
-    s.addToPrintList("small_tissue_filled_max_area", str(area_max))
+    # s.addToPrintList("small_tissue_filled_num_regions", str(nobj))
+    # s.addToPrintList("small_tissue_filled_mean_area", str(area_mean))
+    # s.addToPrintList("small_tissue_filled_max_area", str(area_max))
+    s.addToPrintList("small_tissue_filled_num_regions", str(stats.get('num', 0)))
+    s.addToPrintList("small_tissue_filled_mean_area", str(stats.get('area_mean', 0)))
+    s.addToPrintList("small_tissue_filled_max_area", str(stats.get('area_max', 0)))
 
     s.addToPrintList("small_tissue_filled_percent",
                      printMaskHelper(params.get("mask_statistics", s["mask_statistics"]), prev_mask, s["img_mask_use"]))
