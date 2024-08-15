@@ -71,7 +71,7 @@ def finalProcessingArea(s, params):
             f"After BasicModule.finalProcessingArea NO tissue remains detectable! Downstream modules likely to be incorrect/fail")
 
 
-def countTissuePieces(s):
+def countTissuePieces(s, params):
     mask = s["img_mask_use"]
     stats = getMaskRegionsStats(mask)
     s.addToPrintList("#pieces_of_tissue", str(stats.get('num', 0)))
