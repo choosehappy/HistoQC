@@ -37,7 +37,7 @@ def saveFinalMask(s, params):
 
 
 def saveAssociatedImage(s, key:str, dim:int):
-    logging.info(f"{s['filename']} - \tsave{key.capitalize()}")
+    logging.info(f"{s['filename']}- save{key.capitalize()}")
     osh = s["os_handle"]
 
     if not key in osh.associated_images:
