@@ -1,5 +1,6 @@
 import logging
 import os
+import cv2
 import uuid
 import json
 import numpy as np
@@ -53,7 +54,16 @@ def binaryMask2Geojson(s, mask):
     (mask_height, mask_width) = mask.shape
 
     # convert binary mask to contours
-    contours = measure.find_contours(mask)
+    # contours = measure.find_contours(mask)
+    contours, hierarchy = cv2.findContours(img_as_ubyte(mask), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    children = [[] for i in range(len(contours))]
+    for i, cnt in enumerate(contours):
+        # first_child_idx = hier[0, i, 2]
+        parent_idx = hierarchy[0, i, 3]
+        if (parent_idx == -1):
+            continue
+        # add contour to parent's children node
+        children[parent_idx].append(cnt)    
     
     # no contours detected
     if not len(contours):
@@ -67,25 +77,34 @@ def binaryMask2Geojson(s, mask):
     
     # copy feature collection template in geojson
     feature_collection = deepcopy(feature_collection_template)
-    for contour in contours:
+    for i, contour in enumerate(contours):
+        first_child_idx = hierarchy[0, i, 2]
+        parent_idx = hierarchy[0, i, 3]
+        
+        if (parent_idx != -1):
+            continue
+        
         # copy feature template in geojson
         new_feature = deepcopy(feature_template)
         # set id
         new_feature["id"] = uuid.uuid4().hex
-
         # scale up the coordinate
-        points = np.asarray(np.flip(contour / [mask_height, mask_width] * [dim_height, dim_width]),dtype="int")
-        
-        # if first and last points has same coordinates then it is polygon
-        if (contour[0]==contour[-1]).all():
-            # polygon
+        # points = np.asarray(np.flip(contour / [mask_height, mask_width] * [dim_height, dim_width]),dtype="int")
+        points = np.asarray(contour / [mask_height, mask_width] * [dim_height, dim_width],dtype="int")
+        points = np.append(points, [points[0]], axis=0)
+        points = points[:,0]
+
+        if first_child_idx == -1:
             new_feature['geometry']['type'] = 'Polygon'
-            new_feature['geometry']['coordinates'].append(points.tolist())
+            new_feature['geometry']['coordinates'].append(points.tolist())       
         else:
-            # LineString
-            new_feature['geometry']['type'] = 'LineString'
-            new_feature['geometry']['coordinates'] = points.tolist()
-        
+            new_feature['geometry']['type'] = 'MultiPolygon'
+            new_feature['geometry']['coordinates'].append([points.tolist()])    
+            for child in children[i]:
+                child_points = np.asarray(child / [mask_height, mask_width] * [dim_height, dim_width],dtype="int")
+                child_points = np.append(child_points, [child_points[0]], axis=0)
+                child_points = child_points[:,0]
+                new_feature['geometry']['coordinates'].append([child_points.tolist()])
         feature_collection['features'].append(new_feature)
     
     return feature_collection
