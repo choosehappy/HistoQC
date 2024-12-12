@@ -8,6 +8,7 @@ from skimage import io, img_as_ubyte
 from distutils.util import strtobool
 from skimage import color, measure
 from copy import deepcopy
+from geojson import Polygon, Feature, FeatureCollection, dump
 
 def blend2Images(img, mask):
     if (img.ndim == 3):
@@ -18,34 +19,6 @@ def blend2Images(img, mask):
     mask = mask[:, :, None] * 1.0
     out = np.concatenate((mask, img, mask), 2)
     return out
-
-
-'''
-the followings are helper functions for generating geojson
-'''
-
-feature_template = {
-    "type": "Feature",
-    "id": None,
-    "geometry": {
-        "type": None,
-        "coordinates": []
-    },
-    "properties": {
-        "objectType": "annotation"
-    }
-}
-
-feature_collection_template = {
-  "type": "FeatureCollection",
-  "features": []
-}
-
-
-
-
-
-
 
 def binaryMask2Geojson(s, mask):
     # get the dimension of slide
@@ -75,38 +48,32 @@ def binaryMask2Geojson(s, mask):
         s["warnings"].append(msg)
         return None
     
-    # copy feature collection template in geojson
-    feature_collection = deepcopy(feature_collection_template)
+    features = []
     for i, contour in enumerate(contours):
         first_child_idx = hierarchy[0, i, 2]
         parent_idx = hierarchy[0, i, 3]
         
         if (parent_idx != -1):
             continue
-        
-        # copy feature template in geojson
-        new_feature = deepcopy(feature_template)
-        # set id
-        new_feature["id"] = uuid.uuid4().hex
-        # scale up the coordinate
-        # points = np.asarray(np.flip(contour / [mask_height, mask_width] * [dim_height, dim_width]),dtype="int")
+
+        geometry = []
         points = np.asarray(contour / [mask_height, mask_width] * [dim_height, dim_width],dtype="int")
         points = np.append(points, [points[0]], axis=0)
-        points = points[:,0]
-
-        if first_child_idx == -1:
-            new_feature['geometry']['type'] = 'Polygon'
-            new_feature['geometry']['coordinates'].append(points.tolist())       
-        else:
-            new_feature['geometry']['type'] = 'MultiPolygon'
-            new_feature['geometry']['coordinates'].append([points.tolist()])    
+        points = points[:,0].tolist()
+        points = [tuple(p) for p in points]
+        geometry.append(points)
+        if first_child_idx != -1:
             for child in children[i]:
                 child_points = np.asarray(child / [mask_height, mask_width] * [dim_height, dim_width],dtype="int")
                 child_points = np.append(child_points, [child_points[0]], axis=0)
-                child_points = child_points[:,0]
-                new_feature['geometry']['coordinates'].append([child_points.tolist()])
-        feature_collection['features'].append(new_feature)
-    
+                child_points = child_points[:,0].tolist()
+                child_points = [tuple(p) for p in child_points]
+                geometry.append(child_points)
+        new_feature = Feature(id=uuid.uuid4().hex, geometry=Polygon(geometry),properties={"objectType": "annotation"})
+        
+        features.append(new_feature)
+    feature_collection = FeatureCollection(features)
+
     return feature_collection
 
 
@@ -193,7 +160,7 @@ def saveMask2Geojson(s, params):
     
     # save mask as genjson file
     with open(f"{s['outdir']}{os.sep}{s['filename']}_{suffix}.geojson", 'w') as f:
-        json.dump(geojson, f)
+        dump(geojson, f)
 
 
 
