@@ -106,11 +106,13 @@ optional arguments:
   -f, --force           force overwriting of existing files
   -b BATCH, --batch BATCH
                         break results file into subsets of this size
-  -s SEED, --seed SEED,
+  -s SEED, --seed SEED
                         set a seed used to produce a random number in all modules                    
   -n NPROCESSES, --nprocesses NPROCESSES
                         number of processes to launch
   --symlink TARGET_DIR  create symlink to outdir in TARGET_DIR
+
+  
 
 ```
 
