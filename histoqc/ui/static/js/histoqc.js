@@ -37,7 +37,7 @@ function loadResultsTsv(data) {
 
 	current_parallel_attributes = original_features.filter(function (d) {
 		// in DEFAULT_PARAC_ATTRIBUTES and is numeric
-		if (typeof (ORIGINAL_TSV_LINES[0][d]) == "number" && DEFAULT_PARAC_ATTRIBUTES.indexOf(d) != -1) {
+		if (typeof (ORIGINAL_TSV_LINES[0][d]) == "number") {
 			return true;
 		}
 		return false;
