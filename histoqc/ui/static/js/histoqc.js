@@ -67,12 +67,7 @@ function loadResultsTsv(data) {
 }
 
 function exportResultsTsv() {
-	const lines_with_comments = ORIGINAL_TSV_LINES.map(function (d, i) {
-		d["comments"] = DATA_VIEW.items[i]["comments"];
-		return d;
-	});
-
-	const fileContent = FILE_HEADER + d3.tsvFormat(lines_with_comments)
+	const fileContent = FILE_HEADER + d3.tsvFormat(DATA_VIEW.items)
 
 	// Create a blob object representing the data as a file
 	var blob = new Blob([fileContent], { type: 'text/plain' });
