@@ -22,7 +22,7 @@ def getBasicStats(s, params):
 
 def finalComputations(s, params):
     mask = s["img_mask_use"]
-    s.addToPrintList("pixels_to_use", str(len(mask.nonzero()[0])))
+    s.addToPrintList("pixels_to_use", printMaskHelper(params.get("mask_statistics", s["mask_statistics"]), mask, mask))
 
 
 def finalProcessingSpur(s, params):
