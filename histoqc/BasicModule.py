@@ -22,7 +22,13 @@ def getBasicStats(s, params):
 
 def finalComputations(s, params):
     mask = s["img_mask_use"]
-    s.addToPrintList("pixels_to_use", printMaskHelper(params.get("mask_statistics", s["mask_statistics"]), mask, mask))
+    mask_statistics = params.get("mask_statistics", s["mask_statistics"])
+    if mask_statistics == "relative2mask":
+        warning_message = "relative2mask is not supported in BasicModule.finalComputations. Using absolute instead."
+        logging.warning(f"{s['filename']} - {warning_message}")
+        s["warnings"].append(warning_message)
+        mask_statistics = "absolute"
+    s.addToPrintList("pixels_to_use", printMaskHelper(mask_statistics, mask, mask))
 
 
 def finalProcessingSpur(s, params):
@@ -65,10 +71,10 @@ def finalProcessingArea(s, params):
                      printMaskHelper(params.get("mask_statistics", s["mask_statistics"]), prev_mask, s["img_mask_use"]))
 
     if len(s["img_mask_use"].nonzero()[0]) == 0:  # add warning in case the final tissue is empty
+        warning_message = "After BasicModule.finalProcessingArea NO tissue remains detectable! Downstream modules likely to be incorrect/fail"
         logging.warning(
-            f"{s['filename']} - After BasicModule.finalProcessingArea NO tissue remains detectable! Downstream modules likely to be incorrect/fail")
-        s["warnings"].append(
-            f"After BasicModule.finalProcessingArea NO tissue remains detectable! Downstream modules likely to be incorrect/fail")
+            f"{s['filename']} - {warning_message}")
+        s["warnings"].append(warning_message)
 
 
 def countTissuePieces(s, params):
