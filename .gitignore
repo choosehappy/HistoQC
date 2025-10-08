@@ -25,3 +25,7 @@ htmlcov/
 histoqc/_version.py
 environment.yml
 
+
+# local backup files
+histoqc/*.bak*
+histoqc/*bak_*
