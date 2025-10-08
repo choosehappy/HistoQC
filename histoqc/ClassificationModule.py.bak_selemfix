@@ -98,7 +98,7 @@ def compute_gaussian(img, params):
 
 def compute_median(img, params):
     median_disk_size = int(params.get("median_disk_size", 3))
-    return median(rgb2gray(img), footprint=disk(median_disk_size))[:, :, None]
+    return median(rgb2gray(img), selem=disk(median_disk_size))[:, :, None]
 
 
 def compute_gabor(img, params):
@@ -228,7 +228,7 @@ def byExampleWithFeatures(s, params):
 
     dilate_kernel_size = int(params.get("dilate_kernel_size", "0"))
     if dilate_kernel_size > 0:
-        mask = dilation(mask, footprint=np.ones((dilate_kernel_size, dilate_kernel_size)))
+        mask = dilation(mask, selem=np.ones((dilate_kernel_size, dilate_kernel_size)))
 
     mask = s["img_mask_use"] & (mask > 0)
 

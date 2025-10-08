@@ -64,7 +64,7 @@ def roiWise(s, params):
             feat = frangi(g, frangi_scale_range, frangi_scale_step, frangi_beta1, frangi_beta2, frangi_black_ridges)
             feat = feat / 8.875854409275627e-08
             region_mask = np.bitwise_and(g < .3, feat > 5)
-            region_mask = remove_small_objects(region_mask, min_size=100)
+            region_mask = remove_small_objects(region_mask, min_size=100, in_place=True)
             # region_std = region.std(axis=2)
             # region_gray = rgb2gray(region)
             # region_mask = np.bitwise_and(region_std < 20, region_gray < 100/255)
@@ -77,7 +77,7 @@ def roiWise(s, params):
     mask = np.concatenate(mask, axis=1)
 
     if params.get("area_threshold", "") != "":
-        mask = remove_small_objects(mask, min_size=int(params.get("area_threshold", "")))
+        mask = remove_small_objects(mask, min_size=int(params.get("area_threshold", "")), in_place=True)
 
     s.addToPrintList(name, str(mask.mean()))
 

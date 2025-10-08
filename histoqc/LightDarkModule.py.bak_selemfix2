@@ -18,7 +18,7 @@ def getIntensityThresholdOtsu(s, params):
     name = params.get("name", "classTask")    
     local = strtobool(params.get("local", "False"))
     radius = float(params.get("radius", 15))
-    selem= disk(radius)
+    selem = disk(radius)
 
     img = s.getImgThumb(s["image_work_size"])
     img = color.rgb2gray(img)
@@ -151,7 +151,7 @@ def minimumPixelIntensityNeighborhoodFiltering(s,params):
     img = s.getImgThumb(s["image_work_size"])
     img = color.rgb2gray(img)
     img = (img * 255).astype(np.uint8)
-    selem= disk(disk_size)
+    selem = disk(disk_size)
 
     imgfilt = rank.minimum(img, selem)
     s["img_mask_bright"] = imgfilt > threshold

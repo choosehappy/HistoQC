@@ -59,7 +59,7 @@ def removeSmallObjects(s, params):
 
 def remove_large_objects(img, max_size):
     # code taken from morphology.remove_small_holes, except switched < with >
-    selem= ndi.generate_binary_structure(img.ndim, 1)
+    footprint= ndi.generate_binary_structure(img.ndim, 1)
     ccs = np.zeros_like(img, dtype=np.int32)
     ndi.label(img, selem, output=ccs)
     component_sizes = np.bincount(ccs.ravel())
