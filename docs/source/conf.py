@@ -7,9 +7,8 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = 'HistoQC'
-copyright = '2025, Jackson Jacobs, Fan Fan, Laura Barisoni, Andrew Janowczyk'
-author = 'Jackson Jacobs, Fan Fan, Laura Barisoni, Andrew Janowczyk'
-release = '1.0'
+copyright = '2025, Andrew Janowczyk'
+author = 'Andrew Janowczyk'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
