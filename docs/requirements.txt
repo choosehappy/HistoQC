@@ -1,0 +1,6 @@
+sphinx
+sphinx-autobuild # Requires python 3.11+ to work correctly.
+sphinx-rtd-theme
+furo
+sphinx-design
+myst-parser
