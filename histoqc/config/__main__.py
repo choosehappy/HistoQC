@@ -3,21 +3,14 @@ import sys
 
 from histoqc.config import list_config_templates
 from histoqc.config import read_config_template
+from histoqc.config._parser import get_argument_parser
 
 
 def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
 
-    parser = argparse.ArgumentParser(prog="histoqc.config",description="Show example configuration files")
-    parser.add_argument('--list',
-                        action='store_true',
-                        help='list available configs')
-    parser.add_argument('--show',
-                        metavar='NAME',
-                        type=str,
-                        default=None,
-                        help='show named example config')
+    parser = get_argument_parser()
     args = parser.parse_args(argv)
 
     if args.list:

@@ -14,14 +14,43 @@ Docker is now the recommended method for installing and running HistoQC. Contain
 4. If you exit the shell, the container will stop running but no data/configuration will be lost. You can restart the container and resume your work with the following command.
 
 ## Using pip
-You can install HistoQC into your system by using:
+While we recommend using Docker for most users, some may prefer installing HistoQC from source for development or customization purposes.
 
-```bash
-git clone https://github.com/choosehappy/HistoQC.git
-cd HistoQC
-python -m pip install --upgrade pip  # (optional) upgrade pip to newest version
-pip install -r requirements.txt      # (required) install pinned versions of packages
-pip install .                        # (recommended) install HistoQC as a package
-```
+Follow these steps to install and set up HistoQC:
 
-Note that `pip install .` will install HistoQC as a Python package in your environment. If you do not want to install HistoQC as a package, you will only be able to run HistoQC from the `HistoQC` directory.
+1. **Clone the Repository**
+
+   Clone the HistoQC repository to your local machine:
+
+   ```bash
+   git clone https://github.com/choosehappy/HistoQC.git
+   cd HistoQC
+   ```
+
+2. **(Optional) Set Up a Virtual Environment**
+
+   It is recommended to use a virtual environment to manage dependencies:
+
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate
+   ```
+
+3. **Install Dependencies**
+
+   Install HistoQC
+
+   ```bash
+   pip install .
+   ```
+
+4. **Verify Installation**
+
+   Run the following command to verify that HistoQC is installed correctly:
+
+   ```bash
+   histoqc --help
+   ```
+
+   This should display the CLI usage instructions.
+

@@ -1,3 +1,5 @@
+import os
+import sys
 # Configuration file for the Sphinx documentation builder.
 #
 # For the full list of built-in configuration values, see the documentation:
@@ -10,6 +12,9 @@ project = 'HistoQC'
 copyright = '2025, Andrew Janowczyk'
 author = 'Andrew Janowczyk'
 
+# -- Path setup ---------------------------------------------------------------
+sys.path.insert(0, os.path.abspath("../.."))  # Goes two levels up to project root
+
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
@@ -19,6 +24,7 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx_design',
     'myst_parser',
+    'sphinxarg.ext'
 ]
 
 # Allow .md files as source
