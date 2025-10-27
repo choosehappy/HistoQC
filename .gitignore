@@ -25,4 +25,5 @@ htmlcov/
 
 histoqc/_version.py
 environment.yml
+histoqc_output*/
 

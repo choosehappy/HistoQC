@@ -1,6 +1,7 @@
 # HistoQC Documentation
 
 Welcome to the HistoQC documentation! HistoQC is an open-source quality control tool for digital pathology slides.
+![alt text](_static/image.png)
 
 ```{toctree}
 :maxdepth: 1
