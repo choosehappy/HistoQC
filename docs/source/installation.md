@@ -1,17 +1,21 @@
 # Installation
 
 ## Using Docker
-Docker is now the recommended method for installing and running HistoQC. Containerized runtimes like Docker are more portable and avoid issues with Python environment management, and ensure reproducible application behavior. Docker is available for Windows, MacOS, and Linux.
+Docker is the recommended method for installing and running HistoQC. Containerized runtimes like Docker are more portable and avoid issues with Python environment management, and ensure reproducible application behavior. Docker is available for Windows, MacOS, and Linux.
 
-> **Note**: These instructions assume you have Docker engine installed on your system. If you do not have Docker installed, please see the [Docker installation instructions](https://docs.docker.com/engine/install/).
+```{note}
+These instructions assume you have Docker installed on your system. [Docker installation instructions](https://docs.docker.com/engine/install/).
+```
 
-1. Begin by pulling the [official HistoQC Docker image](https://hub.docker.com/r/histotools/histoqc/tags) from Docker Hub. This repository contains the latest stable version of HistoQC and is guaranteed up-to-date.
+1. Run the official HistoQC Docker image from Docker Hub:
 
-2. Next, run the Docker image with a few options to mount your data directory and expose the web interface on your host machine.
+   ```bash
+   docker run -v <local-path>:/data --name <container-name> -p <local-port>:5000 -it histotools/histoqc:master /bin/bash
+   # Example:
+   # docker run -v /local/datadir:/data --name my_container -p 5000:5000 -it histotools/histoqc:master /bin/bash
+   ```
 
-3. A terminal session will open inside the Docker container. You can now run HistoQC as you would on a local machine.
-
-4. If you exit the shell, the container will stop running but no data/configuration will be lost. You can restart the container and resume your work with the following command.
+2. Your terminal will open a bash shell inside the Docker container. You can now proceed to run HistoQC commands. See [Running HistoQC](running_histoqc.md)
 
 ## Using pip
 While we recommend using Docker for most users, some may prefer installing HistoQC from source for development or customization purposes.
@@ -36,9 +40,7 @@ Follow these steps to install and set up HistoQC:
    source venv/bin/activate
    ```
 
-3. **Install Dependencies**
-
-   Install HistoQC
+3. **Install HistoQC**
 
    ```bash
    pip install .
