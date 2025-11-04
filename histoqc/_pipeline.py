@@ -67,15 +67,19 @@ def setup_logging(*, capture_warnings, filter_warnings):
     logging.captureWarnings(capture_warnings)
 
 
+
 def move_logging_file_handler(logger, destination, debug=False):
-    """point the logging file handlers to the new destination
+    """
+    Redirect FileHandlers to a new destination directory, moving the log file.
 
     Parameters
     ----------
-    logger :
-        the Logger instance for which the default file handler should be moved
-    destination :
-        destination directory for the new file handler
+    logger : logging.Logger
+        Logger instance whose FileHandlers will be moved.
+    destination : str
+        Directory path for the new log files.
+    debug : bool
+        If True, set the log level of the new handlers to DEBUG.
     """
     for handler in reversed(logger.handlers):
         if not isinstance(handler, logging.FileHandler):
@@ -90,9 +94,19 @@ def move_logging_file_handler(logger, destination, debug=False):
         # remove handler
         logger.removeHandler(handler)
         handler.close()
-        # copy error log to destination
-        new_filename = shutil.move(handler.baseFilename, destination)
 
+        if not os.path.exists(handler.baseFilename):
+            logger.warning(f"Original log file {handler.baseFilename!r} does not exist, cannot move.")
+            continue
+
+        new_filename = shutil.copy2(handler.baseFilename, destination)
+        try:
+            os.remove(handler.baseFilename)
+        except OSError:
+            # on WSL/Windows, file might still be locked briefly
+            logger.warning(f"Could not remove original log file {handler.baseFilename!r}")
+
+        # create and attach new handler
         new_handler = logging.FileHandler(new_filename, mode='a')
         new_handler.setLevel(logging.DEBUG if debug else handler.level)
         new_handler.setFormatter(handler.formatter)
