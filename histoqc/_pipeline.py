@@ -86,6 +86,9 @@ def move_logging_file_handler(logger, destination, debug=False):
             continue
         if handler.baseFilename != os.path.join(os.getcwd(), DEFAULT_LOG_FN):
             continue
+        if not os.path.exists(handler.baseFilename):
+            logger.warning(f"Original log file {handler.baseFilename!r} does not exist, cannot move.")
+            continue
 
         if not destination.endswith(handler.baseFilename):
             destination = os.path.join(destination, os.path.relpath(handler.baseFilename, os.getcwd()))
@@ -94,10 +97,6 @@ def move_logging_file_handler(logger, destination, debug=False):
         # remove handler
         logger.removeHandler(handler)
         handler.close()
-
-        if not os.path.exists(handler.baseFilename):
-            logger.warning(f"Original log file {handler.baseFilename!r} does not exist, cannot move.")
-            continue
 
         new_filename = shutil.copy2(handler.baseFilename, destination)
         try:
