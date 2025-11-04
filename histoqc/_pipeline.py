@@ -79,7 +79,7 @@ def move_logging_file_handler(logger, destination, debug=False):
     destination : str
         Directory path for the new log files.
     debug : bool
-        If True, set the log level of the new handlers to DEBUG.
+        If True, set the log level of the new handlers to DEBUG. If False, the new handlers retain the original handler's log level.
     """
     for handler in reversed(logger.handlers):
         if not isinstance(handler, logging.FileHandler):
