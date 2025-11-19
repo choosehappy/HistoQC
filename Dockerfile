@@ -14,7 +14,6 @@ COPY . .
 ENV PATH="/opt/HistoQC/venv/bin:$PATH"
 RUN python -m venv venv \
     && python -m pip install --no-cache-dir setuptools wheel \
-    && python -m pip install --no-cache-dir -r requirements.txt \
     && python -m pip install --no-cache-dir . \
     # We force this so there is no error even if the dll does not exist.
     && rm -f libopenslide-0.dll
