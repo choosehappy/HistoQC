@@ -1,0 +1,21 @@
+/* custom.css */
+.md-header__title {
+    display: flex;
+    align-items: center;
+}
+
+.md-header__title img {
+    margin-right: 10px;  /* Adjust spacing as needed */
+    height: 40px;  /* Adjust the height as needed */
+}
+
+/* Ensure logo is consistent in various views */
+.wy-nav-side .wy-side-nav-search .logo {
+    display: flex;
+    align-items: center;
+}
+
+.wy-nav-side .wy-side-nav-search .logo img {
+    margin-right: 10px;
+    height: 40px;
+}

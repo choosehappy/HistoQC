@@ -24,10 +24,8 @@ function loadResultsTsv(data) {
 		// add placeholder for cohortfinder results
 		if (!d.hasOwnProperty("embed_x")) d["embed_x"] = null;
 		if (!d.hasOwnProperty("embed_y")) d["embed_y"] = null;
-		// non-negative integers in cohortfinder results
-		if (!d.hasOwnProperty("groupid")) d["groupid"] = -1;
-		// 0 or 1 in cohortfinder results
-		if (!d.hasOwnProperty("testind")) d["testind"] = 2;
+		if (!d.hasOwnProperty("groupid")) d["groupid"] = null;
+		if (!d.hasOwnProperty("testind")) d["testind"] = null;
 		if (!d.hasOwnProperty("sitecol")) d["sitecol"] = "None";
 		if (!d.hasOwnProperty("labelcol")) d["labelcol"] = "None";
 		return d;
