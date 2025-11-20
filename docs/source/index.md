@@ -16,4 +16,4 @@ wiki/index
 
 
 
-For more advanced usage and configuration, please refer to the [HistoQC Wiki](https://github.com/choosehappy/HistoQC/wiki).
+For more advanced usage and configuration, please see the [Wiki](wiki/index) section of the documentation.
