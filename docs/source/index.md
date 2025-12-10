@@ -13,7 +13,3 @@ configuring_histoqc
 viewing_results
 wiki/index
 ```
-
-
-
-For more advanced usage and configuration, please refer to the [HistoQC Wiki](https://github.com/choosehappy/HistoQC/wiki).
