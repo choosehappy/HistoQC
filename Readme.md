@@ -2,8 +2,6 @@
 
 HistoQC is an open-source quality control tool for digital pathology slides. It applies a configurable pipeline of image-analysis modules to whole-slide images (WSIs) in order to automatically detect common artifacts (blur, pen markings, tissue folds, air bubbles, etc.), compute quality metrics, and produce visual output masks that flag problematic regions—giving you an at-a-glance view of slide quality before downstream analysis.
 
-![HistoQC](docs/source/_static/image.png)
-
 ---
 
 ## Table of Contents
