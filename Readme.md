@@ -223,7 +223,7 @@ The `[BaseImage]` section's `image_work_size` parameter controls the resolution 
 | | `finalProcessingArea` | Removes isolated tissue islands from the final mask |
 | `LightDarkModule.py` | `getIntensityThresholdOtsu` | Thresholds the image using Otsu's method |
 | | `getIntensityThresholdPercent` | Thresholds using user-supplied intensity bounds; good for tissue/background and fold detection |
-| `MorphologyModule.py` | `removeSmallObjects` | Removes small noise objects (dust, pixelation artefacts) from the mask |
+| `MorphologyModule.py` | `removeSmallObjects` | Removes small noise objects (dust, pixelation artifacts) from the mask |
 | | `fillSmallHoles` | Fills lumen spaces and small holes that are incorrectly excluded |
 | `BlurDetectionModule.py` | `identifyBlurryRegions` | Detects blurry regions via a Laplacian filter |
 | `HistogramModule.py` | `getHistogram` | Produces an RGB-space histogram image |
@@ -235,7 +235,7 @@ The `[BaseImage]` section's `image_work_size` parameter controls the resolution 
 | `ClassificationModule.py` | `pixelWise` | Applies an RGB-based pixel classifier from a user-supplied TSV |
 | | `byExampleWithFeatures` | Trains a classifier from exemplar image/mask pairs; ideal for pen marks, cracks, coverslip edges |
 | `SaveModule.py` | `saveFinalMask` | Saves the output mask and its overlay on the original thumbnail |
-| | `saveThumbnails` | Saves thumbnails required by the web UI |
+| | `saveThumbnail` | Saves thumbnails required by the web UI |
 | `AnnotationModule.py` | `xmlMask` | Loads an Aperio XML annotation to restrict processing to regions of interest |
 | `BubbleRegionByRegion.py` | `roiWise` | Detects air-bubble contour lines; demonstrates tile-wise high-magnification processing |
 | `PenMarkingModule.py` | `identifyPenMarking` | *Deprecated* — use `ClassificationModule.pixelWise` instead |
