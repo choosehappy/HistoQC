@@ -11,6 +11,7 @@ WORKDIR /opt/HistoQC
 COPY . .
 # Create virtual environment for this project. This makes it easier to copy the Python
 # installation into the second stage of the build.
+ENV PATH="/opt/HistoQC/venv/bin:$PATH"
 RUN python -m venv venv \
     && python -m pip install --no-cache-dir setuptools wheel \
     && python -m pip install --no-cache-dir .
