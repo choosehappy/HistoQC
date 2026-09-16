@@ -1,0 +1,11 @@
+{
+  "name": "HistoQC Development Container",
+  "build": {
+    "dockerfile": "../Dockerfile",
+    "context": ".."
+  },
+  "workspaceFolder": "/opt/HistoQC",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/opt/HistoQC,type=bind",
+  "remoteUser": "root",
+  "postCreateCommand": "python -m venv venv && venv/bin/pip install --no-cache-dir -e . && apt update && apt install -y git"
+}
