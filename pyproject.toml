@@ -26,7 +26,7 @@ classifiers = [
     "Operating System :: Unix"
 ]
 
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "openslide-bin==4.0.1.2",
     "openslide-python==1.4.6",
