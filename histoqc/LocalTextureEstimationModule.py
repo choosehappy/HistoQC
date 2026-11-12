@@ -29,9 +29,13 @@ def estimateGreyComatrixFeatures(s, params):
 
     mask = s[mask_name] if not invert else ~s[mask_name]
     if len(mask.nonzero()[0]) == 0:  # add warning in case the no tissus detected in mask
-        msg = f"LocalTextureEstimationModule.estimateGreyComatrixFeatures:{prefix} Can not estimate the empty mask since NO tissue remains detectable in mask"
+        msg = f"LocalTextureEstimationModule.estimateGreyComatrixFeatures:{prefix} Can not estimate the empty mask since NO tissue remains detectable in mask, defaulting to -100"
         logging.warning(f"{s['filename']} - {msg}")
         s["warnings"].append(msg)
+        # write placeholders so this slide's row keeps the same columns as the others (#337)
+        for feat in feats:
+            s.addToPrintList(f"{prefix}{feat}", str(-100))
+            s.addToPrintList(f"{prefix}{feat}_std", str(-100))
         return
 
     maskidx = mask.nonzero()
