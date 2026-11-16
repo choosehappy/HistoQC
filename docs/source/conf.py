@@ -30,6 +30,7 @@ extensions = [
 # Allow .md files as source
 source_suffix = {
     ".md": "markdown",
+    ".rst": "restructuredtext",
 }
 
 templates_path = ['_templates']
@@ -51,4 +52,22 @@ html_js_files = [
 # Add custom CSS for further customization
 html_css_files = [
     'custom.css',
+]
+
+# There isn't a built-in way to automatically mock all imports, so we list them explicitly in autodoc_mock_imports.
+autodoc_mock_imports = [
+    'openslide',
+    'cv2',
+    'PIL',
+    'numpy',
+    'scipy',
+    'skimage',
+    'sklearn',
+    'matplotlib',
+    'shapely',
+    'geojson',
+    'dill',
+    'lazy_property',
+    'distutils',
+    'distutils.util',
 ]

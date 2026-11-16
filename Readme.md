@@ -7,6 +7,14 @@ HistoQC is an open-source quality control tool for digital pathology slides.
 
 For installation and usage instructions, please refer to the [HistoQC Documentation](https://histoqc.readthedocs.io/).
 
+# Building the docs locally
+
+```bash
+pip install sphinx -r docs/requirements.txt
+pip install --no-deps -e .
+sphinx-autobuild docs/source docs/_build/html -a --open-browser
+```
+
 # Citation
 
 If you find this software useful, please drop me a line and/or consider citing it:
