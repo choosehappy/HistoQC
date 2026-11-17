@@ -1,3 +1,4 @@
+"""Classifier-based artifact detection."""
 import logging
 import os
 import re
@@ -25,6 +26,22 @@ import matplotlib.pyplot as plt
 
 
 def pixelWise(s, params):
+    """Classify image pixels using an RGB model trained from a TSV file.
+
+    Args:
+        s: Slide state containing the image and working tissue mask.
+        params: Operation configuration options:
+
+            - ``name`` (str): Name of the output mask. Defaults to ``classTask``.
+            - ``threshold`` (float): Probability threshold for positive
+              classification. Defaults to 0.5.
+            - ``tsv_file`` (str): Path to the TSV containing labeled RGB training
+              values. Required. This operation has no section in
+              the example configuration.
+
+    Returns:
+        None.
+    """
     name = params.get("name", "classTask")
     logging.info(f"{s['filename']} - \tpixelWise:\t", name)
 
@@ -148,6 +165,66 @@ def compute_features(img, params):
 
 
 def byExampleWithFeatures(s, params):
+    """Train and apply a classifier from example images, feature masks, and image features.
+
+    Args:
+        s: Slide state containing the image and working tissue mask.
+        params: Operation configuration options:
+
+            - ``name`` (str): Name of the output mask. Defaults to ``classTask``.
+              the example configuration uses ``pen_markings`` and ``coverslip_edge``.
+            - ``threshold`` (float): Positive-class probability threshold. Defaults
+              to 0.5; the example configuration uses 0.5.
+            - ``examples`` (str): Newline-separated ``image_path:mask_path`` pairs.
+              Required; the example configuration supplies example images and masks for
+              pen-marking and coverslip-edge classifiers.
+            - ``nsamples_per_example`` (float): Number of samples drawn per example.
+              Defaults to -1; the example configuration uses 10000.
+            - ``features`` (str): Newline-separated feature names, such as
+              ``rgb``, ``laplace``, or ``frangi``. Required; the example configuration
+              uses ``frangi``, ``laplace``, and ``rgb``.
+            - ``area_threshold`` (int): Minimum detected-object size to retain.
+              Defaults to 5; the example configuration uses 100 for pen markings and 15
+              for the coverslip edge.
+            - ``dilate_kernel_size`` (int): Kernel size used to dilate the detected
+              mask. Defaults to 0; the example configuration uses 5 for the coverslip
+              edge.
+            - ``laplace_ksize`` (int): Laplacian kernel size. Defaults to 3;
+              the example configuration sets this to 3.
+            - ``frangi_scale_range`` (tuple): Frangi filter scale range. Defaults to
+              ``(1, 10)``; the example configuration sets this to ``(1, 10)``.
+            - ``frangi_scale_step`` (float): Frangi filter scale step. Defaults to
+              2; the example configuration sets this to 2.
+            - ``frangi_beta1`` (float): Frangi filter beta parameter. Defaults to
+              0.5; the example configuration sets this to 0.5.
+            - ``frangi_beta2`` (float): Frangi filter gamma parameter. Defaults to
+              15; the example configuration sets this to 15.
+            - ``frangi_black_ridges`` (bool): Whether to detect black ridges.
+              Defaults to ``True``; the example configuration sets this to ``True``.
+            - ``lbp_radius`` (float): Local binary pattern radius. Defaults to 3;
+              the example configuration sets this to 3.
+            - ``lbp_points`` (int): Number of local binary pattern points. Defaults
+              to 24; the example configuration sets this to 24.
+            - ``lbp_method`` (str): Local binary pattern method. Defaults to
+              ``default``; the example configuration sets this to ``default``.
+            - ``median_disk_size`` (int): Median-filter disk size. Defaults to 3;
+              the example configuration sets this to 3.
+            - ``gabor_theta`` (int): Number of Gabor orientations. Defaults to 4;
+              the example configuration sets this to 4.
+            - ``gabor_sigma`` (tuple): Gabor filter sigma values. Defaults to
+              ``(1, 3)``; the example configuration sets this to ``(1, 3)``.
+            - ``gabor_frequency`` (tuple): Gabor filter frequencies. Defaults to
+              ``(0.05, 0.25)``; the example configuration sets this to
+              ``(0.05, 0.25)``.
+            - ``gaussian_sigma`` (int): Gaussian-filter sigma. Defaults to 1.
+            - ``gaussian_multichan`` (bool): Whether to apply the Gaussian filter
+              to each channel. Defaults to ``False``.
+            - ``mask_statistics`` (str): Statistics mode for the remaining mask.
+              Defaults to the slide-wide setting.
+
+    Returns:
+        None.
+    """
     name = params.get("name", "classTask")
     logging.info(f"{s['filename']} - \tClassificationModule.byExample:\t{name}")
 

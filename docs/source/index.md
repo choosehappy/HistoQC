@@ -11,5 +11,8 @@ installation
 running_histoqc
 configuring_histoqc
 viewing_results
+modules/index
+module_docs
+
 wiki/index
 ```

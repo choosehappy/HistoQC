@@ -1,3 +1,4 @@
+"""Region-by-region processing for high-magnification slide images."""
 import logging
 import os
 import sys
@@ -33,6 +34,24 @@ global_holder = {}
 
 #WARNING: Not as robust as other modules
 def roiWise(s, params):
+    """Detect air-bubble contours by iterating over regions of a large slide.
+
+    Args:
+        s: Slide state with an OpenSlide handle and output metadata.
+        params: Operation configuration options:
+
+            - ``name`` (str): Name used for the recorded result. Defaults to
+              ``classTask``.
+            - ``level`` (int): OpenSlide level used for region processing. Defaults
+              to 1.
+            - ``win_size`` (int): Size of each processed region. Defaults to 2048.
+            - ``area_threshold`` (int): Optional minimum size for retained objects.
+              If omitted or empty, no additional size filtering is applied.
+              This operation has no section in the example configuration.
+
+    Returns:
+        None.
+    """
     name = params.get("name", "classTask")
     print("\tpixelWise:\t", name, end="")
 

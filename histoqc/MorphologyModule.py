@@ -1,3 +1,4 @@
+"""Morphological refinement of image masks."""
 import logging
 import os
 import numpy as np
@@ -11,6 +12,21 @@ from histoqc.SaveModule import blend2Images #for easier debugging
 
 
 def removeSmallObjects(s, params):
+    """Remove small objects, such as pixel noise and dust, from the image mask.
+
+    Args:
+        s: Slide state containing the working tissue mask.
+        params: Operation configuration options:
+
+            - ``min_size`` (int): Minimum object size to retain. Defaults to 64 pixels;
+              the example configuration also sets this to 64.
+            - ``mask_statistics`` (str): Statistics mode used for the removed-mask
+              percentage. Defaults to the slide-wide setting, which is
+              ``relative2mask`` in the example configuration.
+
+    Returns:
+        None.
+    """
     logging.info(f"{s['filename']} - \tremoveSmallObjects")
     min_size = int(params.get("min_size", 64))
     img_reduced = morphology.remove_small_objects(s["img_mask_use"], min_size=min_size)
@@ -121,6 +137,21 @@ def removeFatlikeTissue(s, params):
 
 
 def fillSmallHoles(s, params):
+    """Fill small and medium holes in the image mask, such as lumen spaces in tubules.
+
+    Args:
+        s: Slide state containing the working tissue mask.
+        params: Operation configuration options:
+
+            - ``min_size`` (int): Maximum hole area to fill. Defaults to 64 pixels;
+              the example configuration sets this to 1000.
+            - ``mask_statistics`` (str): Statistics mode used for the filled-mask
+              percentage. Defaults to the slide-wide setting, which is
+              ``relative2mask`` in the example configuration.
+
+    Returns:
+        None.
+    """
     logging.info(f"{s['filename']} - \tfillSmallHoles")
     min_size = int(params.get("min_size", 64))
     img_reduced = morphology.remove_small_holes(s["img_mask_use"], area_threshold=min_size)

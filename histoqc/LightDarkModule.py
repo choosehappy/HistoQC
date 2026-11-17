@@ -1,3 +1,4 @@
+"""Intensity-based image thresholding."""
 import logging
 import os
 import numpy as np
@@ -14,6 +15,25 @@ import matplotlib.pyplot as plt
 
 
 def getIntensityThresholdOtsu(s, params):
+    """Create an intensity mask using a global or local Otsu threshold.
+
+    Args:
+        s: Slide state containing the image and working tissue mask.
+        params: Operation configuration options:
+
+            - ``name`` (str): Name of the output mask. Defaults to ``classTask``.
+            - ``local`` (bool): Whether to use local Otsu thresholding. Defaults to
+              ``False``.
+            - ``radius`` (float): Radius of the neighborhood used for local
+              thresholding. Defaults to 15.
+            - ``invert`` (bool): Whether to invert the threshold mask. Defaults to
+              ``False``.
+            - ``mask_statistics`` (str): Statistics mode for the remaining mask.
+              Defaults to the slide-wide setting.
+
+    Returns:
+        None.
+    """
     logging.info(f"{s['filename']} - \tLightDarkModule.getIntensityThresholdOtsu")
     name = params.get("name", "classTask")    
     local = strtobool(params.get("local", "False"))
@@ -52,6 +72,34 @@ def getIntensityThresholdOtsu(s, params):
 
 
 def getIntensityThresholdPercent(s, params):
+    """Create an intensity mask using user-supplied intensity and variance bounds.
+
+    Args:
+        s: Slide state containing the image and working tissue mask.
+        params: Operation configuration options:
+
+            - ``name`` (str): Name of the output mask. Defaults to ``classTask``.
+            - ``lower_threshold`` (float): Lower grayscale intensity bound. Defaults
+              to negative infinity.
+            - ``upper_threshold`` (float): Upper grayscale intensity bound. Defaults
+              to positive infinity. the example configuration uses 0.15 for the dark-tissue
+              mask and 0.82/0.94 for the bubble mask.
+            - ``lower_std`` (float): Lower bound on per-pixel channel standard
+              deviation. Defaults to negative infinity; the example configuration uses 10
+              for its tissue mask.
+            - ``upper_std`` (float): Upper bound on per-pixel channel standard
+              deviation. Defaults to positive infinity. ``upper_var`` is an
+              accepted alias. The ``upper_variance`` key used in the
+              the example configuration bubble section is not read by this function.
+            - ``invert`` (bool): Whether to invert the resulting mask. Defaults to
+              ``False``; the example configuration enables it for the dark-tissue and
+              bubble masks.
+            - ``mask_statistics`` (str): Statistics mode for the remaining mask.
+              Defaults to the slide-wide setting.
+
+    Returns:
+        None.
+    """
     name = params.get("name", "classTask")
     logging.info(f"{s['filename']} - \tLightDarkModule.getIntensityThresholdPercent:\t {name}")
 
