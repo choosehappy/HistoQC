@@ -79,7 +79,19 @@ def binaryMask2Geojson(s, mask):
 
 
 def saveFinalMask(s, params):
-    """Save the final HistoQC mask and its overlay on the original image."""
+    """Save the final HistoQC mask and, optionally, its overlay.
+
+    Args:
+        s: Slide state containing the final mask and image.
+        params: Operation configuration options:
+
+            - ``use_mask`` (bool): Whether to save the image overlay. Defaults to
+              ``True``. the example configuration specifies ``overlay = True``, but this
+              function reads ``use_mask`` rather than ``overlay``.
+
+    Returns:
+        None.
+    """
     logging.info(f"{s['filename']} - \tsaveUsableRegion")
 
     mask = s["img_mask_use"]
@@ -167,7 +179,20 @@ def saveMask2Geojson(s, params):
 
 
 def saveThumbnails(s, params):
-    """Save slide thumbnails for viewing in the user interface."""
+    """Save slide thumbnails for viewing in the user interface.
+
+    Args:
+        s: Slide state containing the image and output directory.
+        params: Operation configuration options:
+
+            - ``image_work_size`` (str): Size of the regular thumbnail. Defaults to
+              ``1.25x``; the example configuration sets this to ``1.25x``.
+            - ``small_dim`` (int): Maximum dimension of the small thumbnail.
+              Defaults to 500; the example configuration sets this to 500.
+
+    Returns:
+        None.
+    """
     logging.info(f"{s['filename']} - \tsaveThumbnail")
     # we create 2 thumbnails for usage in the front end, one relatively small one, and one larger one
     img = s.getImgThumb(params.get("image_work_size", "1.25x"))

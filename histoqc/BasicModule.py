@@ -9,7 +9,16 @@ import matplotlib.pyplot as plt
 
 
 def getBasicStats(s, params):
-    """Extract basic metadata from the slide image header."""
+    """Record basic metadata from the slide image header.
+
+    Args:
+        s: Slide state containing the OpenSlide handle and result collector.
+        params: Operation configuration mapping. This function has no
+            operation-specific options in the example configuration.
+
+    Returns:
+        None.
+    """
     logging.info(f"{s['filename']} - \tgetBasicStats")
     osh = s["os_handle"]
     s.addToPrintList("type", osh.properties.get("openslide.vendor", "NA"))
@@ -23,7 +32,20 @@ def getBasicStats(s, params):
 
 
 def finalComputations(s, params):
-    """Compute the number of pixels available in the final output mask."""
+    """Record the final number of pixels available in the output mask.
+
+    Args:
+        s: Slide state containing the final working mask.
+        params: Operation configuration options:
+
+            - ``mask_statistics`` (str): Pixel-count reporting mode. Defaults to the
+              slide-wide setting; the example configuration sets this operation to
+              ``absolute``. ``relative2mask`` is unsupported here and falls
+              back to ``absolute``.
+
+    Returns:
+        None.
+    """
     mask = s["img_mask_use"]
     mask_statistics = params.get("mask_statistics", s["mask_statistics"])
     if mask_statistics == "relative2mask":
@@ -35,7 +57,20 @@ def finalComputations(s, params):
 
 
 def finalProcessingSpur(s, params):
-    """Remove small spurs from the final mask by morphological opening."""
+    """Remove small spurs from the final mask by morphological opening.
+
+    Args:
+        s: Slide state containing the working tissue mask.
+        params: Operation configuration options:
+
+            - ``disk_radius`` (int): Radius of the disk used for morphological
+              opening. Defaults to 25; the example configuration sets this to 5.
+            - ``mask_statistics`` (str): Statistics mode for the remaining mask.
+              Defaults to the slide-wide setting.
+
+    Returns:
+        None.
+    """
     logging.info(f"{s['filename']} - \tfinalProcessingSpur")
     disk_radius = int(params.get("disk_radius", "25"))
     selem = disk(disk_radius)
@@ -59,7 +94,20 @@ def finalProcessingSpur(s, params):
 
 
 def finalProcessingArea(s, params):
-    """Remove larger isolated regions from the final mask."""
+    """Remove larger isolated regions from the final mask.
+
+    Args:
+        s: Slide state containing the working tissue mask.
+        params: Operation configuration options:
+
+            - ``area_threshold`` (int): Minimum object size to retain. Defaults to
+              1000 pixels; the example configuration sets this to 10000.
+            - ``mask_statistics`` (str): Statistics mode for the remaining mask.
+              Defaults to the slide-wide setting.
+
+    Returns:
+        None.
+    """
     logging.info(f"{s['filename']} - \tfinalProcessingArea")
     area_thresh = int(params.get("area_threshold", "1000"))
     mask = s["img_mask_use"]

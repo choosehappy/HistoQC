@@ -9,7 +9,32 @@ import matplotlib.pyplot as plt
 
 
 def estimateGreyComatrixFeatures(s, params):
-    """Estimate grey-level co-occurrence matrix features for background or final images."""
+    """Estimate grey-level co-occurrence matrix features for selected image regions.
+
+    Args:
+        s: Slide state containing the image, masks, and optional random seed.
+        params: Operation configuration options:
+
+            - ``prefix`` (str): Optional prefix for output metric names. The example configuration
+              uses ``background`` and ``final``.
+            - ``patch_size`` (int): Side length of each sampled patch. Defaults to
+              32; the example configuration sets this to 32.
+            - ``npatches`` (int): Number of patches to sample. Defaults to 100;
+              the example configuration uses 1000.
+            - ``nlevels`` (int): Number of gray levels for quantization. Defaults to
+              8; the example configuration sets this to 8.
+            - ``feats`` (str): Colon-separated gray-comatrix properties to record.
+              Defaults to ``contrast:dissimilarity:homogeneity:ASM:energy:correlation``;
+              the example configuration uses the same properties.
+            - ``invert`` (bool): Whether to sample outside the selected mask.
+              Defaults to ``False``; the example configuration enables this for background
+              and disables it for final-image measurements.
+            - ``mask_name`` (str): State key of the mask to sample. Defaults to
+              ``img_mask_use``; the example configuration uses this value.
+
+    Returns:
+        None.
+    """
     prefix = params.get("prefix", None)
     prefix = prefix+"_" if prefix else ""
 

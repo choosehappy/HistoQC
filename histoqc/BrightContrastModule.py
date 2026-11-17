@@ -7,7 +7,26 @@ from distutils.util import strtobool
 
 
 def getBrightnessGray(s, params):
-    """Compute mean and standard deviation of grayscale brightness."""
+    """Compute mean and standard deviation of grayscale brightness.
+
+    Args:
+        s: Slide state containing the image and masks.
+        params: Operation configuration options:
+
+            - ``prefix`` (str): Optional prefix for output metric names. The example configuration
+              uses ``background`` for background metrics.
+            - ``limit_to_mask`` (bool): Whether to measure pixels from a mask.
+              Defaults to ``True``; the example configuration sets this to ``True``.
+            - ``invert`` (bool): Whether to use the inverse of the selected mask.
+              Defaults to ``False``; the example configuration enables it for background
+              measurements.
+            - ``mask_name`` (str): State key of the mask to use. Defaults to
+              ``img_mask_use``; the example configuration uses this for background
+              measurements.
+
+    Returns:
+        None.
+    """
     prefix = params.get("prefix", None)
     prefix = prefix+"_" if prefix else ""
     logging.info(f"{s['filename']} - \tgetContrast:{prefix}")
@@ -34,7 +53,27 @@ def getBrightnessGray(s, params):
 
 
 def getBrightnessByChannelinColorSpace(s, params):
-    """Compute mean and standard deviation for each channel in the selected color space."""
+    """Compute brightness mean and standard deviation for each color channel.
+
+    Args:
+        s: Slide state containing the image and masks.
+        params: Operation configuration options:
+
+            - ``prefix`` (str): Optional prefix for output metric names. The example configuration
+              uses ``RGB_background`` for background metrics.
+            - ``to_color_space`` (str): Color space used for the channel metrics.
+              Defaults to ``RGB``; the example configuration also uses ``YUV``.
+            - ``limit_to_mask`` (bool): Whether to measure pixels from a mask.
+              Defaults to ``True``; the example configuration sets this to ``True``.
+            - ``mask_name`` (str): State key of the mask to use. Defaults to
+              ``img_mask_use``.
+            - ``invert`` (bool): Whether to use the inverse of the selected mask.
+              Defaults to ``False``; the example configuration enables it for background
+              measurements.
+
+    Returns:
+        None.
+    """
     prefix = params.get("prefix", None)
     prefix = prefix + "_" if prefix else ""
 
@@ -71,7 +110,25 @@ def getBrightnessByChannelinColorSpace(s, params):
 
 
 def getContrast(s, params):
-    """Compute image contrast metrics, including RMS and Michelson contrast."""
+    """Compute Tenengrad, Michelson, and RMS contrast metrics.
+
+    Args:
+        s: Slide state containing the image and masks.
+        params: Operation configuration options:
+
+            - ``prefix`` (str): Optional prefix for output metric names. The example configuration
+              uses ``background`` for background metrics.
+            - ``limit_to_mask`` (bool): Whether to measure pixels from a mask.
+              Defaults to ``True``; the example configuration sets this to ``True``.
+            - ``mask_name`` (str): State key of the mask to use. Defaults to
+              ``img_mask_use``.
+            - ``invert`` (bool): Whether to use the inverse of the selected mask.
+              Defaults to ``False``; the example configuration enables it for background
+              measurements.
+
+    Returns:
+        None.
+    """
     prefix = params.get("prefix", None)
     prefix = prefix + "_" if prefix else ""
 

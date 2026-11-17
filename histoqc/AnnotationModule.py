@@ -75,7 +75,24 @@ def getParams(s, params):
 
 
 def saveAnnotationMask(s, params):
-    """Load an annotation file and restrict artifact detection and metric computation to its regions of interest."""
+    """Load an annotation file and restrict processing to its regions of interest.
+
+    Args:
+        s: Slide state containing slide metadata and the working tissue mask.
+        params: Operation configuration options:
+
+            - ``format`` (str): Annotation file format. Defaults to ``"xml"``.
+            - ``file_path`` (str): Directory containing the annotation file.
+              Defaults to the slide's input directory.
+            - ``suffix`` (str): Optional suffix added to the slide stem when
+              constructing the annotation filename. Defaults to an empty
+              string.
+            - ``mask_statistics`` (str): Statistics mode for the resulting mask.
+              Defaults to the slide-wide setting.
+
+    Returns:
+        None.
+    """
     logging.info(f"{s['filename']} - \tgetAnnotationMask")
 
     (ann_format, file_path, suffix) = getParams(s, params)

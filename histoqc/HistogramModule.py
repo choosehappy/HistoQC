@@ -10,7 +10,20 @@ global_holder = {} #this holds a local copy of the histograms of the template im
 
 
 def getHistogram(s, params):
-    """Create an RGB histogram image."""
+    """Save an RGB histogram image for the slide.
+
+    Args:
+        s: Slide state containing the image and working tissue mask.
+        params: Operation configuration options:
+
+            - ``limit_to_mask`` (bool): Whether to include only pixels in the working
+              mask. Defaults to ``True``; the example configuration sets this to ``True``.
+            - ``bins`` (int): Number of histogram bins. Defaults to 20;
+              the example configuration sets this to 20.
+
+    Returns:
+        None.
+    """
     logging.info(f"{s['filename']} - \tgetHistogram")
     limit_to_mask = strtobool(params.get("limit_to_mask", True))
     bins = int(params.get("bins", 20))
@@ -46,7 +59,22 @@ def computeHistogram(img, bins, mask=-1):
 
 
 def compareToTemplates(s, params):
-    """Compare the image histogram with user-provided template images."""
+    """Compare the slide's RGB histogram with histograms from template images.
+
+    Args:
+        s: Slide state containing the image and working tissue mask.
+        params: Operation configuration options:
+
+            - ``limit_to_mask`` (bool): Whether to compare only pixels in the working
+              mask. Defaults to ``True``; the example configuration sets this to ``True``.
+            - ``bins`` (int): Number of histogram bins. Defaults to 20;
+              the example configuration sets this to 20.
+            - ``templates`` (str): Newline-separated paths to template images.
+              Required; the example configuration lists four template image paths.
+
+    Returns:
+        None.
+    """
     logging.info(f"{s['filename']} - \tcompareToTemplates")
     bins = int(params.get("bins", 20))
     limit_to_mask = strtobool(params.get("limit_to_mask", True))

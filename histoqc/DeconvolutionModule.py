@@ -15,7 +15,21 @@ import matplotlib.pyplot as plt
 
 
 def separateStains(s, params):
-    """Perform stain deconvolution using a scikit-image stain matrix."""
+    """Perform stain deconvolution using a scikit-image stain matrix.
+
+    Args:
+        s: Slide state containing the image and working tissue mask.
+        params: Operation configuration options:
+
+            - ``stain`` (str): Name of a scikit-image stain matrix, such as
+              ``hed_from_rgb``. Required; the example configuration uses ``hed_from_rgb``.
+            - ``use_mask`` (bool): Whether to calculate stain statistics within the
+              working tissue mask. Defaults to ``True``; the example configuration sets
+              this to ``True``.
+
+    Returns:
+        None.
+    """
     logging.info(f"{s['filename']} - \tseparateStains")
     stain = params.get("stain", "")
     use_mask = strtobool(params.get("use_mask", "True"))

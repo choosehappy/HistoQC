@@ -18,7 +18,26 @@ import matplotlib.pyplot as plt
 
 
 def identifyBlurryRegions(s, params):
-    """Use a Laplace-based measure to identify likely blurry regions."""
+    """Identify likely blurry regions using a Laplacian-based measure.
+
+    Args:
+        s: Slide state containing the image and working tissue mask.
+        params: Operation configuration options:
+
+            - ``image_work_size`` (str): Image size used for blur detection. Defaults
+              to ``2.5x``; the example configuration sets this to ``2.5x``.
+            - ``blur_radius`` (int): Gaussian smoothing radius applied to the
+              Laplacian response. Defaults to 7; the example configuration sets this to
+              100.
+            - ``blur_threshold`` (float): Laplacian-response threshold for
+              identifying blurry regions. Defaults to 0.1; the example configuration sets
+              this to 0.15.
+            - ``mask_statistics`` (str): Statistics mode used when recording the
+              remaining mask percentage. Defaults to the slide-wide setting.
+
+    Returns:
+        None.
+    """
     logging.info(f"{s['filename']} - \tidentifyBlurryRegions")
 
     blur_radius = int(params.get("blur_radius", 7))
