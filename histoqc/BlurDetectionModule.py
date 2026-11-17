@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 def identifyBlurryRegions(s, params):
     """Identify likely blurry regions using a Laplacian-based measure.
     
-    Adds the following TSV columns:
+    TSV columns:
       - ``blurry_removed_num_regions``
       - ``blurry_removed_mean_area``
       - ``blurry_removed_max_area``
