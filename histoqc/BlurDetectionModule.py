@@ -19,6 +19,12 @@ import matplotlib.pyplot as plt
 
 def identifyBlurryRegions(s, params):
     """Identify likely blurry regions using a Laplacian-based measure.
+    
+    Adds the following TSV columns:
+      - ``blurry_removed_num_regions``
+      - ``blurry_removed_mean_area``
+      - ``blurry_removed_max_area``
+      - ``blurry_removed_percent``
 
     Args:
         s: Slide state containing the image and working tissue mask.
