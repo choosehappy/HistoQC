@@ -1,3 +1,4 @@
+"""Classifier-based artifact detection."""
 import logging
 import os
 import re
@@ -25,6 +26,7 @@ import matplotlib.pyplot as plt
 
 
 def pixelWise(s, params):
+    """Classify image pixels using an RGB model trained from a user-provided TSV."""
     name = params.get("name", "classTask")
     logging.info(f"{s['filename']} - \tpixelWise:\t", name)
 
@@ -148,6 +150,7 @@ def compute_features(img, params):
 
 
 def byExampleWithFeatures(s, params):
+    """Train and apply a classifier from example images, feature masks, and selected image features."""
     name = params.get("name", "classTask")
     logging.info(f"{s['filename']} - \tClassificationModule.byExample:\t{name}")
 

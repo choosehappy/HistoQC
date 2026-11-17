@@ -1,3 +1,4 @@
+"""Basic slide metadata and final mask processing."""
 import logging
 import os
 from histoqc.BaseImage import printMaskHelper, getMaskRegionsStats
@@ -8,6 +9,7 @@ import matplotlib.pyplot as plt
 
 
 def getBasicStats(s, params):
+    """Extract basic metadata from the slide image header."""
     logging.info(f"{s['filename']} - \tgetBasicStats")
     osh = s["os_handle"]
     s.addToPrintList("type", osh.properties.get("openslide.vendor", "NA"))
@@ -21,6 +23,7 @@ def getBasicStats(s, params):
 
 
 def finalComputations(s, params):
+    """Compute the number of pixels available in the final output mask."""
     mask = s["img_mask_use"]
     mask_statistics = params.get("mask_statistics", s["mask_statistics"])
     if mask_statistics == "relative2mask":
@@ -32,6 +35,7 @@ def finalComputations(s, params):
 
 
 def finalProcessingSpur(s, params):
+    """Remove small spurs from the final mask by morphological opening."""
     logging.info(f"{s['filename']} - \tfinalProcessingSpur")
     disk_radius = int(params.get("disk_radius", "25"))
     selem = disk(disk_radius)
@@ -55,6 +59,7 @@ def finalProcessingSpur(s, params):
 
 
 def finalProcessingArea(s, params):
+    """Remove larger isolated regions from the final mask."""
     logging.info(f"{s['filename']} - \tfinalProcessingArea")
     area_thresh = int(params.get("area_threshold", "1000"))
     mask = s["img_mask_use"]

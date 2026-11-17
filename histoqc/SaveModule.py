@@ -1,3 +1,4 @@
+"""Saving image masks, overlays, annotations, and thumbnails."""
 import logging
 import os
 import cv2
@@ -78,6 +79,7 @@ def binaryMask2Geojson(s, mask):
 
 
 def saveFinalMask(s, params):
+    """Save the final HistoQC mask and its overlay on the original image."""
     logging.info(f"{s['filename']} - \tsaveUsableRegion")
 
     mask = s["img_mask_use"]
@@ -165,6 +167,7 @@ def saveMask2Geojson(s, params):
 
 
 def saveThumbnails(s, params):
+    """Save slide thumbnails for viewing in the user interface."""
     logging.info(f"{s['filename']} - \tsaveThumbnail")
     # we create 2 thumbnails for usage in the front end, one relatively small one, and one larger one
     img = s.getImgThumb(params.get("image_work_size", "1.25x"))

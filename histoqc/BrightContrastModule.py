@@ -1,3 +1,4 @@
+"""Brightness and contrast metrics for slide images."""
 import logging
 import numpy as np
 from skimage.filters import sobel
@@ -6,6 +7,7 @@ from distutils.util import strtobool
 
 
 def getBrightnessGray(s, params):
+    """Compute mean and standard deviation of grayscale brightness."""
     prefix = params.get("prefix", None)
     prefix = prefix+"_" if prefix else ""
     logging.info(f"{s['filename']} - \tgetContrast:{prefix}")
@@ -32,6 +34,7 @@ def getBrightnessGray(s, params):
 
 
 def getBrightnessByChannelinColorSpace(s, params):
+    """Compute mean and standard deviation for each channel in the selected color space."""
     prefix = params.get("prefix", None)
     prefix = prefix + "_" if prefix else ""
 
@@ -68,6 +71,7 @@ def getBrightnessByChannelinColorSpace(s, params):
 
 
 def getContrast(s, params):
+    """Compute image contrast metrics, including RMS and Michelson contrast."""
     prefix = params.get("prefix", None)
     prefix = prefix + "_" if prefix else ""
 

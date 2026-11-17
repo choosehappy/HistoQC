@@ -1,3 +1,5 @@
+"""Slide image representation, metadata, and image access helpers."""
+
 import logging
 import os
 import numpy as np
@@ -315,6 +317,7 @@ def parsed_mag(mag: Union[str, int, float]) -> Union[None, float]:
 # this function is seperated out because in the future we hope to have automatic detection of
 # magnification if not present in open slide, and/or to confirm openslide base magnification
 def getMag(s: BaseImage, params) -> Union[float, None]:
+    """Read the slide's base magnification, which is required by HistoQC."""
     logging.info(f"{s['filename']} - \tgetMag")
     osh = s["os_handle"]
     mag = osh.properties.get("openslide.objective-power") or \

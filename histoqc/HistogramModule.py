@@ -1,3 +1,4 @@
+"""Image analysis using RGB histograms."""
 import logging
 import os
 import numpy as np
@@ -9,6 +10,7 @@ global_holder = {} #this holds a local copy of the histograms of the template im
 
 
 def getHistogram(s, params):
+    """Create an RGB histogram image."""
     logging.info(f"{s['filename']} - \tgetHistogram")
     limit_to_mask = strtobool(params.get("limit_to_mask", True))
     bins = int(params.get("bins", 20))
@@ -44,6 +46,7 @@ def computeHistogram(img, bins, mask=-1):
 
 
 def compareToTemplates(s, params):
+    """Compare the image histogram with user-provided template images."""
     logging.info(f"{s['filename']} - \tcompareToTemplates")
     bins = int(params.get("bins", 20))
     limit_to_mask = strtobool(params.get("limit_to_mask", True))

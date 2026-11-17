@@ -1,3 +1,4 @@
+"""Intensity-based image thresholding."""
 import logging
 import os
 import numpy as np
@@ -14,6 +15,7 @@ import matplotlib.pyplot as plt
 
 
 def getIntensityThresholdOtsu(s, params):
+    """Threshold the image using a dynamically computed Otsu threshold."""
     logging.info(f"{s['filename']} - \tLightDarkModule.getIntensityThresholdOtsu")
     name = params.get("name", "classTask")    
     local = strtobool(params.get("local", "False"))
@@ -52,6 +54,7 @@ def getIntensityThresholdOtsu(s, params):
 
 
 def getIntensityThresholdPercent(s, params):
+    """Threshold the image using user-supplied values to identify tissue and very dark regions."""
     name = params.get("name", "classTask")
     logging.info(f"{s['filename']} - \tLightDarkModule.getIntensityThresholdPercent:\t {name}")
 

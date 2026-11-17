@@ -1,3 +1,4 @@
+"""Estimation of local image texture features."""
 import logging
 import numpy as np
 from skimage import  color
@@ -8,7 +9,7 @@ import matplotlib.pyplot as plt
 
 
 def estimateGreyComatrixFeatures(s, params):
-    
+    """Estimate grey-level co-occurrence matrix features for background or final images."""
     prefix = params.get("prefix", None)
     prefix = prefix+"_" if prefix else ""
 

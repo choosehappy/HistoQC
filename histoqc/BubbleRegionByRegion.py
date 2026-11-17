@@ -1,3 +1,4 @@
+"""Region-by-region processing for high-magnification slide images."""
 import logging
 import os
 import sys
@@ -33,6 +34,7 @@ global_holder = {}
 
 #WARNING: Not as robust as other modules
 def roiWise(s, params):
+    """Detect air-bubble contours by iterating over regions of a large slide."""
     name = params.get("name", "classTask")
     print("\tpixelWise:\t", name, end="")
 

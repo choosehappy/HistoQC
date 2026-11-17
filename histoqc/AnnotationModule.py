@@ -1,3 +1,4 @@
+"""Masking based on slide annotations."""
 import logging
 from typing import List, Tuple
 from histoqc.BaseImage import printMaskHelper
@@ -74,6 +75,7 @@ def getParams(s, params):
 
 
 def saveAnnotationMask(s, params):
+    """Load an annotation file and restrict artifact detection and metric computation to its regions of interest."""
     logging.info(f"{s['filename']} - \tgetAnnotationMask")
 
     (ann_format, file_path, suffix) = getParams(s, params)

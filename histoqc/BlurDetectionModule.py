@@ -1,3 +1,4 @@
+"""Detection of blurry regions in slide images."""
 import logging
 import os
 
@@ -17,6 +18,7 @@ import matplotlib.pyplot as plt
 
 
 def identifyBlurryRegions(s, params):
+    """Use a Laplace-based measure to identify likely blurry regions."""
     logging.info(f"{s['filename']} - \tidentifyBlurryRegions")
 
     blur_radius = int(params.get("blur_radius", 7))

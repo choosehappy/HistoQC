@@ -1,3 +1,4 @@
+"""Stain deconvolution for histology images."""
 import logging
 import os
 import sys
@@ -14,6 +15,7 @@ import matplotlib.pyplot as plt
 
 
 def separateStains(s, params):
+    """Perform stain deconvolution using a scikit-image stain matrix."""
     logging.info(f"{s['filename']} - \tseparateStains")
     stain = params.get("stain", "")
     use_mask = strtobool(params.get("use_mask", "True"))

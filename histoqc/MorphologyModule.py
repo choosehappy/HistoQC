@@ -1,3 +1,4 @@
+"""Morphological refinement of image masks."""
 import logging
 import os
 import numpy as np
@@ -11,6 +12,7 @@ from histoqc.SaveModule import blend2Images #for easier debugging
 
 
 def removeSmallObjects(s, params):
+    """Remove small objects, such as pixel noise and dust, from the image mask."""
     logging.info(f"{s['filename']} - \tremoveSmallObjects")
     min_size = int(params.get("min_size", 64))
     img_reduced = morphology.remove_small_objects(s["img_mask_use"], min_size=min_size)
@@ -121,6 +123,7 @@ def removeFatlikeTissue(s, params):
 
 
 def fillSmallHoles(s, params):
+    """Fill small and medium holes in the image mask, such as lumen spaces in tubules."""
     logging.info(f"{s['filename']} - \tfillSmallHoles")
     min_size = int(params.get("min_size", 64))
     img_reduced = morphology.remove_small_holes(s["img_mask_use"], area_threshold=min_size)
