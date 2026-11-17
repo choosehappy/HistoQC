@@ -24,7 +24,8 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx_design',
     'myst_parser',
-    'sphinxarg.ext'
+    'sphinxarg.ext',
+    "sphinx.ext.autosummary",
 ]
 
 # Allow .md files as source
@@ -53,6 +54,11 @@ html_js_files = [
 html_css_files = [
     'custom.css',
 ]
+
+autodoc_default_options = {
+    "members": True,
+    "undoc-members": True,
+}
 
 # There isn't a built-in way to automatically mock all imports, so we list them explicitly in autodoc_mock_imports.
 autodoc_mock_imports = [
