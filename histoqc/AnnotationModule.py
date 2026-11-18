@@ -85,6 +85,11 @@ def saveAnnotationMask(s, params):
         msg = f"Annotation file {f_path} does not exist. Skipping..."
         logging.warning(f"{s['filename']} - {msg}")
         s["warnings"].append(msg)
+        # the mask is left unchanged; still record the column so this slide's row
+        # lines up with slides that do have annotations (same shape as #337)
+        s.addToPrintList("getAnnotationMask",
+                         printMaskHelper(params.get("mask_statistics", s["mask_statistics"]),
+                                         s["img_mask_use"], s["img_mask_use"]))
         return
 
     logging.info(f"{s['filename']} - \tusing {f_path}")
@@ -101,6 +106,11 @@ def saveAnnotationMask(s, params):
         msg = f"unsupported file format '{ann_format}'. Skipping..."
         logging.warning(f"{s['filename']} - {msg}")
         s["warnings"].append(msg)
+        # the mask is left unchanged; still record the column so this slide's row
+        # lines up with slides that do have annotations (same shape as #337)
+        s.addToPrintList("getAnnotationMask",
+                         printMaskHelper(params.get("mask_statistics", s["mask_statistics"]),
+                                         s["img_mask_use"], s["img_mask_use"]))
         return
 
     (off_x, off_y, ncol, nrow) = s["img_bbox"]
