@@ -11,6 +11,30 @@ import matplotlib.pyplot as plt
 def estimateGreyComatrixFeatures(s, params):
     """Estimate grey-level co-occurrence matrix features for selected image regions.
 
+    TSV columns:
+      - ``contrast``, ``dissimilarity``, ``homogeneity``, ``ASM``, ``energy``,
+        ``correlation``: Mean over patches of scikit-image ``graycoprops`` for each
+        property in ``feats`` (``energy`` is the square root of ``ASM``).
+      - ``contrast_std``, ``dissimilarity_std``, ``homogeneity_std``, ``ASM_std``,
+        ``energy_std``, ``correlation_std``: Standard deviation over patches.
+
+    With ``prefix`` set, names start with ``<prefix>_``.
+    The example configuration writes ``final_contrast``, ``final_contrast_std``,
+    ``final_dissimilarity``, ``final_dissimilarity_std``, ``final_homogeneity``,
+    ``final_homogeneity_std``, ``final_ASM``, ``final_ASM_std``, ``final_energy``,
+    ``final_energy_std``, ``final_correlation``, and ``final_correlation_std``; and
+    ``background_contrast``, ``background_contrast_std``, ``background_dissimilarity``,
+    ``background_dissimilarity_std``, ``background_homogeneity``,
+    ``background_homogeneity_std``, ``background_ASM``, ``background_ASM_std``,
+    ``background_energy``, ``background_energy_std``, ``background_correlation``, and
+    ``background_correlation_std``.
+    ``npatches`` square patches of side ``patch_size`` pixels are drawn with
+    replacement; each patch's top-left corner is a mask pixel, so a
+    patch can extend past the mask. Grayscale is quantised to ``nlevels`` levels and a
+    symmetric, normalised co-occurrence matrix is built at distance 5 px, angle 0.
+    Values repeat between runs only when a seed is set. All columns are ``-100`` when
+    the selected mask is empty.
+
     Args:
         s: Slide state containing the image, masks, and optional random seed.
         params: Operation configuration options:

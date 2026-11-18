@@ -1,4 +1,23 @@
-"""Basic slide metadata and final mask processing."""
+"""Basic slide metadata and final mask processing.
+
+Conventions for the columns in ``results.tsv``, shared by all modules:
+
+- Measurements are made on a thumbnail at ``image_work_size`` (1.25x in the example
+  configuration; blur detection runs at its own size, 2.5x, and its mask is resized
+  back). Grayscale is scikit-image ``rgb2gray``, 0 to 1.
+- Most measurements use the current tissue mask (``img_mask_use``), which each
+  mask-filtering step changes in pipeline order.
+- Mask-filtering steps report their change to that mask according to
+  ``mask_statistics`` (set slide-wide, or per operation):
+
+  - ``relative2mask`` (the default): fraction of the previous mask removed by the
+    step, 1 - after/before; ``-100`` if the previous mask was already empty. A step
+    that adds pixels (``fillSmallHoles``) gives a negative value.
+  - ``relative2image``: fraction of the whole thumbnail in the mask after the step.
+  - ``absolute``: number of mask pixels after the step.
+
+- ``-100`` in a measurement column means the mask it reads was empty.
+"""
 import logging
 import os
 from histoqc.BaseImage import printMaskHelper, getMaskRegionsStats
@@ -10,6 +29,22 @@ import matplotlib.pyplot as plt
 
 def getBasicStats(s, params):
     """Record basic metadata from the slide image header.
+
+    TSV columns:
+      - ``type``: Scanner vendor (``openslide.vendor``).
+      - ``levels``: Number of pyramid levels (``openslide.level-count``).
+      - ``height``, ``width``: Level-0 size in pixels.
+      - ``mpp_x``, ``mpp_y``: Microns per pixel from the slide metadata.
+      - ``comment``: ``openslide.comment`` with line breaks removed.
+
+    Missing properties are written as ``NA``. Four more metadata columns are written
+    when the slide is loaded (``histoqc.BaseImage``), not by this function:
+    ``filename``; ``comments`` (a blank placeholder); ``image_bounding_box``, the
+    (x, y, width, height) of the analysed region, which is the whole slide unless
+    ``enable_bounding_box`` is set and the slide supplies bounds; and ``base_mag``,
+    from ``openslide.objective-power``, else ``aperio.AppMag``, else the configured
+    ``base_mag``. The last column, ``warnings``, joins the warning messages from all
+    steps with ``|``.
 
     Args:
         s: Slide state containing the OpenSlide handle and result collector.
@@ -33,6 +68,11 @@ def getBasicStats(s, params):
 
 def finalComputations(s, params):
     """Record the final number of pixels available in the output mask.
+
+    TSV columns:
+      - ``pixels_to_use``: Size of the final tissue mask. ``relative2mask`` is not
+        supported here and falls back to ``absolute`` (pixel count);
+        ``relative2image`` gives the fraction of the image in the mask.
 
     Args:
         s: Slide state containing the final working mask.
@@ -58,6 +98,14 @@ def finalComputations(s, params):
 
 def finalProcessingSpur(s, params):
     """Remove small spurs from the final mask by morphological opening.
+
+    TSV columns:
+      - ``spur_pixels``:
+        Fraction of the remaining tissue mask removed by this step under the
+        default ``mask_statistics`` (see :mod:`histoqc.BasicModule` for the other
+        modes).
+        Removed pixels are thin protrusions that do not survive a morphological
+        opening with a disk of radius ``disk_radius``.
 
     Args:
         s: Slide state containing the working tissue mask.
@@ -94,7 +142,14 @@ def finalProcessingSpur(s, params):
 
 
 def finalProcessingArea(s, params):
-    """Remove larger isolated regions from the final mask.
+    """Remove tissue pieces smaller than ``area_threshold`` from the final mask.
+
+    TSV columns:
+      - ``areaThresh``:
+        Fraction of the remaining tissue mask removed by this step under the
+        default ``mask_statistics`` (see :mod:`histoqc.BasicModule` for the other
+        modes).
+        Removed pixels belong to tissue pieces smaller than ``area_threshold``.
 
     Args:
         s: Slide state containing the working tissue mask.
@@ -131,6 +186,21 @@ def finalProcessingArea(s, params):
 
 
 def countTissuePieces(s, params):
+    """Count connected pieces of tissue in the current mask.
+
+    TSV columns:
+      - ``#pieces_of_tissue``: Number of connected regions in the tissue mask at this
+        point in the pipeline (the final mask when run after the mask-filtering
+        steps, as in the example configuration).
+
+    Args:
+        s: Slide state containing the working tissue mask.
+        params: Operation configuration mapping. This function has no
+            operation-specific options in the example configuration.
+
+    Returns:
+        None.
+    """
     mask = s["img_mask_use"]
     stats = getMaskRegionsStats(mask)
     s.addToPrintList("#pieces_of_tissue", str(stats.get('num', 0)))

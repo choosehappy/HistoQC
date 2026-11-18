@@ -17,6 +17,14 @@ import matplotlib.pyplot as plt
 def getIntensityThresholdOtsu(s, params):
     """Create an intensity mask using a global or local Otsu threshold.
 
+    TSV columns:
+      - ``<name>``: One column named by ``name``.
+        Fraction of the remaining tissue mask removed by this step under the
+        default ``mask_statistics`` (see :mod:`histoqc.BasicModule` for the other
+        modes).
+        The mask keeps pixels darker than the Otsu threshold (brighter ones when
+        ``invert`` is true).
+
     Args:
         s: Slide state containing the image and working tissue mask.
         params: Operation configuration options:
@@ -73,6 +81,19 @@ def getIntensityThresholdOtsu(s, params):
 
 def getIntensityThresholdPercent(s, params):
     """Create an intensity mask using user-supplied intensity and variance bounds.
+
+    TSV columns:
+      - ``<name>``: One column named by ``name``. The shipped configurations use
+        ``dark`` (their ``darktissue`` sections), ``bright`` (``config.ini``) and
+        ``nonwhite`` (``config_clinical.ini``, ``config_first.ini``,
+        ``config_light.ini``).
+        Fraction of the remaining tissue mask removed by this step under the
+        default ``mask_statistics`` (see :mod:`histoqc.BasicModule` for the other
+        modes).
+        The mask keeps pixels whose grayscale lies strictly between
+        ``lower_threshold`` and ``upper_threshold`` and whose per-pixel RGB standard
+        deviation lies strictly between ``lower_std`` and ``upper_std`` (the
+        complement when ``invert`` is true).
 
     Args:
         s: Slide state containing the image and working tissue mask.
@@ -151,6 +172,29 @@ def getIntensityThresholdPercent(s, params):
 
 
 def removeBrightestPixels(s, params):
+    """Threshold grayscale at the darkest pixel of the brightest of three k-means clusters.
+
+    TSV columns:
+      - ``brightestPixels``:
+        Fraction of the remaining tissue mask removed by this step under the
+        default ``mask_statistics`` (see :mod:`histoqc.BasicModule` for the other
+        modes).
+
+    With ``invert`` false (the default) the mask keeps only pixels brighter than that
+    point; set ``invert`` to remove them instead. This operation has no section in the
+    example configuration.
+
+    Args:
+        s: Slide state containing the image and working tissue mask.
+        params: Operation configuration options:
+
+            - ``invert`` (bool): Whether to invert the mask. Defaults to ``False``.
+            - ``mask_statistics`` (str): Statistics mode for the remaining mask.
+              Defaults to the slide-wide setting.
+
+    Returns:
+        None.
+    """
     logging.info(f"{s['filename']} - \tLightDarkModule.removeBrightestPixels")
 
     # lower_thresh = float(params.get("lower_threshold", -float("inf")))
@@ -192,6 +236,35 @@ def removeBrightestPixels(s, params):
 
 
 def minimumPixelIntensityNeighborhoodFiltering(s,params):
+    """Remove areas with no dark pixel nearby, using a neighbourhood minimum filter.
+
+    TSV columns:
+      - ``brightestPixels``:
+        Fraction of the remaining tissue mask removed by this step under the
+        default ``mask_statistics`` (see :mod:`histoqc.BasicModule` for the other
+        modes).
+
+    Grayscale is scaled to 0 to 255 and replaced by its minimum over a disk; pixels
+    whose neighbourhood minimum exceeds ``upper_threshold`` are bright everywhere
+    around them (mainly glass). With ``invert`` true (the default) they are removed.
+
+    Args:
+        s: Slide state containing the image and working tissue mask.
+        params: Operation configuration options:
+
+            - ``disk_size`` (int): Radius of the disk for the minimum filter.
+              Defaults to 10000; the example configuration sets this to 5.
+            - ``upper_threshold`` (int): Neighbourhood-minimum threshold on the 0 to
+              255 scale. Defaults to 200; the example configuration sets this to 210.
+            - ``invert`` (bool): Whether to remove (true) or keep (false) the pixels
+              above the threshold. Defaults to ``True``; the example configuration
+              sets this to ``True``.
+            - ``mask_statistics`` (str): Statistics mode for the remaining mask.
+              Defaults to the slide-wide setting.
+
+    Returns:
+        None.
+    """
     logging.info(f"{s['filename']} - \tLightDarkModule.minimumPixelNeighborhoodFiltering")
     disk_size = int(params.get("disk_size", 10000))
     threshold = int(params.get("upper_threshold", 200))

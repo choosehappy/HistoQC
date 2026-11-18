@@ -17,6 +17,18 @@ import matplotlib.pyplot as plt
 def separateStains(s, params):
     """Perform stain deconvolution using a scikit-image stain matrix.
 
+    TSV columns:
+      - ``deconv_c0_mean``, ``deconv_c1_mean``, ``deconv_c2_mean``: Mean of each
+        stain channel from scikit-image ``separate_stains`` with the ``stain``
+        matrix (for ``hed_from_rgb``: c0 haematoxylin, c1 eosin, c2 DAB).
+      - ``deconv_c0_std``, ``deconv_c1_std``, ``deconv_c2_std``: Standard deviation
+        of each channel.
+
+    Each channel is clipped to [0, its 99th percentile over the whole thumbnail], then
+    summarised over the tissue mask (over the whole thumbnail when ``use_mask`` is
+    false). The names do not record which matrix was used. All six are ``-100`` when
+    ``use_mask`` is true and the tissue mask is empty.
+
     Args:
         s: Slide state containing the image and working tissue mask.
         params: Operation configuration options:

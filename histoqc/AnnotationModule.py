@@ -77,6 +77,16 @@ def getParams(s, params):
 def saveAnnotationMask(s, params):
     """Load an annotation file and restrict processing to its regions of interest.
 
+    TSV columns:
+      - ``getAnnotationMask``:
+        Fraction of the remaining tissue mask removed by this step under the
+        default ``mask_statistics`` (see :mod:`histoqc.BasicModule` for the other
+        modes).
+        Removed pixels lie outside the supplied annotations. The column is not
+        written when the slide's annotation file is missing or its format is
+        unsupported, so in a mixed batch those rows have one column fewer than the
+        header (a warning is recorded).
+
     Args:
         s: Slide state containing slide metadata and the working tissue mask.
         params: Operation configuration options:

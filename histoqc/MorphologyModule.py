@@ -14,6 +14,16 @@ from histoqc.SaveModule import blend2Images #for easier debugging
 def removeSmallObjects(s, params):
     """Remove small objects, such as pixel noise and dust, from the image mask.
 
+    TSV columns:
+      - ``small_tissue_removed_percent``:
+        Fraction of the remaining tissue mask removed by this step under the
+        default ``mask_statistics`` (see :mod:`histoqc.BasicModule` for the other
+        modes).
+      - ``small_tissue_removed_num_regions``: Number of connected regions removed (0 if none).
+      - ``small_tissue_removed_mean_area``: Mean area of those regions, in pixels at
+        ``image_work_size``.
+      - ``small_tissue_removed_max_area``: Area of the largest of those regions.
+
     Args:
         s: Slide state containing the working tissue mask.
         params: Operation configuration options:
@@ -87,6 +97,39 @@ def remove_large_objects(img, max_size):
 
 
 def removeFatlikeTissue(s, params):
+    """Remove clusters of small holes that look like fat tissue.
+
+    TSV columns:
+      - ``fatlike_tissue_removed_percent``:
+        Fraction of the remaining tissue mask removed by this step under the
+        default ``mask_statistics`` (see :mod:`histoqc.BasicModule` for the other
+        modes).
+      - ``fatlike_tissue_removed_num_regions``: Number of connected regions removed (0 if none).
+      - ``fatlike_tissue_removed_mean_area``: Mean area of those regions, in pixels at
+        ``image_work_size``.
+      - ``fatlike_tissue_removed_max_area``: Area of the largest of those regions.
+
+    Holes smaller than ``fat_cell_size`` pixels are found and dilated with a
+    ``kernel_size`` square; where the dilated holes merge into clusters larger than
+    ``max_keep_size`` pixels, those clusters are removed from the mask.
+
+    Args:
+        s: Slide state containing the working tissue mask.
+        params: Operation configuration options:
+
+            - ``fat_cell_size`` (int): Largest hole, in pixels, treated as a fat
+              cell. Defaults to 64; the example configuration sets this to 64.
+            - ``kernel_size`` (int): Side length of the square used to dilate the
+              holes. Defaults to 3; the example configuration sets this to 10.
+            - ``max_keep_size`` (int): Dilated clusters larger than this many pixels
+              are removed. Defaults to 1000; the example configuration sets this to
+              1000.
+            - ``mask_statistics`` (str): Statistics mode for the remaining mask.
+              Defaults to the slide-wide setting.
+
+    Returns:
+        None.
+    """
     logging.info(f"{s['filename']} - \tremoveFatlikeTissue")
     fat_cell_size = int(params.get("fat_cell_size", 64))
     kernel_size = int(params.get("kernel_size", 3))
@@ -138,6 +181,15 @@ def removeFatlikeTissue(s, params):
 
 def fillSmallHoles(s, params):
     """Fill small and medium holes in the image mask, such as lumen spaces in tubules.
+
+    TSV columns:
+      - ``small_tissue_filled_percent``: Change in the tissue mask from this step
+        under ``mask_statistics`` (see :mod:`histoqc.BasicModule`). Filling holes
+        adds pixels, so under the default ``relative2mask`` the value is negative.
+      - ``small_tissue_filled_num_regions``: Number of connected regions filled (0 if none).
+      - ``small_tissue_filled_mean_area``: Mean area of those regions, in pixels at
+        ``image_work_size``.
+      - ``small_tissue_filled_max_area``: Area of the largest of those regions.
 
     Args:
         s: Slide state containing the working tissue mask.
