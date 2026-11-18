@@ -36,6 +36,10 @@ global_holder = {}
 def roiWise(s, params):
     """Detect air-bubble contours by iterating over regions of a large slide.
 
+    TSV columns:
+      - ``<name>``: One column named by ``name``: the fraction of pixels in the
+        processed regions flagged as bubble edges. The tissue mask is not changed.
+
     Args:
         s: Slide state with an OpenSlide handle and output metadata.
         params: Operation configuration options:
@@ -110,6 +114,32 @@ def roiWise(s, params):
 
 
 def detectSmoothness(s, params):
+        """Remove flat, featureless areas whose grayscale barely differs from its local mean.
+
+        TSV columns:
+          - ``flat_areas``:
+            Fraction of the remaining tissue mask removed by this step under the
+            default ``mask_statistics`` (see :mod:`histoqc.BasicModule` for the other
+            modes).
+
+        Args:
+            s: Slide state containing the image and working tissue mask.
+            params: Operation configuration options:
+
+                - ``threshold`` (float): Maximum absolute difference between a pixel's
+                  grayscale and its local mean for the pixel to count as flat. Defaults
+                  to 0.01; the example configuration sets this to 0.01.
+                - ``kernel_size`` (int): Side length of the square averaging window.
+                  Defaults to 10; the example configuration sets this to 10.
+                - ``min_object_size`` (int): Flat and non-flat specks smaller than this
+                  many pixels are discarded. Defaults to 100; the example configuration
+                  sets this to 500.
+                - ``mask_statistics`` (str): Statistics mode for the remaining mask.
+                  Defaults to the slide-wide setting.
+
+        Returns:
+            None.
+        """
         logging.info(f"{s['filename']} - \tBubbleRegionByRegion.detectSmoothness")
         thresh = float(params.get("threshold", ".01" ))
         kernel_size = int(params.get("kernel_size", "10"))

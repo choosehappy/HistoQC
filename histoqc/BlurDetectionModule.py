@@ -19,12 +19,18 @@ import matplotlib.pyplot as plt
 
 def identifyBlurryRegions(s, params):
     """Identify likely blurry regions using a Laplacian-based measure.
-    
+
     TSV columns:
-      - ``blurry_removed_num_regions``
-      - ``blurry_removed_mean_area``
-      - ``blurry_removed_max_area``
-      - ``blurry_removed_percent``
+      - ``blurry_removed_percent``:
+        Fraction of the remaining tissue mask removed by this step under the
+        default ``mask_statistics`` (see :mod:`histoqc.BasicModule` for the other
+        modes).
+        Removed pixels are those where the Gaussian-smoothed absolute Laplacian of
+        grayscale is at or below ``blur_threshold``.
+      - ``blurry_removed_num_regions``: Number of connected regions removed (0 if none).
+      - ``blurry_removed_mean_area``: Mean area of those regions, in pixels at
+        ``image_work_size``.
+      - ``blurry_removed_max_area``: Area of the largest of those regions.
 
     Args:
         s: Slide state containing the image and working tissue mask.

@@ -61,6 +61,17 @@ def computeHistogram(img, bins, mask=-1):
 def compareToTemplates(s, params):
     """Compare the slide's RGB histogram with histograms from template images.
 
+    TSV columns:
+      - ``<template>_MSE_hist``: One column per template, named after the template
+        file without its extension (``template1_MSE_hist``, ``template2_MSE_hist``,
+        ``template3_MSE_hist`` and ``template4_MSE_hist`` in the example
+        configuration). The value is the sum, over ``bins`` bins and
+        3 channels, of squared differences between density-normalised per-channel
+        histograms (range 0 to 255) of the slide's selected pixels and of the whole
+        template image. It is a sum rather than a mean; 0 means identical. If the
+        tissue mask is empty the slide histogram is taken as all zeros and a warning
+        is written.
+
     Args:
         s: Slide state containing the image and working tissue mask.
         params: Operation configuration options:

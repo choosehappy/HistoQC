@@ -28,6 +28,14 @@ import matplotlib.pyplot as plt
 def pixelWise(s, params):
     """Classify image pixels using an RGB model trained from a TSV file.
 
+    TSV columns:
+      - ``<name>``: Named by ``name``.
+        Fraction of the remaining tissue mask removed by this step under the
+        default ``mask_statistics`` (see :mod:`histoqc.BasicModule` for the other
+        modes).
+        The name is added to the output list twice, so ``results.tsv`` has two
+        columns with this name, both holding this value.
+
     Args:
         s: Slide state containing the image and working tissue mask.
         params: Operation configuration options:
@@ -166,6 +174,15 @@ def compute_features(img, params):
 
 def byExampleWithFeatures(s, params):
     """Train and apply a classifier from example images, feature masks, and image features.
+
+    TSV columns:
+      - ``<name>``: One column named by ``name`` (``pen_markings`` and
+        ``coverslip_edge`` in ``config.ini`` and ``config_ihc.ini``).
+        Fraction of the remaining tissue mask removed by this step under the
+        default ``mask_statistics`` (see :mod:`histoqc.BasicModule` for the other
+        modes).
+        Removed pixels are those the classifier, trained on ``examples``, assigns to
+        the class.
 
     Args:
         s: Slide state containing the image and working tissue mask.
